@@ -8,6 +8,7 @@ endif()
 
 # OpenCV
 find_package(OpenCV 3 REQUIRED)
+message(STATUS "OpenCV version: ${OpenCV_VERSION}")
 
 # コンパイラーがC++17に対応しているかチェック
 include(CheckCXXCompilerFlag)
@@ -47,3 +48,6 @@ target_link_libraries(main ${OpenCV_LIBS})
 
 add_executable(se3 test/se3.cpp ${SOURCES})
 target_link_libraries(se3 ${OpenCV_LIBS})
+
+add_executable(record test/kinect_record.cpp ${SOURCES})
+target_link_libraries(record ${OpenCV_LIBS} freenect2)

@@ -6,7 +6,7 @@ int main()
 {
     using namespace math;
     {
-        cv::Mat1f mat = cv::Mat1f::eye(4, 4);
+        cv::Mat1f mat(cv::Mat1f::eye(4, 4));
         std::cout << mat << std::endl;
 
         mat = se3::log(mat);

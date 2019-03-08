@@ -1,42 +1,21 @@
-depth01.png
-depth02.png
-depth03.png
-depth04.png
-depth05.png
-depth06.png
-depth07.png
-depth08.png
-depth09.png
-depth10.png
-depth11.png
-depth12.png
-depth13.png
-depth14.png
-depth15.png
-depth16.png
-depth17.png
-depth18.png
-depth19.png
-depth20.png
-depth21.png
-rgb01.png
-rgb02.png
-rgb03.png
-rgb04.png
-rgb05.png
-rgb06.png
-rgb07.png
-rgb08.png
-rgb09.png
-rgb10.png
-rgb11.png
-rgb12.png
-rgb13.png
-rgb14.png
-rgb15.png
-rgb16.png
-rgb17.png
-rgb18.png
-rgb19.png
-rgb20.png
-rgb21.png
+rgb01.png depth01.png
+rgb02.png depth02.png
+rgb03.png depth03.png
+rgb04.png depth04.png
+rgb05.png depth05.png
+rgb06.png depth06.png
+rgb07.png depth07.png
+rgb08.png depth08.png
+rgb09.png depth09.png
+rgb10.png depth10.png
+rgb11.png depth11.png
+rgb12.png depth12.png
+rgb13.png depth13.png
+rgb14.png depth14.png
+rgb15.png depth15.png
+rgb16.png depth16.png
+rgb17.png depth17.png
+rgb18.png depth18.png
+rgb19.png depth19.png
+rgb20.png depth20.png
+rgb21.png depth21.png

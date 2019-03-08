@@ -1,34 +1,17 @@
-ir01.png
-ir02.png
-ir03.png
-ir04.png
-ir05.png
-ir06.png
-ir07.png
-ir08.png
-ir09.png
-ir10.png
-ir11.png
-ir12.png
-ir13.png
-ir14.png
-ir15.png
-ir16.png
-ir17.png
-rgb01.png
-rgb02.png
-rgb03.png
-rgb04.png
-rgb05.png
-rgb06.png
-rgb07.png
-rgb08.png
-rgb09.png
-rgb10.png
-rgb11.png
-rgb12.png
-rgb13.png
-rgb14.png
-rgb15.png
-rgb16.png
-rgb17.png
+rgb01.png depth01.png
+rgb02.png depth02.png
+rgb03.png depth03.png
+rgb04.png depth04.png
+rgb05.png depth05.png
+rgb06.png depth06.png
+rgb07.png depth07.png
+rgb08.png depth08.png
+rgb09.png depth09.png
+rgb10.png depth10.png
+rgb11.png depth11.png
+rgb12.png depth12.png
+rgb13.png depth13.png
+rgb14.png depth14.png
+rgb15.png depth15.png
+rgb16.png depth16.png
+rgb17.png depth17.png

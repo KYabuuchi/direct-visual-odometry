@@ -46,8 +46,8 @@ file(GLOB SOURCES src/*.cpp)
 add_executable(main main.cpp ${SOURCES})
 target_link_libraries(main ${OpenCV_LIBS})
 
-add_executable(se3 test/se3.cpp ${SOURCES})
-target_link_libraries(se3 ${OpenCV_LIBS})
+add_executable(test-se3 test/se3.cpp ${SOURCES})
+target_link_libraries(test-se3 ${OpenCV_LIBS})
 
 add_executable(record test/kinect_record.cpp ${SOURCES})
 target_link_libraries(record ${OpenCV_LIBS} freenect2)

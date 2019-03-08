@@ -1,3 +1,4 @@
+// math::se3のテスト
 #include "math.hpp"
 #include <opencv2/opencv.hpp>
 #include <opencv2/viz.hpp>
@@ -30,14 +31,14 @@ int main()
 
     // 補完(黄)
     for (int i = 1; i < 10; i++) {
-        cv::Mat1f tmp = se3::exp(xi * static_cast<float>(i) / 10.0);
+        cv::Mat1f tmp = se3::exp(cv::Mat1f(xi * static_cast<float>(i) / 10.0));
         cv::Mat1f inter(tmp * before);
         cv::viz::WArrow arrow_i(cv::Point3f(tmp.col(3).rowRange(0, 3)), cv::Point3f(inter.rowRange(0, 3)), 0.01, cv::viz::Color::yellow());
         viz_window.showWidget("inter" + std::to_string(i), arrow_i);
     }
     // 予測(緑)
     for (int i = 1; i < 10; i++) {
-        cv::Mat1f tmp = se3::exp(xi * static_cast<float>(10.0 + i) / 10.0);
+        cv::Mat1f tmp = se3::exp(cv::Mat1f(xi * static_cast<float>(10.0 + i) / 10.0));
         cv::Mat1f predict(tmp * before);
         cv::viz::WArrow arrow_p(cv::Point3f(tmp.col(3).rowRange(0, 3)), cv::Point3f(predict.rowRange(0, 3)), 0.01, cv::viz::Color::lime());
         viz_window.showWidget("predict" + std::to_string(i), arrow_p);

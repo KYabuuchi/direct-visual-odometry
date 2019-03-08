@@ -57,6 +57,7 @@ int main()
             break;
         if (key == 's') {
             save = true;
+            framecount++;
         }
 
         {  // Color
@@ -105,12 +106,6 @@ int main()
                 std::cout << "depth save" << std::endl;
             }
         }
-
-
-        framecount++;
-        if (framecount % 100 == 0)
-            std::cout << "Received " << framecount
-                      << " frames. Ctrl-C to stop." << std::endl;
 
         listener.release(frames);
     }

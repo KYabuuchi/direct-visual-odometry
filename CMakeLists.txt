@@ -46,8 +46,12 @@ file(GLOB SOURCES src/*.cpp)
 add_executable(main main.cpp ${SOURCES})
 target_link_libraries(main ${OpenCV_LIBS})
 
-add_executable(test-se3 test/se3.cpp ${SOURCES})
+add_executable(test-se3 test/se3.cpp src/math.cpp)
 target_link_libraries(test-se3 ${OpenCV_LIBS})
 
-add_executable(record test/kinect_record.cpp ${SOURCES})
-target_link_libraries(record ${OpenCV_LIBS} freenect2)
+message(${SOURCES})
+add_executable(test-map test/map_depth_to_gray.cpp ${SOURCES})
+target_link_libraries(test-map ${OpenCV_LIBS})
+
+add_executable(test-kinect test/kinect_record.cpp)
+target_link_libraries(test-kinect ${OpenCV_LIBS} freenect2)

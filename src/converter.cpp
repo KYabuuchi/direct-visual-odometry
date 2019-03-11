@@ -87,4 +87,20 @@ cv::Mat mapDepthtoGray(const cv::Mat& depth_image, const cv::Mat& gray_image)
     return mapped_image;
 }
 
+
+cv::Mat depthNormalize(const cv::Mat& depth_image)
+{
+    cv::Mat tmp_image;
+    depth_image.convertTo(tmp_image, CV_32FC1, 1.0 / 5000.0);  // [mm]
+    return tmp_image;
+}
+
+cv::Mat colorNormalize(const cv::Mat& color_image)
+{
+    cv::Mat tmp_image;
+    cv::cvtColor(color_image, tmp_image, cv::COLOR_BGR2GRAY);
+    tmp_image.convertTo(tmp_image, CV_32FC1, 1.0 / 255.0);  // 0~1
+    return tmp_image;
+}
+
 }  // namespace Converter

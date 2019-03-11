@@ -42,16 +42,28 @@ endforeach()
 message("Build type:\n\t${CMAKE_BUILD_TYPE}")
 
 include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
+
 file(GLOB SOURCES src/*.cpp)
-add_executable(main main.cpp ${SOURCES})
+add_executable(main main.cpp)
 target_link_libraries(main ${OpenCV_LIBS})
 
 add_executable(test-se3 test/se3.cpp src/math.cpp)
 target_link_libraries(test-se3 ${OpenCV_LIBS})
 
-message(${SOURCES})
 add_executable(test-map test/map_depth_to_gray.cpp ${SOURCES})
 target_link_libraries(test-map ${OpenCV_LIBS})
 
 add_executable(test-kinect test/kinect_record.cpp)
 target_link_libraries(test-kinect ${OpenCV_LIBS} freenect2)
+
+add_executable(test-load test/load.cpp)
+target_link_libraries(test-load ${OpenCV_LIBS})
+
+# matplotlib
+find_package(PythonLibs 3.6)
+
+add_executable(test-tracking test/tracking.cpp ${SOURCES})
+target_link_libraries(test-tracking ${OpenCV_LIBS} ${PYTHON_LIBRARIES})
+target_include_directories(test-tracking SYSTEM
+                           PRIVATE external/matplotlib-cpp
+                                   ${PYTHON_INCLUDE_DIRS})

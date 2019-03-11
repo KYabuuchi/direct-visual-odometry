@@ -10,8 +10,6 @@ int main()
     cv::Mat depth_image = cv::imread("../data/KINECT_5MM/depth01.png", cv::IMREAD_UNCHANGED);
     cv::Mat gray_image;
 
-    std::cout << Params::KINECTV2_EXTRINSIC_INVERSE << std::endl;
-
     cv::cvtColor(color_image, gray_image, cv::COLOR_BGR2GRAY);
     depth_image.convertTo(depth_image, CV_32FC1, 1.0 / 5000.0);  // [mm]
     gray_image.convertTo(gray_image, CV_32FC1, 1.0 / 255.0);     // 0~1

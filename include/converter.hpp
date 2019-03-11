@@ -23,4 +23,7 @@ cv::Mat1f backProject(const cv::Mat1f& intrinsic, const cv::Mat1f& point, float 
 
 cv::Mat mapDepthtoGray(const cv::Mat& depth_image, const cv::Mat& color_image);
 
+cv::Mat depthNormalize(const cv::Mat& depth_image);
+cv::Mat colorNormalize(const cv::Mat& color_image);
+
 }  // namespace Converter

@@ -11,7 +11,7 @@ int main()
     cv::Mat gray_image;
 
     cv::cvtColor(color_image, gray_image, cv::COLOR_BGR2GRAY);
-    depth_image.convertTo(depth_image, CV_32FC1, 1.0 / 5000.0);  // [mm]
+    depth_image.convertTo(depth_image, CV_32FC1, 1.0 / 5000.0);  // [m]
     gray_image.convertTo(gray_image, CV_32FC1, 1.0 / 255.0);     // 0~1
 
     // map Depth->Color

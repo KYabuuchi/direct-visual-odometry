@@ -59,6 +59,9 @@ target_link_libraries(test-kinect ${OpenCV_LIBS} freenect2)
 add_executable(test-load test/load.cpp)
 target_link_libraries(test-load ${OpenCV_LIBS})
 
+add_executable(test-generator test/generator.cpp)
+target_link_libraries(test-generator ${OpenCV_LIBS})
+
 # matplotlib
 find_package(PythonLibs 3.6)
 

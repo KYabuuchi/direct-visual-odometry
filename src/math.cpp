@@ -64,6 +64,8 @@ cv::Mat1f exp(const cv::Mat1f& twist)
                     + w_hat * (1.0f - std::cos(w_length)) / (w_length * w_length)
                     + (w_hat * w_hat) * (w_length - static_cast<float>(std::sin(w_length))) / (w_length * w_length * w_length));
         t = V * v;
+    } else {
+        t = v;
     }
 
     // 4x4

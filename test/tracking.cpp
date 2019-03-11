@@ -2,13 +2,13 @@
 #include "converter.hpp"
 #include "io.hpp"
 #include "math.hpp"
-#include "matplotlibcpp.h"
 #include "params.hpp"
 #include <cassert>
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
-namespace plt = matplotlibcpp;
+//#define DEBUG3
+//#define DEBUGG
 
 // warp先の画素値を返す
 cv::Point2f warp(const cv::Mat1f& xi, const cv::Point2f& x_i, const float depth)
@@ -17,6 +17,40 @@ cv::Point2f warp(const cv::Mat1f& xi, const cv::Point2f& x_i, const float depth)
     x_c = Converter::transformByXi(xi, x_c);
     cv::Mat1f transformed_x_i = Converter::project(Params::KINECTV2_INTRINSIC_DEPTH, x_c);
     return cv::Point2f(transformed_x_i);
+}
+
+// 勾配を計算(欠けていたら0)
+cv::Mat gradiate(const cv::Mat& gray_image, bool x)
+{
+    cv::Size size = gray_image.size();
+    cv::Mat gradiate_image = cv::Mat::zeros(gray_image.size(), CV_32FC1);
+
+    if (x) {
+        gradiate_image.forEach<float>(
+            [=](float& p, const int position[2]) -> void {
+                if (position[0] == 0 or position[0] == size.width)
+                    return;
+
+                float x0 = gray_image.at<float>(position[0] - 1, position[1]);
+                float x1 = gray_image.at<float>(position[0] + 1, position[1]);
+                if (x0 == 0 or x1 == 0)
+                    return;
+                p = x1 - x0;
+            });
+    } else {
+        gradiate_image.forEach<float>(
+            [=](float& p, const int position[2]) -> void {
+                if (position[1] == 0 or position[1] == size.height)
+                    return;
+
+                float y0 = gray_image.at<float>(position[0], position[1] - 1);
+                float y1 = gray_image.at<float>(position[0], position[1] + 1);
+                if (y0 == 0 or y1 == 0)
+                    return;
+                p = y1 - y0;
+            });
+    }
+    return gradiate_image;
 }
 
 struct Camera {
@@ -28,35 +62,37 @@ struct Camera {
 
 int main(int argc, char* argv[])
 {
-    int num1 = 1;
-    int num2 = 1;
+    int num1 = 3;
+    int num2 = 5;
     if (argc == 2) {
         int tmp = std::atoi(argv[1]);
-        num1 = tmp > 0 ? 0 : -tmp;
-        num2 = tmp > 0 ? tmp : 0;
+        num1 = tmp + 5;
+        // num2 = tmp > 0 ? tmp : 0;
     }
 
     // prepare depth-image & gray-image
-    //io::Loader loader("../data/KINECT_5MM/info.txt");
+#ifndef DEBUGG
+    io::Loader loader("../data/KINECT_5MM/info.txt");
     cv::Mat depth_image1, color_image1;
     cv::Mat depth_image2, color_image2;
-    //loader.readImages(num1, color_image1, depth_image1);
-    //loader.readImages(num2, color_image2, depth_image2);
-    cv::Mat gray_image1;  // = Converter::mapDepthtoGray(depth_image1, Converter::colorNormalize(color_image1));
-    cv::Mat gray_image2;  // = Converter::mapDepthtoGray(depth_image2, Converter::colorNormalize(color_image2));
-
-    depth_image1 = cv::imread("depth.png", cv::IMREAD_UNCHANGED);
-    depth_image2 = cv::imread("depth.png", cv::IMREAD_UNCHANGED);
-    gray_image1 = cv::imread("gray1.png", cv::IMREAD_UNCHANGED);
-    gray_image2 = cv::imread("gray2.png", cv::IMREAD_UNCHANGED);
+    loader.readImages(num1, color_image1, depth_image1);
+    loader.readImages(num2, color_image2, depth_image2);
     depth_image1 = Converter::depthNormalize(depth_image1);
     depth_image2 = Converter::depthNormalize(depth_image2);
+    cv::Mat gray_image1 = Converter::mapDepthtoGray(depth_image1, Converter::colorNormalize(color_image1));
+    cv::Mat gray_image2 = Converter::mapDepthtoGray(depth_image2, Converter::colorNormalize(color_image2));
+#else
+    cv::Mat depth_image1 = cv::imread("depth.png", cv::IMREAD_UNCHANGED);
+    cv::Mat depth_image2 = cv::imread("depth.png", cv::IMREAD_UNCHANGED);
+    cv::Mat gray_image1 = cv::imread("gray1.png", cv::IMREAD_UNCHANGED);
+    cv::Mat gray_image2 = cv::imread("gray2.png", cv::IMREAD_UNCHANGED);
     gray_image1.convertTo(gray_image1, CV_32FC1, 1.0 / 255.0);  // 0~1
     gray_image2.convertTo(gray_image2, CV_32FC1, 1.0 / 255.0);  // 0~1
+    depth_image1 = Converter::depthNormalize(depth_image1);
+    depth_image2 = Converter::depthNormalize(depth_image2);
+#endif
 
-
-    cv::dilate(gray_image1, gray_image1, cv::Mat(), cv::Point(-1, -1), 1);
-    cv::dilate(gray_image2, gray_image2, cv::Mat(), cv::Point(-1, -1), 1);
+    assert(gray_image1.type() == CV_32FC1);
 
     // iterate direct-method
     const int COL = gray_image1.cols;
@@ -70,24 +106,24 @@ int main(int argc, char* argv[])
         Params::KINECTV2_INTRINSIC_DEPTH(1, 2)};
 
     // gradient gray_image
-    cv::Mat gradient_image_x;
-    cv::Mat gradient_image_y;
-    cv::Sobel(gray_image2, gradient_image_x, CV_32FC1, 1, 0, 3);
-    cv::Sobel(gray_image2, gradient_image_y, CV_32FC1, 0, 1, 3);
+    cv::Mat gradient_image_x = gradiate(gray_image1, true);
+    cv::Mat gradient_image_y = gradiate(gray_image1, false);
 
-    // A xi + B = 0
+// A xi + B = 0
+#ifdef DEBUG3
+    cv::Mat1f A(cv::Mat1f::zeros(0, 3));
+#else
     cv::Mat1f A(cv::Mat1f::zeros(0, 6));
+#endif
+
     cv::Mat1f B(cv::Mat1f::zeros(0, 1));
-    std::vector<float> residuals;
+    cv::Mat1f xi = math::se3::log(cv::Mat1f::eye(4, 4));
 
-    cv::Mat1f tmp = cv::Mat1f::eye(4, 4);
-    cv::Mat1f xi = math::se3::log(tmp);
-
-    for (int iteration = 0; iteration < 5; iteration++) {
+    for (int iteration = 0; iteration < 10; iteration++) {
 
         float residual = 0;
-        for (int col = 0; col < COL; col += 1) {
-            for (int row = 0; row < ROW; row += 10) {
+        for (int col = 0; col < COL; col += 80) {
+            for (int row = 0; row < ROW; row += 80) {
                 cv::Point2f x_i0 = cv::Point2f(col, row);
                 float depth = depth_image2.at<float>(x_i0);
                 if (depth < 0.01)  // 1e-6[m]
@@ -103,18 +139,18 @@ int main(int argc, char* argv[])
                 if (r == 0)
                     continue;
 
-                // calc jacobian
                 // clang-format off
                 cv::Mat1f jacobian1 = (cv::Mat1f(1, 2) << 
                     gradient_image_x.at<float>(x_i),
                     gradient_image_y.at<float>(x_i));
                 // clang-format on
-                if (jacobian1(0) == 0 and jacobian1(1) == 0)
-                    continue;
-                // std::cout << jacobian1 << std::endl;
 
                 cv::Point3f x_c = cv::Point3f(Converter::backProject(Params::KINECTV2_INTRINSIC_DEPTH, cv::Mat1f(x_i0), depth));
+#ifdef DEBUG3
+                cv::Mat1f jacobian2 = cv::Mat1f::zeros(2, 3);
+#else
                 cv::Mat1f jacobian2 = cv::Mat1f::zeros(2, 6);
+#endif
                 {
                     const Camera& c = camera;
                     float x = x_c.x;
@@ -123,15 +159,17 @@ int main(int argc, char* argv[])
                     jacobian2(0, 0) = c.fx / z;
                     jacobian2(0, 1) = 0;
                     jacobian2(0, 2) = -c.fx * x / z / z;
-                    jacobian2(0, 3) = -c.fx * x * y / z / z;
-                    jacobian2(0, 4) = c.fx * (1 + x * x / z / z);
-                    jacobian2(0, 5) = -c.fx * y / z;
                     jacobian2(1, 0) = 0;
                     jacobian2(1, 1) = c.fy / z;
                     jacobian2(1, 2) = -c.fy * y / z / z;
+#ifndef DEBUG3
+                    jacobian2(0, 3) = -c.fx * x * y / z / z;
+                    jacobian2(0, 4) = c.fx * (1 + x * x / z / z);
+                    jacobian2(0, 5) = -c.fx * y / z;
                     jacobian2(1, 3) = -c.fy * (1 + y * y / z / z);
                     jacobian2(1, 4) = c.fy * x * y / z / z;
                     jacobian2(1, 5) = c.fy * x / z;
+#endif
                 }
 
                 // stack coefficient
@@ -144,19 +182,16 @@ int main(int argc, char* argv[])
         // A xi = - B
         cv::solve(A, -B, update, cv::DECOMP_SVD);
         // std::cout << A << std::endl;
-        // std::cout << cv::norm(B) << std::endl;
-        // std::cout << cv::norm(A * update + B) << std::endl;
-        xi = math::se3::concatenate(xi, update);
-        residuals.push_back(residual);
-        std::cout << residual << std::endl;
-        // std::cout << update.t() << std::endl;
-        std::cout << xi.t() << std::endl;
-    }
-    std::cout << math::se3::exp(xi) << std::endl;
 
-    // show graph
-    // plt::plot(residuals);
-    // plt::show(false);
+#ifndef DEBUG3
+        xi = math::se3::concatenate(xi, update);
+        std::cout << xi.t() << std::endl;
+#endif
+        std::cout << residual << std::endl;
+        std::cout << update.t() << std::endl;
+    }
+    std::cout << "\n"
+              << math::se3::exp(xi) << std::endl;
 
     // show image
     cv::Mat show_image;

@@ -14,7 +14,7 @@ int main()
     cv::resize(texture, texture, cv::Size(500, 400));
     texture.copyTo(gray1.colRange(0, 500).rowRange(0, 400));
     texture.copyTo(gray1.colRange(0, 500).rowRange(0, 400));
-    texture.copyTo(gray2.colRange(12, 512).rowRange(24, 424));
+    texture.copyTo(gray2.colRange(12, 512).rowRange(0, 400));
 
 
     cv::imshow("gray1", gray1);

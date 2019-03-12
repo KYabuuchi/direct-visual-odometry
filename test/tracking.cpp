@@ -108,8 +108,8 @@ int main(int argc, char* argv[])
         Params::KINECTV2_INTRINSIC_DEPTH(1, 2)};
 
     // gradient gray_image
-    cv::Mat gradient_image_x = gradiate(gray_image1, true);
-    cv::Mat gradient_image_y = gradiate(gray_image1, false);
+    cv::Mat gradient_image_x = gradiate(gray_image2, true);
+    cv::Mat gradient_image_y = gradiate(gray_image2, false);
 
 // A xi + B = 0
 #ifdef DEBUG3

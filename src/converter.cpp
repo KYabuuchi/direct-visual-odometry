@@ -11,6 +11,9 @@ float getColorSubpix(const cv::Mat1f& img, cv::Point2f pt)
 {
     assert(img.type() == CV_32FC1);
 
+    if (pt.x < 0 || pt.x > img.size().width, pt.y < 0 || pt.y > img.size().height)
+        return -1.0f;
+
     int x = (int)pt.x;
     int y = (int)pt.y;
 
@@ -22,8 +25,16 @@ float getColorSubpix(const cv::Mat1f& img, cv::Point2f pt)
     float a = pt.x - (float)x;
     float c = pt.y - (float)y;
 
-    return (img(y0, x0) * (1.f - a) + img(y0, x1) * a) * (1.f - c)
-           + (img(y1, x0) * (1.f - a) + img(y1, x1) * a) * c;
+    float v00 = img(y0, x0);
+    float v01 = img(y0, x1);
+    float v10 = img(y1, x0);
+    float v11 = img(y1, x1);
+
+    if (v00 < 0 or v01 < 0 or v11 < 0 or v10 < 0)
+        return -1.0f;
+
+    return (v00 * (1.f - a) + v01 * a) * (1.f - c)
+           + (v10 * (1.f - a) + v11 * a) * c;
 }
 
 cv::Mat1f toMat1f(float x, float y)
@@ -72,6 +83,7 @@ cv::Mat1f inversePose(const cv::Mat1f& T)
     return tmp;
 }
 
+// 無効な画素には-1が入る
 cv::Mat mapDepthtoGray(const cv::Mat& depth_image, const cv::Mat& gray_image)
 {
     assert(depth_image.type() == CV_32FC1);
@@ -83,6 +95,7 @@ cv::Mat mapDepthtoGray(const cv::Mat& depth_image, const cv::Mat& gray_image)
         [=](float& p, const int position[2]) -> void {
             float depth = depth_image.at<float>(position[0], position[1]);
             if (depth < 1e-6f) {
+                p = -1.0f;
                 return;
             }
             cv::Mat1f x_c = backProject(Params::KINECTV2_INTRINSIC_DEPTH, toMat1f(static_cast<float>(position[1]), static_cast<float>(position[0])), depth);

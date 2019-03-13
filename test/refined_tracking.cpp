@@ -2,6 +2,7 @@
 #include "converter.hpp"
 #include "io.hpp"
 #include "math.hpp"
+#include "matplotlibcpp.h"
 #include "params.hpp"
 #include <Eigen/Dense>
 #include <cassert>
@@ -9,22 +10,43 @@
 #include <opencv2/core/eigen.hpp>
 #include <opencv2/opencv.hpp>
 
-#define DEBUG3
+namespace plt = matplotlibcpp;
 
+// #define DEBUG3
 #define EPSILON 1e-6
 
-inline bool isEpsilon(float num)
+inline bool testXi(const cv::Mat1f& xi)
 {
-    return std::abs(num) < EPSILON;
+    assert(xi.size() == cv::Size(6, 1));
+    bool flag = true;
+
+    // TODO:
+    for (int i = 0; i < 6; i++)
+        flag &= not std::isnan(xi(i));
+
+    return flag;
 }
+
+inline bool isEpsilon(float num) { return std::abs(num) < EPSILON; }
 
 inline bool isRange(float num, int min, int max)
 {
-    if (num <= min)
+    if (num <= static_cast<float>(min))
         return false;
-    if (max <= num)
+    if (static_cast<float>(max) <= num)
         return false;
     return true;
+}
+
+cv::Mat1f solveNE(const cv::Mat1f& A, const cv::Mat1f& B)
+{
+    Eigen::MatrixXf eigen_A, eigen_B;
+    cv::cv2eigen(A, eigen_A);
+    cv::cv2eigen(B, eigen_B);
+    Eigen::MatrixXf eigen_update = eigen_A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(-eigen_B);
+    cv::Mat1f update;
+    cv::eigen2cv(eigen_update, update);
+    return update;
 }
 
 class Frame
@@ -52,26 +74,9 @@ std::vector<Frame> createFramePyramid(
     const cv::Mat& gray_image2,
     const cv::Mat& depth_image2);
 
-cv::Mat1f solveNE(const cv::Mat1f& A, const cv::Mat1f& B)
-{
-    std::cout << "cv::solve()\n"
-              << std::endl;
-    cv::Mat show;
-    cv::hconcat(A, B, show);
-    // std::cout << show << std::endl;
-
-    Eigen::MatrixXf eigen_A, eigen_B;
-    cv::cv2eigen(A, eigen_A);
-    cv::cv2eigen(B, eigen_B);
-    Eigen::MatrixXf eigen_update = eigen_A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(-eigen_B);
-    cv::Mat1f update;
-    cv::eigen2cv(eigen_update, update);
-    return update;
-}
-
 int main(int argc, char* argv[])
 {
-    int num1 = 0, num2 = 5;
+    int num1 = 0, num2 = 7;
     if (argc == 2)
         num1 = std::atoi(argv[1]) + 5;
     std::cout << num1 << " " << num2 << std::endl;
@@ -95,7 +100,9 @@ int main(int argc, char* argv[])
     cv::namedWindow("depth", cv::WINDOW_NORMAL);
     cv::namedWindow("grad", cv::WINDOW_NORMAL);
 
-    cv::Mat1f xi(math::se3::log(cv::Mat1f::eye(4, 4)));
+    cv::Mat1f xi(cv::Mat1f::zeros(6, 1));
+    xi(0) = -0.25f;
+    std::vector<std::vector<float>> vector_of_residuals;
 
     // create frame pyramid
     std::vector<Frame> frames = createFramePyramid(
@@ -105,20 +112,19 @@ int main(int argc, char* argv[])
         gray_image1, depth_image1,
         gray_image2, depth_image2);
 
-    std::vector<float> residuals;
 
-    for (int level = 0; level < 2; level++) {
+    for (int level = 0; level < 3; level++) {
         Frame frame = frames.at(level);
         const int ROW = frame.rows;
         const int COL = frame.cols;
-
         std::cout << "\nLEVEL: " << level << " ROW: " << ROW << " COL: " << COL << std::endl;
-        std::cout << frame.intrinsic_depth << std::endl;
 
         // gradient gray_image
         cv::Mat gradient_image_x = gradiate(frame.gray_image2, true);
         cv::Mat gradient_image_y = gradiate(frame.gray_image2, false);
 
+        // vector of residual
+        std::vector<float> residuals;
 
         // show image
         {
@@ -134,95 +140,105 @@ int main(int argc, char* argv[])
             cv::hconcat(gradient_image_x, gradient_image_y, show_image);
             show_image.convertTo(show_image, CV_8UC1, 100, 100);
             cv::imshow("grad", show_image);
+
             int key = cv::waitKey(0);
             if (key == 'q')
                 return 0;
         }
 
         // iterate direct-method
-        for (int iteration = 0; iteration < 30; iteration++) {
-            float residual = 0;
-            std::cout << "ITERATION: " << iteration << " " << std::endl;
+        for (int iteration = 0; iteration < 50; iteration++) {
             // A xi + B = 0
             cv::Mat1f A(cv::Mat1f::zeros(0, 6));
             cv::Mat1f B(cv::Mat1f::zeros(0, 1));
 
-            for (int col = 0; col < COL; col += 5) {
-                for (int row = 0; row < ROW; row += 5) {
+            float residual = 0;
+
+            for (int col = 0; col < COL; col += 1) {
+                for (int row = 0; row < ROW; row += 1) {
                     cv::Point2f x_i0 = cv::Point2f(col, row);
-                    float depth = frame.depth_image2.at<float>(x_i0);
-                    if (depth < 0.001)  // 1e-6[m]
+                    float depth1 = frame.depth_image1.at<float>(x_i0);
+                    float depth2 = frame.depth_image2.at<float>(x_i0);
+                    if (depth2 < 0.001 or depth1 < 0.001)  //   1[mm]
                         continue;
 
                     // calc residual
-                    cv::Point2f x_i = warp(xi, x_i0, depth, frame);
+                    cv::Point2f x_i = warp(xi, x_i0, depth2, frame);
                     if ((!isRange(x_i.x, 0, COL)) or (!isRange(x_i.y, 0, ROW)))
                         continue;
 
-                    float a = Converter::getColorSubpix(frame.gray_image2, x_i);
-                    float b = frame.gray_image1.at<float>(x_i0);
-                    float r = a - b;
-                    if (isEpsilon(r))
+                    float I_2 = Converter::getColorSubpix(frame.gray_image2, x_i);
+                    float I_1 = frame.gray_image1.at<float>(x_i0);
+                    if (I_1 < 0 or I_2 < 0) {  // 無効な画素はスキップ
                         continue;
+                    }
+                    float r = I_2 - I_1;
                     residual += r * r;
 
                     // calc jacobian
                     float gx = Converter::getColorSubpix(gradient_image_x, x_i);
                     float gy = Converter::getColorSubpix(gradient_image_y, x_i);
-                    cv::Mat1f jacobian1 = (cv::Mat1f(1, 2) << gx, gy);
-                    cv::Mat1f jacobian2 = cv::Mat1f::zeros(2, 6);
+                    cv::Mat1f jacobi1(cv::Mat1f::zeros(1, 2));
+                    jacobi1 = (cv::Mat1f(1, 2) << gx, gy);
 
-                    if (isEpsilon(jacobian1(0)) or isEpsilon(jacobian1(1)))
+                    if (isEpsilon(jacobi1(0)) or isEpsilon(jacobi1(1)))
                         continue;
-                    // std::cout << jacobian1 << std::endl;
+
+                    cv::Mat1f jacobi2(cv::Mat1f::zeros(2, 6));
                     {
-                        cv::Point3f x_c = cv::Point3f(Converter::backProject(frame.intrinsic_depth, cv::Mat1f(x_i0), depth));
+                        cv::Point3f x_c = cv::Point3f(Converter::backProject(frame.intrinsic_depth, cv::Mat1f(x_i0), depth2));
                         float x = x_c.x, y = x_c.y, z = x_c.z;
                         float fx = frame.intrinsic_depth(0, 0);
                         float fy = frame.intrinsic_depth(1, 1);
-                        jacobian2(0, 0) = fx / z;
-                        jacobian2(0, 1) = 0;
-                        jacobian2(0, 2) = -fx * x / z / z;
-                        jacobian2(1, 0) = 0;
-                        jacobian2(1, 1) = fy / z;
-                        jacobian2(1, 2) = -fy * y / z / z;
+                        jacobi2(0, 0) = fx / z;
+                        jacobi2(0, 1) = 0;
+                        jacobi2(0, 2) = -fx * x / z / z;
+                        jacobi2(1, 0) = 0;
+                        jacobi2(1, 1) = fy / z;
+                        jacobi2(1, 2) = -fy * y / z / z;
 #ifndef DEBUG3
-                        jacobian2(0, 3) = -fx * x * y / z / z;
-                        jacobian2(0, 4) = fx * (1 + x * x / z / z);
-                        jacobian2(0, 5) = -fx * y / z;
-                        jacobian2(1, 3) = -fy * (1 + y * y / z / z);
-                        jacobian2(1, 4) = fy * x * y / z / z;
-                        jacobian2(1, 5) = fy * x / z;
+                        jacobi2(0, 3) = -fx * x * y / z / z;
+                        jacobi2(0, 4) = fx * (1 + x * x / z / z);
+                        jacobi2(0, 5) = -fx * y / z;
+                        jacobi2(1, 3) = -fy * (1 + y * y / z / z);
+                        jacobi2(1, 4) = fy * x * y / z / z;
+                        jacobi2(1, 5) = fy * x / z;
 #endif
                     }
-                    // std::cout << jacobian2 << " " << r << std::endl;
+
+
                     // stack coefficient
-                    cv::vconcat(A, jacobian1 * jacobian2, A);
+                    cv::vconcat(A, jacobi1 * jacobi2, A);
                     cv::vconcat(B, cv::Mat1f(cv::Mat1f(1, 1) << r), B);
                 }
             }
 
-            cv::Mat1f xi_update = solveNE(A, B);
-            std::cout << "xi: " << xi.t() << std::endl;
-            xi = math::se3::concatenate(xi, xi_update);
-            std::cout << "dxi: " << xi_update.t() << std::endl;
-            std::cout << "xi : " << xi.t() << std::endl;
-            std::cout << "r  : " << residual << std::endl;
-            residuals.push_back(residual);
-            for (int i = 0; i < 6; i++) {
-                if (std::isnan(xi(i))) {
-                    std::cout << "xi is nan" << std::endl;
-                    abort();
-                }
-            }
-        }
-    }
-    std::cout << "DONE\n "
-              << math::se3::exp(xi) << std::endl;
+            // if (not residuals.empty()) {
+            // float last = residuals.at(residuals.size() - 1);
+            // if (residual > last * 1.05)
+            //    break;
+            // }
 
-    for (int i = 0; i < residuals.size(); i++) {
-        std::cout << i << " " << residuals.at(i) << std::endl;
+            cv::Mat1f xi_update = solveNE(A, B);
+            xi = math::se3::concatenate(xi, xi_update);
+            std::cout << "iteration: " << iteration << " r  : " << residual << " update " << cv::norm(xi_update) << std::endl;
+            if (cv::norm(xi_update) < 1e-4)
+                break;
+            residuals.push_back(residual);
+            assert(testXi(xi));
+
+        }  // iteration
+
+        std::cout << "\n "
+                  << math::se3::exp(xi) << std::endl;
+        vector_of_residuals.push_back(residuals);
+    }  // level
+
+    for (size_t i = 0; i < vector_of_residuals.size(); i++) {
+        plt::subplot(1, vector_of_residuals.size(), i + 1);
+        plt::plot(vector_of_residuals.at(i));
     }
+    plt::show();
 }
 
 
@@ -244,24 +260,24 @@ cv::Mat gradiate(const cv::Mat& gray_image, bool x)
     if (x) {
         gradiate_image.forEach<float>(
             [=](float& p, const int position[2]) -> void {
-                if (position[1] + 1 >= size.width)
+                if (position[1] <= 1 or position[1] + 1 >= size.width)
                     return;
 
                 float x0 = gray_image.at<float>(position[0], position[1]);
                 float x1 = gray_image.at<float>(position[0], position[1] + 1);
-                if (isEpsilon(x0) or isEpsilon(x1))
+                if (x0 < 0 or x1 < 0)
                     return;
                 p = x1 - x0;
             });
     } else {
         gradiate_image.forEach<float>(
             [=](float& p, const int position[2]) -> void {
-                if (position[0] + 1 >= size.height)
+                if (position[0] <= 1 or position[0] + 1 >= size.height)
                     return;
 
                 float y0 = gray_image.at<float>(position[0], position[1]);
                 float y1 = gray_image.at<float>(position[0] + 1, position[1]);
-                if (isEpsilon(y0) or isEpsilon(y1))
+                if (y0 < 0 or y1 < 0)
                     return;
 
                 p = y1 - y0;

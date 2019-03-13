@@ -4,6 +4,36 @@
 
 namespace math
 {
+constexpr float EPSILON = 1e-6f;
+
+inline bool isEpsilon(float num)
+{
+    return std::abs(num) < EPSILON;
+}
+
+inline bool testXi(const cv::Mat1f& xi)
+{
+    assert(xi.size() == cv::Size(6, 1));
+    bool flag = true;
+
+    // TODO:
+    for (int i = 0; i < 6; i++)
+        flag &= not std::isnan(xi(i));
+
+    return flag;
+}
+
+template <typename T = float>
+inline bool isRange(float num, T min, T max)
+{
+    if (num <= static_cast<float>(min))
+        return false;
+    if (static_cast<float>(max) <= num)
+        return false;
+    return true;
+}
+
+
 // 3x1 => 3x3
 cv::Mat1f hat(const cv::Mat1f& vec);
 

@@ -2,6 +2,7 @@
 
 namespace math
 {
+
 // 3x1 => 3x3
 cv::Mat1f hat(const cv::Mat1f& vec)
 {

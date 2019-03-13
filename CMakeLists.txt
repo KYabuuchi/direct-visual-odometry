@@ -68,14 +68,8 @@ target_link_libraries(test-generator ${OpenCV_LIBS})
 # matplotlib
 find_package(PythonLibs 3.6)
 
-# add_executable(test-tracking test/tracking.cpp ${SOURCES})
-# target_link_libraries(test-tracking ${OpenCV_LIBS} ${PYTHON_LIBRARIES})
-# target_include_directories(test-tracking SYSTEM PRIVATE external/matplotlib-
-# cpp ${PYTHON_INCLUDE_DIRS})
-
-add_executable(tracking test/refined_tracking.cpp ${SOURCES})
+add_executable(tracking test/tracking.cpp ${SOURCES})
 target_link_libraries(tracking ${OpenCV_LIBS} ${PYTHON_LIBRARIES})
-target_include_directories(tracking SYSTEM
-                           PRIVATE external/matplotlib-cpp
-                                   ${PYTHON_INCLUDE_DIRS}
-                                   ${EIGEN3_INCLUDE_DIRS})
+target_include_directories(
+  tracking SYSTEM
+  PRIVATE external/matplotlib-cpp ${PYTHON_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})

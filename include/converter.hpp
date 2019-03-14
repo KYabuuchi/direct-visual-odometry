@@ -3,6 +3,10 @@
 
 namespace Converter
 {
+constexpr float INVALID = -2.0f;
+
+inline bool isValid(float num) { return INVALID < num; }
+inline bool isInvalid(float num) { return num <= INVALID; }
 
 cv::Mat1f toMat1f(float x, float y);
 cv::Mat1f toMat1f(float x, float y, float z);
@@ -18,5 +22,5 @@ cv::Mat1f gradiate(const cv::Mat1f& gray_image, bool x);
 
 float getColorSubpix(const cv::Mat1f& img, cv::Point2f pt);
 
-cv::Mat1f cullImage(const cv::Mat1f& src_image);
+cv::Mat cullImage(const cv::Mat& src_image);
 }  // namespace Converter

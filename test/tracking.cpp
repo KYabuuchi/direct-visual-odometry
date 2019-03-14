@@ -5,22 +5,9 @@
 #include "matplotlibcpp.h"
 #include "params.hpp"
 #include "transform.hpp"
-#include <Eigen/Dense>
 #include <cassert>
 #include <iostream>
-#include <opencv2/core/eigen.hpp>
 #include <opencv2/opencv.hpp>
-
-cv::Mat1f solveNE(const cv::Mat1f& A, const cv::Mat1f& B)
-{
-    Eigen::MatrixXf eigen_A, eigen_B;
-    cv::cv2eigen(A, eigen_A);
-    cv::cv2eigen(B, eigen_B);
-    Eigen::MatrixXf eigen_update = eigen_A.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(-eigen_B);
-    cv::Mat1f update;
-    cv::eigen2cv(eigen_update, update);
-    return update;
-}
 
 class Frame
 {
@@ -78,6 +65,8 @@ std::vector<Frame> createFramePyramid(
     return frames;
 }
 
+// #define DEBUG
+
 int main(int argc, char* argv[])
 {
     int num1 = 0, num2 = 5;
@@ -86,18 +75,33 @@ int main(int argc, char* argv[])
     std::cout << num1 << " " << num2 << std::endl;
     assert(0 <= num1 and num1 <= 16);
 
+
     // prepare depth-image & gray-image
-    io::Loader loader("../data/KINECT_5MM/info.txt");
-    cv::Mat depth_image1, color_image1;
-    cv::Mat depth_image2, color_image2;
+    io::Loader loader("../data/KINECT_1DEG/info.txt");
+    cv::Mat depth_image1, depth_image2;
+    cv::Mat color_image1, color_image2;
+    cv::Mat gray_image1, gray_image2;
+#ifndef DEBUG
     loader.readImages(num1, color_image1, depth_image1);
     loader.readImages(num2, color_image2, depth_image2);
     depth_image1 = Converter::depthNormalize(depth_image1);
     depth_image2 = Converter::depthNormalize(depth_image2);
-    cv::Mat gray_image1 = Transform::mapDepthtoGray(depth_image1, Converter::colorNormalize(color_image1));
-    cv::Mat gray_image2 = Transform::mapDepthtoGray(depth_image2, Converter::colorNormalize(color_image2));
-    assert(gray_image1.type() == CV_32FC1);
+    gray_image1 = Transform::mapDepthtoGray(depth_image1, Converter::colorNormalize(color_image1));
+    gray_image2 = Transform::mapDepthtoGray(depth_image2, Converter::colorNormalize(color_image2));
+#else
+    depth_image1 = cv::imread("depth01.png", cv::IMREAD_UNCHANGED);
+    depth_image2 = cv::imread("depth02.png", cv::IMREAD_UNCHANGED);
+    color_image1 = cv::imread("rgb01.png", cv::IMREAD_UNCHANGED);
+    color_image2 = cv::imread("rgb02.png", cv::IMREAD_UNCHANGED);
+    cv::cvtColor(color_image1, gray_image1, cv::COLOR_BGR2GRAY);
+    cv::cvtColor(color_image2, gray_image2, cv::COLOR_BGR2GRAY);
+    gray_image1.convertTo(gray_image1, CV_32FC1, 1 / 255.0f);
+    gray_image2.convertTo(gray_image2, CV_32FC1, 1 / 255.0f);
+    depth_image1.convertTo(depth_image1, CV_32FC1, 1 / 5000.0f);
+    depth_image2.convertTo(depth_image2, CV_32FC1, 1 / 5000.0f);
+#endif
 
+    assert(gray_image1.type() == CV_32FC1);
 
     // image window
     cv::namedWindow("gray", cv::WINDOW_NORMAL);
@@ -133,7 +137,7 @@ int main(int argc, char* argv[])
         {
             cv::Mat show_image;
             cv::hconcat(frame.gray_image1, frame.gray_image2, show_image);
-            show_image.convertTo(show_image, CV_8UC1, 255);
+            show_image.convertTo(show_image, CV_8UC1, 127, 127);
             cv::imshow("gray", show_image);
 
             cv::hconcat(frame.depth_image1, frame.depth_image2, show_image);
@@ -141,7 +145,8 @@ int main(int argc, char* argv[])
             cv::imshow("depth", show_image);
 
             cv::hconcat(gradient_image_x, gradient_image_y, show_image);
-            show_image.convertTo(show_image, CV_8UC1, 100, 100);
+            show_image.convertTo(show_image, CV_32FC1, 1, 1);
+            show_image.convertTo(show_image, CV_8UC1, 127, 1);
             cv::imshow("grad", show_image);
 
             int key = cv::waitKey(0);
@@ -150,11 +155,11 @@ int main(int argc, char* argv[])
         }
 
         // iterate direct-method
-        for (int iteration = 0; iteration < 50; iteration++) {
+        for (int iteration = 0; iteration < 10; iteration++) {
             // A xi + B = 0
             cv::Mat1f A(cv::Mat1f::zeros(0, 6));
             cv::Mat1f B(cv::Mat1f::zeros(0, 1));
-
+            cv::Mat moved_image(frame.depth_image1.size(), CV_32FC1, Converter::INVALID);
             float residual = 0;
 
             for (int col = 0; col < COL; col += 1) {
@@ -172,41 +177,50 @@ int main(int argc, char* argv[])
 
                     float I_2 = Converter::getColorSubpix(frame.gray_image2, x_i);
                     float I_1 = frame.gray_image1.at<float>(x_i0);
-                    if (I_1 < 0 or I_2 < 0) {  // 無効な画素はスキップ
+                    moved_image.at<float>(x_i0) = I_2;
+                    if (Converter::isInvalid(I_1) or Converter::isInvalid(I_2)) {
+                        // std::cout << I_1 << " " << I_2 << std::endl;
                         continue;
                     }
-                    float r = I_2 - I_1;
-                    residual += r * r;
 
                     // calc jacobian
                     float gx = Converter::getColorSubpix(gradient_image_x, x_i);
                     float gy = Converter::getColorSubpix(gradient_image_y, x_i);
+                    if (Converter::isInvalid(gx) or Converter::isInvalid(gy)) {
+                        // std::cout << gx << " " << gy << std::endl;
+                        continue;
+                    }
+
+                    float r = I_2 - I_1;
+                    residual += r * r;
+
                     cv::Mat1f jacobi1(cv::Mat1f::zeros(1, 2));
                     jacobi1 = (cv::Mat1f(1, 2) << gx, gy);
 
-                    if (math::isEpsilon(jacobi1(0)) or math::isEpsilon(jacobi1(1)))
-                        continue;
+                    // if (math::isEpsilon(jacobi1(0)) or math::isEpsilon(jacobi1(1)))
+                    //     continue;
 
-                    cv::Mat1f jacobi2(cv::Mat1f::zeros(2, 6));
+                    cv::Mat1f jacobi2 = cv::Mat1f(cv::Mat1f::zeros(2, 6));
                     {
                         cv::Point3f x_c = cv::Point3f(Transform::backProject(frame.intrinsic_depth, cv::Mat1f(x_i0), depth2));
+                        // std::cout << x_i0 << " " << x_c << std::endl;
+
                         float x = x_c.x, y = x_c.y, z = x_c.z;
                         float fx = frame.intrinsic_depth(0, 0);
                         float fy = frame.intrinsic_depth(1, 1);
+
                         jacobi2(0, 0) = fx / z;
-                        jacobi2(0, 1) = 0;
-                        jacobi2(0, 2) = -fx * x / z / z;
                         jacobi2(1, 0) = 0;
+                        jacobi2(0, 1) = 0;
                         jacobi2(1, 1) = fy / z;
+                        jacobi2(0, 2) = -fx * x / z / z;
                         jacobi2(1, 2) = -fy * y / z / z;
-#ifndef DEBUG3
                         jacobi2(0, 3) = -fx * x * y / z / z;
-                        jacobi2(0, 4) = fx * (1 + x * x / z / z);
-                        jacobi2(0, 5) = -fx * y / z;
                         jacobi2(1, 3) = -fy * (1 + y * y / z / z);
+                        jacobi2(0, 4) = fx * (1 + x * x / z / z);
                         jacobi2(1, 4) = fy * x * y / z / z;
+                        jacobi2(0, 5) = -fx * y / z;
                         jacobi2(1, 5) = fy * x / z;
-#endif
                     }
 
                     // stack coefficient
@@ -215,8 +229,16 @@ int main(int argc, char* argv[])
                 }
             }
 
+            moved_image.convertTo(moved_image, CV_8UC1, 127, 127);
+            cv::namedWindow("show", cv::WINDOW_NORMAL);
+            cv::imshow("show", moved_image);
+            int key = cv::waitKey(0);
+            if (key == 'q')
+                break;
+
             // 最小二乗法を解く
-            cv::Mat1f xi_update = solveNE(A, B);
+            cv::Mat1f xi_update;
+            cv::solve(A, -B, xi_update, cv::DECOMP_SVD);
             xi = math::se3::concatenate(xi, xi_update);
             std::cout << "iteration: " << iteration << " r  : " << residual << " update " << cv::norm(xi_update) << std::endl;
             residuals.push_back(residual);
@@ -235,5 +257,8 @@ int main(int argc, char* argv[])
         plt::subplot(1, vector_of_residuals.size(), i + 1);
         plt::plot(vector_of_residuals.at(i));
     }
-    plt::show();
+    plt::show(false);
+    int key = -1;
+    while (key != 'q')
+        key = cv::waitKey(10);
 }

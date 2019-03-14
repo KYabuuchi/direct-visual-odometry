@@ -30,7 +30,7 @@ cv::Mat1f backProject(const cv::Mat1f& intrinsic, const cv::Mat1f& point, float 
     return Converter::toMat1f(depth * (point(0) - intrinsic(0, 2)) / intrinsic(0, 0), depth * (point(1) - intrinsic(1, 2)) / intrinsic(1, 1), depth);
 }
 
-// 無効な画素には-1が入る
+// 無効な画素にはINVALIDが入る
 cv::Mat mapDepthtoGray(const cv::Mat& depth_image, const cv::Mat& gray_image)
 {
     assert(depth_image.type() == CV_32FC1);
@@ -42,7 +42,7 @@ cv::Mat mapDepthtoGray(const cv::Mat& depth_image, const cv::Mat& gray_image)
         [=](float& p, const int position[2]) -> void {
             float depth = depth_image.at<float>(position[0], position[1]);
             if (depth < 1e-6f) {
-                p = -1.0f;
+                p = Converter::INVALID;
                 return;
             }
             cv::Mat1f x_c = backProject(Params::KINECTV2_INTRINSIC_DEPTH, Converter::toMat1f(static_cast<float>(position[1]), static_cast<float>(position[0])), depth);

@@ -46,10 +46,10 @@ cv::Mat1f inversePose(const cv::Mat1f& T)
 // 勾配を計算(欠けていたら0)
 cv::Mat1f gradiate(const cv::Mat1f& gray_image, bool x)
 {
-    assert(gray_img.type() == CV_32FC1);
+    assert(gray_image.type() == CV_32FC1);
 
     cv::Size size = gray_image.size();
-    cv::Mat gradiate_image = cv::Mat::zeros(gray_image.size(), CV_32FC1);
+    cv::Mat gradiate_image = cv::Mat(gray_image.size(), CV_32FC1, INVALID);
 
     if (x) {
         gradiate_image.forEach<float>(
@@ -80,13 +80,13 @@ cv::Mat1f gradiate(const cv::Mat1f& gray_image, bool x)
     return gradiate_image;
 }
 
-// 画素を計算(欠けていたら0)
+// 画素を計算(欠けていたらINVALID)
 float getColorSubpix(const cv::Mat1f& img, cv::Point2f pt)
 {
     assert(img.type() == CV_32FC1);
 
     if (pt.x < 0 || pt.x > img.size().width, pt.y < 0 || pt.y > img.size().height)
-        return -1.0f;
+        return INVALID;
 
     int x = (int)pt.x;
     int y = (int)pt.y;
@@ -104,21 +104,20 @@ float getColorSubpix(const cv::Mat1f& img, cv::Point2f pt)
     float v10 = img(y1, x0);
     float v11 = img(y1, x1);
 
-    if (v00 < 0 or v01 < 0 or v11 < 0 or v10 < 0)
-        return -1.0f;
+    if (isValid(v00) and isValid(v01) and isValid(v10) and isValid(v11))
+        return (v00 * (1.f - a) + v01 * a) * (1.f - c)
+               + (v10 * (1.f - a) + v11 * a) * c;
 
-    return (v00 * (1.f - a) + v01 * a) * (1.f - c)
-           + (v10 * (1.f - a) + v11 * a) * c;
+    return INVALID;
 }
 
-cv::Mat1f cullImage(const cv::Mat1f& src_image)
+cv::Mat cullImage(const cv::Mat& src_image)
 {
     assert(src_image.type() == CV_32FC1);
     cv::Mat1f culled_image = cv::Mat::zeros(src_image.size() / 2, CV_32FC1);
-
     culled_image.forEach(
         [=](float& p, const int position[2]) -> void {
-            p = src_image(position[0] * 2, position[1] * 2);
+            p = src_image.at<float>(position[0] * 2, position[1] * 2);
         });
 
     return culled_image;

@@ -1,5 +1,5 @@
 // io::Loaderのテスト
-#include "io.hpp"
+#include "core/io.hpp"
 
 int main()
 {

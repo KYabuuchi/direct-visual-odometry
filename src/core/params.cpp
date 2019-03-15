@@ -1,5 +1,5 @@
-#include "params.hpp"
-#include "converter.hpp"
+#include "core/params.hpp"
+#include "core/convert.hpp"
 
 namespace Params
 {
@@ -20,7 +20,7 @@ const cv::Mat1f ZED_EXTRINSIC
         0, 1, 0, 0,
         0, 0, 1, 0,
         0, 0, 0, 1);
-const cv::Mat1f ZED_EXTRINSIC_INVERSE = Converter::inversePose(ZED_EXTRINSIC);
+const cv::Mat1f ZED_EXTRINSIC_INVERSE = Convert::inversePose(ZED_EXTRINSIC);
 
 const cv::Mat1f ZED_PERSPECTIVE_RIGHT
     = static_cast<cv::Mat1f>(ZED_INTRINSIC * IDENTITY.rowRange(0, 3));
@@ -46,7 +46,7 @@ const cv::Mat1f KINECTV2_EXTRINSIC
         0, 1, 0, 1.2369380813873844e-02f,
         0, 0, 1, 3.1557970682765544e-03f,
         0, 0, 0, 1);
-const cv::Mat1f KINECTV2_EXTRINSIC_INVERSE = Converter::inversePose(KINECTV2_EXTRINSIC);
+const cv::Mat1f KINECTV2_EXTRINSIC_INVERSE = Convert::inversePose(KINECTV2_EXTRINSIC);
 
 const cv::Mat1f KINECTV2_PERSPECTIVE_RGB
     = static_cast<cv::Mat1f>(KINECTV2_INTRINSIC_RGB * IDENTITY.rowRange(0, 3));

@@ -1,7 +1,7 @@
-#include "transform.hpp"
-#include "converter.hpp"
-#include "math.hpp"
-#include "params.hpp"
+#include "core/transform.hpp"
+#include "core/convert.hpp"
+#include "core/math.hpp"
+#include "core/params.hpp"
 
 namespace Transform
 {
@@ -21,13 +21,13 @@ cv::Mat1f transform(const cv::Mat1f& T, const cv::Mat1f& x)
 // x_c => x_i
 cv::Mat1f project(const cv::Mat1f& intrinsic, const cv::Mat1f& point)
 {
-    return Converter::toMat1f(point(0) * intrinsic(0, 0) / point(2) + intrinsic(0, 2), point(1) * intrinsic(1, 1) / point(2) + intrinsic(1, 2));
+    return Convert::toMat1f(point(0) * intrinsic(0, 0) / point(2) + intrinsic(0, 2), point(1) * intrinsic(1, 1) / point(2) + intrinsic(1, 2));
 }
 
 // x_i => x_c
 cv::Mat1f backProject(const cv::Mat1f& intrinsic, const cv::Mat1f& point, float depth)
 {
-    return Converter::toMat1f(depth * (point(0) - intrinsic(0, 2)) / intrinsic(0, 0), depth * (point(1) - intrinsic(1, 2)) / intrinsic(1, 1), depth);
+    return Convert::toMat1f(depth * (point(0) - intrinsic(0, 2)) / intrinsic(0, 0), depth * (point(1) - intrinsic(1, 2)) / intrinsic(1, 1), depth);
 }
 
 // 無効な画素にはINVALIDが入る
@@ -42,13 +42,13 @@ cv::Mat mapDepthtoGray(const cv::Mat& depth_image, const cv::Mat& gray_image)
         [=](float& p, const int position[2]) -> void {
             float depth = depth_image.at<float>(position[0], position[1]);
             if (depth < 1e-6f) {
-                p = Converter::INVALID;
+                p = Convert::INVALID;
                 return;
             }
-            cv::Mat1f x_c = backProject(Params::KINECTV2_INTRINSIC_DEPTH, Converter::toMat1f(static_cast<float>(position[1]), static_cast<float>(position[0])), depth);
+            cv::Mat1f x_c = backProject(Params::KINECTV2_INTRINSIC_DEPTH, Convert::toMat1f(static_cast<float>(position[1]), static_cast<float>(position[0])), depth);
             x_c = transform(Params::KINECTV2_EXTRINSIC, x_c);
             cv::Mat1f x_i = project(Params::KINECTV2_INTRINSIC_RGB, x_c);
-            float gray = Converter::getColorSubpix(gray_image, cv::Point2f(x_i));
+            float gray = Convert::getColorSubpix(gray_image, cv::Point2f(x_i));
             p = gray;
         });
 
@@ -58,7 +58,7 @@ cv::Mat mapDepthtoGray(const cv::Mat& depth_image, const cv::Mat& gray_image)
 // warp先の座標を返す
 cv::Point2f warp(const cv::Mat1f& xi, const cv::Point2f& x_i, const float depth, const cv::Mat1f& intrinsic_matrix)
 {
-    cv::Mat1f x_c = backProject(intrinsic_matrix, Converter::toMat1f(x_i.x, x_i.y), depth);
+    cv::Mat1f x_c = backProject(intrinsic_matrix, Convert::toMat1f(x_i.x, x_i.y), depth);
     x_c = transform(xi, x_c);
     cv::Mat1f transformed_x_i = project(intrinsic_matrix, x_c);
     return cv::Point2f(transformed_x_i);

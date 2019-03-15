@@ -1,7 +1,7 @@
 // converter::mapDepthToColorのテスト
-#include "converter.hpp"
-#include "params.hpp"
-#include "transform.hpp"
+#include "core/convert.hpp"
+#include "core/params.hpp"
+#include "core/transform.hpp"
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
@@ -19,8 +19,8 @@ int main()
     cv::Mat mapped_image = Transform::mapDepthtoGray(depth_image, gray_image);
 
     // cull to half
-    cv::Mat1f half_depth_image = Converter::cullImage(depth_image);
-    cv::Mat1f half_mapped_image = Converter::cullImage(mapped_image);
+    cv::Mat1f half_depth_image = Convert::cullImage(depth_image);
+    cv::Mat1f half_mapped_image = Convert::cullImage(mapped_image);
 
     // show
     {

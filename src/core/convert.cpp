@@ -1,9 +1,9 @@
-#include "converter.hpp"
-#include "math.hpp"
-#include "params.hpp"
+#include "core/convert.hpp"
+#include "core/math.hpp"
+#include "core/params.hpp"
 #include <cassert>
 
-namespace Converter
+namespace Convert
 {
 
 cv::Mat1f toMat1f(float x, float y)
@@ -122,4 +122,4 @@ cv::Mat cullImage(const cv::Mat& src_image)
 
     return culled_image;
 }
-}  // namespace Converter
+}  // namespace Convert

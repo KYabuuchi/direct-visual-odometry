@@ -1,7 +1,7 @@
 #pragma once
 #include <opencv2/opencv.hpp>
 
-namespace Converter
+namespace Convert
 {
 constexpr float INVALID = -2.0f;
 
@@ -23,4 +23,4 @@ cv::Mat1f gradiate(const cv::Mat1f& gray_image, bool x);
 float getColorSubpix(const cv::Mat1f& img, cv::Point2f pt);
 
 cv::Mat cullImage(const cv::Mat& src_image);
-}  // namespace Converter
+}  // namespace Convert

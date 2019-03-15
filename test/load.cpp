@@ -1,4 +1,5 @@
 // io::Loaderのテスト
+#include "calibration/calibration.hpp"
 #include "core/io.hpp"
 
 int main()
@@ -6,6 +7,10 @@ int main()
     io::Loader loader("../data/KINECT_1DEG/info.txt");
     cv::Mat image1, image2;
     int num = 0;
+
+    std::cout << "'q': quit, 'other': next";
+
+    Calibration::StereoCalibration stereo_calibration(0, 0, 0);
 
     while (loader.readImages(num, image1, image2)) {
         cv::imshow("window1", image1);

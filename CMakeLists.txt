@@ -10,10 +10,7 @@ endif()
 find_package(OpenCV 3 REQUIRED)
 message(STATUS "OpenCV version: ${OpenCV_VERSION}")
 
-# Eigen
-find_package(Eigen3 REQUIRED)
-
-# コンパイラーがC++17に対応しているかチェック
+# Check C++17
 include(CheckCXXCompilerFlag)
 message("Using C++17")
 enable_language(CXX)
@@ -49,12 +46,15 @@ include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
 file(GLOB CORE_SOURCES src/core/*.cpp)
 file(GLOB TRACK_SOURCES src/track/*.cpp)
 
-# add_executable(main main.cpp) target_link_libraries(main ${OpenCV_LIBS})
+# cmake-format: off
+
+# add_executable(main main.cpp) 
+# target_link_libraries(main ${OpenCV_LIBS})
 
 add_executable(test-se3 test/se3.cpp src/core/math.cpp)
 target_link_libraries(test-se3 ${OpenCV_LIBS})
 
-add_executable(test-map test/map_depth_to_gray.cpp ${CORE_SOURCES})
+add_executable(test-map test/map.cpp ${CORE_SOURCES})
 target_link_libraries(test-map ${OpenCV_LIBS})
 
 add_executable(test-kinect test/kinect_record.cpp)
@@ -69,10 +69,10 @@ target_link_libraries(test-generator ${OpenCV_LIBS})
 # matplotlib
 find_package(PythonLibs 3.6)
 
-include_directories(SYSTEM
-                    external/matplotlib-cpp
-                    ${PYTHON_INCLUDE_DIRS}
-                    ${EIGEN3_INCLUDE_DIRS})
-
 add_executable(test-tracking test/tracking.cpp ${CORE_SOURCES} ${TRACK_SOURCES})
 target_link_libraries(test-tracking ${OpenCV_LIBS} ${PYTHON_LIBRARIES})
+target_include_directories(test-tracking
+                           PRIVATE SYSTEM external/matplotlib-cpp
+                                   ${PYTHON_INCLUDE_DIRS})
+
+# cmake-format: on

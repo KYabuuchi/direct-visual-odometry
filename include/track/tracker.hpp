@@ -39,8 +39,7 @@ public:
 
     Tracker(const Config& config) : m_initialized(false), m_config(config)
     {
-        cv::namedWindow("gray", cv::WINDOW_NORMAL);
-        cv::namedWindow("depth&grad", cv::WINDOW_NORMAL);
+        cv::namedWindow("show", cv::WINDOW_NORMAL);
     }
 
     void init(cv::Mat depth_image, cv::Mat gray_image);

@@ -91,26 +91,77 @@ cv::Mat1f Tracker::calcJacobi(const Frame& frame, cv::Point2f x_i, float depth)
     return jacobi2;
 }
 
+namespace
+{
+cv::Mat visiblizeGrayImage(const cv::Mat& src_image)
+{
+    cv::Mat dst_image;
+    src_image.convertTo(dst_image, CV_8UC1, 255);            // change valud-depth
+    cv::cvtColor(dst_image, dst_image, cv::COLOR_GRAY2BGR);  // change number of channel
+    dst_image.forEach<cv::Vec3b>(
+        [](cv::Vec3b& p, const int* position) -> void {
+            if (p[0] != 0)
+                return;
+            p[2] = 255;
+        });
+    return dst_image;
+}
+
+cv::Mat visiblizeDepthImage(const cv::Mat& src_image)
+{
+    cv::Mat dst_image;
+    src_image.convertTo(dst_image, CV_8UC1, 100);            // change valud-depth
+    cv::cvtColor(dst_image, dst_image, cv::COLOR_GRAY2BGR);  // change number of channel
+    dst_image.forEach<cv::Vec3b>(
+        [](cv::Vec3b& p, const int* position) -> void {
+            if (p[0] != 0)
+                return;
+            p[2] = 255;
+        });
+    return dst_image;
+}
+
+cv::Mat visiblizeGradientImage(const cv::Mat& x_image, const cv::Mat& y_image)
+{
+    cv::Mat dst_image = cv::Mat::zeros(x_image.size(), CV_8UC3);
+    cv::Mat normalized_x_image, normalized_y_image;
+    x_image.convertTo(normalized_x_image, CV_8UC1, 127, 127);
+    y_image.convertTo(normalized_y_image, CV_8UC1, 127, 127);
+    dst_image.forEach<cv::Vec3b>(
+        [=](cv::Vec3b& p, const int* position) -> void {
+            if (Convert::isInvalid(x_image.at<float>(position[0], position[1]))
+                or (Convert::isInvalid(x_image.at<float>(position[0], position[1])))) {
+                p[2] = 255;
+                return;
+            }
+
+            p[0] = normalized_x_image.at<unsigned char>(position[0], position[1]);
+            p[1] = normalized_y_image.at<unsigned char>(position[0], position[1]);
+        });
+    return dst_image;
+}
+
+}  // namespace
+
 // show image
 void Tracker::showImage(const Scene& scene)
 {
+    cv::Mat upper_image, under_image;
     cv::Mat show_image;
-    cv::hconcat(std::vector<cv::Mat>{scene.pre_frame.m_gray_image, scene.warped_image, scene.cur_frame.m_gray_image}, show_image);
-    show_image.convertTo(show_image, CV_8UC1, 127, 127);
-    cv::imshow("gray", show_image);
 
-    cv::Mat merge_image1;
-    cv::hconcat(scene.pre_frame.m_depth_image, scene.cur_frame.m_depth_image, merge_image1);
-    merge_image1.convertTo(merge_image1, CV_8UC1, 100);
-
-    cv::Mat merge_image2;
-    cv::hconcat(scene.gradient_x_image, scene.gradient_y_image, merge_image2);
-    merge_image2.convertTo(merge_image2, CV_32FC1, 1, 1);
-    merge_image2.convertTo(merge_image2, CV_8UC1, 127, 1);
-
-    cv::vconcat(merge_image1, merge_image2, show_image);
-    cv::imshow("depth&grad", show_image);
-
+    cv::hconcat(std::vector<cv::Mat>{
+                    visiblizeGrayImage(scene.pre_frame.m_gray_image),
+                    visiblizeGrayImage(scene.warped_image),
+                    visiblizeGrayImage(scene.cur_frame.m_gray_image)},
+        upper_image);
+    cv::hconcat(std::vector<cv::Mat>{
+                    visiblizeDepthImage(scene.pre_frame.m_depth_image),
+                    visiblizeGradientImage(scene.gradient_x_image, scene.gradient_y_image),
+                    visiblizeDepthImage(scene.cur_frame.m_depth_image),
+                },
+        under_image);
+    cv::vconcat(upper_image, under_image, show_image);
+    cv::imshow("show", show_image);
     int key = cv::waitKey(0);
 }
 
@@ -138,7 +189,7 @@ cv::Mat1f Tracker::track(const cv::Mat& depth_image, const cv::Mat& gray_image)
     m_cur_frames = createFramePyramid(depth_image, gray_image, m_config.intrinsic_matrix, m_config.level);
     cv::Mat1f xi = cv::Mat1f(cv::Mat1f::zeros(6, 1));
 
-    for (int level = 0; level < 3; level++) {
+    for (int level = 0; level < 4; level++) {
         const Frame& pre_frame = m_pre_frames.at(level);
         const Frame& cur_frame = m_cur_frames.at(level);
         // gradient of gray_image

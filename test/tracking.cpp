@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
 
     // tracking
     tracker.track(depth_image2, gray_image2);
-    tracker.plot(false);
+    // tracker.plot(false);
 
     // wait
     int key = -1;

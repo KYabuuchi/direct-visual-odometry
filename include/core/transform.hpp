@@ -12,7 +12,7 @@ cv::Mat1f project(const cv::Mat1f& intrinsic, const cv::Mat1f& point);
 // x_i => x_c
 cv::Mat1f backProject(const cv::Mat1f& intrinsic, const cv::Mat1f& point, float depth);
 
-// 無効な画素には-1が入る
+// 無効な画素にはConvert::INVALIDが入る
 cv::Mat mapDepthtoGray(const cv::Mat& depth_image, const cv::Mat& gray_image);
 
 // warp先の座標を返す

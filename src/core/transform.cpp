@@ -30,7 +30,6 @@ cv::Mat1f backProject(const cv::Mat1f& intrinsic, const cv::Mat1f& point, float 
     return Convert::toMat1f(depth * (point(0) - intrinsic(0, 2)) / intrinsic(0, 0), depth * (point(1) - intrinsic(1, 2)) / intrinsic(1, 1), depth);
 }
 
-// 無効な画素にはINVALIDが入る
 cv::Mat mapDepthtoGray(const cv::Mat& depth_image, const cv::Mat& gray_image)
 {
     assert(depth_image.type() == CV_32FC1);

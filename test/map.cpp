@@ -1,44 +1,49 @@
-// converter::mapDepthToColorのテスト
-#include "core/convert.hpp"
-#include "core/params.hpp"
+// Convert::mapDepthToColor,Convert::cullImageのテスト
+#include "calibration/loader.hpp"
+#include "core/loader.hpp"
 #include "core/transform.hpp"
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
 int main()
 {
-    cv::Mat color_image = cv::imread("../data/KINECT_5MM/rgb01.png", cv::IMREAD_COLOR);
-    cv::Mat depth_image = cv::imread("../data/KINECT_5MM/depth01.png", cv::IMREAD_UNCHANGED);
-    cv::Mat gray_image;
+    cv::namedWindow("mapped", CV_WINDOW_NORMAL);
+    cv::resizeWindow("mapped", 960, 720);
 
-    cv::cvtColor(color_image, gray_image, cv::COLOR_BGR2GRAY);
-    depth_image.convertTo(depth_image, CV_32FC1, 1.0 / 5000.0);  // [m]
-    gray_image.convertTo(gray_image, CV_32FC1, 1.0 / 255.0);     // 0~1
+    Calibration::Loader config_loader("../camera-calibration/data/kinectv2_00/config.yaml");
+    Loader image_loader("../data/KINECT_1DEG/info.txt");
+    image_loader.setDistortionParameters(config_loader.rgb(), config_loader.depth());
 
-    // map Depth->Color
-    cv::Mat mapped_image = Transform::mapDepthtoGray(depth_image, gray_image);
+    std::cout << "'q': quit, 'other': load next image\n"
+              << std::endl;
 
-    // cull to half
-    cv::Mat1f half_depth_image = Convert::cullImage(depth_image);
-    cv::Mat1f half_mapped_image = Convert::cullImage(mapped_image);
+    int num = 0;
+    while (true) {
+        cv::Mat rgb_image, depth_image;
+        cv::Mat undistorted_rgb_image, undistorted_depth_image;
+        bool flag1 = image_loader.getNormalizedImages(num, rgb_image, depth_image);
+        bool flag2 = image_loader.getNormalizedUndistortedImages(num, undistorted_rgb_image, undistorted_depth_image);
+        if (flag1 == false or flag2 == false)
+            return 0;
 
-    // show
-    {
-        cv::Mat show_image;
-        cv::hconcat(depth_image, mapped_image, show_image);
-        show_image.convertTo(show_image, CV_8UC1, 255);
-        cv::namedWindow("origin", cv::WINDOW_AUTOSIZE);
-        cv::imshow("origin", show_image);
+        // map Depth->Color
+        cv::Mat undistorted_mapped_image = Transform::mapDepthtoGray(undistorted_depth_image, undistorted_rgb_image);
+        cv::Mat mapped_image = Transform::mapDepthtoGray(depth_image, rgb_image);
+
+        cv::Mat upper_image, lower_image, show_image;
+        cv::hconcat(undistorted_mapped_image, mapped_image, upper_image);
+        cv::hconcat(undistorted_depth_image, depth_image, lower_image);
+        upper_image.convertTo(upper_image, CV_8UC1, 255);
+        lower_image.convertTo(lower_image, CV_8UC1, 100);
+        cv::vconcat(upper_image, lower_image, show_image);
+        cv::imshow("mapped", show_image);
+
+        num++;
+        if (cv::waitKey(0) == 'q')
+            break;
     }
 
-    // show
-    {
-        cv::Mat half_show_image;
-        cv::hconcat(half_depth_image, half_mapped_image, half_show_image);
-        half_show_image.convertTo(half_show_image, CV_8UC1, 255);
-        cv::namedWindow("half", cv::WINDOW_AUTOSIZE);
-        cv::imshow("half", half_show_image);
-    }
-
-    cv::waitKey(0);
+    // // cull to half
+    // cv::Mat1f half_depth_image = Convert::cullImage(depth_image);
+    // cv::Mat1f half_mapped_image = Convert::cullImage(mapped_image);
 }

@@ -1,22 +1,41 @@
-// io::Loaderのテスト
-#include "calibration/calibration.hpp"
-#include "core/io.hpp"
+// Loader,cv::undistortのテスト
+#include "calibration/loader.hpp"
+#include "core/loader.hpp"
 
 int main()
 {
-    io::Loader loader("../data/KINECT_1DEG/info.txt");
-    cv::Mat image1, image2;
+    cv::namedWindow("rgb", CV_WINDOW_NORMAL);
+    cv::namedWindow("depth", CV_WINDOW_NORMAL);
+    cv::resizeWindow("rgb", 960, 720);
+    cv::resizeWindow("depth", 960, 720);
+
+    Calibration::Loader config_loader("../camera-calibration/data/kinectv2_00/config.yaml");
+    Loader image_loader("../data/KINECT_1DEG/info.txt");
+    image_loader.setDistortionParameters(config_loader.rgb(), config_loader.depth());
+
+    std::cout << "'q': quit, 'other': load next image\n"
+              << std::endl;
+
     int num = 0;
+    while (true) {
+        cv::Mat rgb_image, depth_image;
+        cv::Mat undistorted_rgb_image, undistorted_depth_image;
+        bool flag1 = image_loader.getNormalizedUndistortedImages(num, undistorted_rgb_image, undistorted_depth_image);
+        bool flag2 = image_loader.getNormalizedImages(num, rgb_image, depth_image);
+        if (flag1 == false or flag2 == false) {
+            return 0;
+        }
 
-    std::cout << "'q': quit, 'other': next";
+        cv::vconcat(rgb_image, undistorted_rgb_image, undistorted_rgb_image);
+        cv::vconcat(depth_image, undistorted_depth_image, undistorted_depth_image);
+        undistorted_rgb_image.convertTo(undistorted_rgb_image, CV_8UC1, 255);
+        undistorted_depth_image.convertTo(undistorted_depth_image, CV_8UC1, 100);
+        cv::imshow("rgb", undistorted_rgb_image);
+        cv::imshow("depth", undistorted_depth_image);
 
-    Calibration::StereoCalibration stereo_calibration(0, 0, 0);
-
-    while (loader.readImages(num, image1, image2)) {
-        cv::imshow("window1", image1);
-        cv::imshow("window2", image2);
         if (cv::waitKey(0) == 'q')
             break;
+
         num++;
     }
 }

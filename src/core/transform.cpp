@@ -44,9 +44,9 @@ cv::Mat mapDepthtoGray(const cv::Mat& depth_image, const cv::Mat& gray_image)
                 p = Convert::INVALID;
                 return;
             }
-            cv::Mat1f x_c = backProject(Params::KINECTV2_INTRINSIC_DEPTH, Convert::toMat1f(static_cast<float>(position[1]), static_cast<float>(position[0])), depth);
-            x_c = transform(Params::KINECTV2_EXTRINSIC, x_c);
-            cv::Mat1f x_i = project(Params::KINECTV2_INTRINSIC_RGB, x_c);
+            cv::Mat1f x_c = backProject(Params::depth_intrinsic.intrinsic, Convert::toMat1f(static_cast<float>(position[1]), static_cast<float>(position[0])), depth);
+            x_c = transform(Params::extrinsic.invT(), x_c);
+            cv::Mat1f x_i = project(Params::rgb_intrinsic.intrinsic, x_c);
             float gray = Convert::getColorSubpix(gray_image, cv::Point2f(x_i));
             p = gray;
         });

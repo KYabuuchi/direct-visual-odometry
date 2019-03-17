@@ -43,7 +43,7 @@ find_package(OpenCV 3.0 REQUIRED)
 message("OpenCV version:\n\t${OpenCV_VERSION}")
 
 # matplotlib
-find_package(Python3)
+find_package(PythonLibs)
 
 # camera-calibration
 add_subdirectory(camera-calibration)
@@ -66,17 +66,15 @@ target_link_libraries(test-se3 ${OpenCV_LIBS})
 add_executable(test-map test/map.cpp ${CORE_SOURCES})
 target_link_libraries(test-map ${OpenCV_LIBS})
 
-add_executable(test-load test/load.cpp)
+add_executable(test-load test/load.cpp src/core/params.cpp)
 target_link_libraries(test-load ${OpenCV_LIBS} camera-calibration)
 
 add_executable(test-generator test/generator.cpp)
 target_link_libraries(test-generator ${OpenCV_LIBS})
 
-# add_executable(test-tracking test/tracking.cpp ${CORE_SOURCES} ${TRACK_SOURCES})
-# target_link_libraries(test-tracking ${OpenCV_LIBS} ${PYTHON_LIBRARIES})
-# target_include_directories(test-tracking
-#                            PRIVATE SYSTEM external/matplotlib-cpp
-#                                    ${PYTHON_INCLUDE_DIRS})
+ add_executable(test-tracking test/tracking.cpp ${CORE_SOURCES} ${TRACK_SOURCES})
+ target_link_libraries(test-tracking ${OpenCV_LIBS} ${PYTHON_LIBRARIES})
+ target_include_directories(test-tracking PRIVATE SYSTEM external/matplotlib-cpp ${PYTHON_INCLUDE_DIRS})
 
 # =============================
 # cmake-format: on

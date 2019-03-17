@@ -1,4 +1,6 @@
+#pragma once
 #include "calibration/params_struct.hpp"
+#include "core/params.hpp"
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
@@ -8,9 +10,6 @@ private:
     std::vector<std::string> m_file_paths1;
     std::vector<std::string> m_file_paths2;
     const std::string m_file_paths_file;
-
-    Calibration::IntrinsicParams m_rgb_intrinsic;
-    Calibration::IntrinsicParams m_depth_intrinsic;
 
     bool m_map_initialized;
     std::array<cv::Mat, 2> m_rgb_map;
@@ -26,6 +25,17 @@ private:
         }
         return file_path;
     }
+
+    void createUndistortionMap()
+    {
+        cv::initUndistortRectifyMap(Params::depth_intrinsic.intrinsic, Params::depth_intrinsic.distortion, cv::Mat(),
+            Params::depth_intrinsic.intrinsic, Params::depth_intrinsic.resolution, CV_32FC1, m_depth_map.at(0), m_depth_map.at(1));
+        cv::initUndistortRectifyMap(Params::rgb_intrinsic.intrinsic, Params::rgb_intrinsic.distortion, cv::Mat(),
+            Params::rgb_intrinsic.intrinsic, Params::rgb_intrinsic.resolution, CV_32FC1, m_rgb_map.at(0), m_rgb_map.at(1));
+
+        m_map_initialized = true;
+    }
+
 
 public:
     Loader(const std::string& file_paths_file) : m_file_paths_file(file_paths_file), m_map_initialized(false)
@@ -51,21 +61,6 @@ public:
             }
         }
         ifs.close();
-    }
-
-    void setDistortionParameters(
-        const Calibration::IntrinsicParams rgb_intrinsic,
-        const Calibration::IntrinsicParams depth_intrinsic)
-    {
-        m_depth_intrinsic = depth_intrinsic;
-        m_rgb_intrinsic = rgb_intrinsic;
-
-        cv::initUndistortRectifyMap(m_depth_intrinsic.intrinsic, m_depth_intrinsic.distortion, cv::Mat(),
-            m_depth_intrinsic.intrinsic, m_depth_intrinsic.resolution, CV_32FC1, m_depth_map.at(0), m_depth_map.at(1));
-        cv::initUndistortRectifyMap(m_rgb_intrinsic.intrinsic, m_rgb_intrinsic.distortion, cv::Mat(),
-            m_rgb_intrinsic.intrinsic, m_rgb_intrinsic.resolution, CV_32FC1, m_rgb_map.at(0), m_rgb_map.at(1));
-
-        m_map_initialized = true;
     }
 
     // 正規除歪画像を取得
@@ -100,7 +95,7 @@ public:
             return false;
 
         if (not m_map_initialized)
-            return false;
+            createUndistortionMap();
 
         cv::Mat undistorted_rgb_image;
         cv::Mat undistorted_depth_image;

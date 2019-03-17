@@ -1,4 +1,4 @@
-// Convert::mapDepthToColor,Convert::cullImageのテスト
+// Convert::mapDepthToColorのテスト
 #include "calibration/loader.hpp"
 #include "core/loader.hpp"
 #include "core/transform.hpp"
@@ -10,9 +10,9 @@ int main()
     cv::namedWindow("mapped", CV_WINDOW_NORMAL);
     cv::resizeWindow("mapped", 960, 720);
 
-    Calibration::Loader config_loader("../camera-calibration/data/kinectv2_00/config.yaml");
     Loader image_loader("../data/KINECT_1DEG/info.txt");
-    image_loader.setDistortionParameters(config_loader.rgb(), config_loader.depth());
+    Calibration::Loader config_loader("../camera-calibration/data/kinectv2_00/config.yaml");
+    Params::init(config_loader.rgb(), config_loader.depth(), config_loader.extrinsic());
 
     std::cout << "'q': quit, 'other': load next image\n"
               << std::endl;

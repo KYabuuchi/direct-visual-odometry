@@ -1,3 +1,4 @@
+#pragma once
 #include <opencv2/opencv.hpp>
 
 namespace Transform
@@ -16,6 +17,6 @@ cv::Mat1f backProject(const cv::Mat1f& intrinsic, const cv::Mat1f& point, float 
 cv::Mat mapDepthtoGray(const cv::Mat& depth_image, const cv::Mat& gray_image);
 
 // warp先の座標を返す
-cv::Point2f warp(const cv::Mat1f& xi, const cv::Point2f& x_i, const float depth, const cv::Mat1f& intrinsic_matrix);
+cv::Point2f warp(const cv::Mat1f& xi, const cv::Point2f& x_i, const float depth, const cv::Mat1f& intrinsic_matrix, float& warped_depth);
 
 }  // namespace Transform

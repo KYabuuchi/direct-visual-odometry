@@ -24,7 +24,6 @@ int main(int argc, char* argv[])
     Calibration::Loader config_loader("../camera-calibration/data/kinectv2_00/config.yaml");
     Params::init(config_loader.rgb(), config_loader.depth(), config_loader.extrinsic());
 
-    std::cout << "1" << std::endl;
 
     cv::Mat depth_image1, depth_image2;
     cv::Mat color_image1, color_image2;
@@ -32,10 +31,8 @@ int main(int argc, char* argv[])
 #ifndef DEBUG
     image_loader.getNormalizedUndistortedImages(num1, color_image1, depth_image1);
     image_loader.getNormalizedUndistortedImages(num2, color_image2, depth_image2);
-    std::cout << "1.5" << std::endl;
     gray_image1 = Transform::mapDepthtoGray(depth_image1, color_image1);
     gray_image2 = Transform::mapDepthtoGray(depth_image2, color_image2);
-    std::cout << "2" << std::endl;
 #else
     depth_image1 = cv::imread("depth01.png", cv::IMREAD_UNCHANGED);
     depth_image2 = cv::imread("depth02.png", cv::IMREAD_UNCHANGED);
@@ -51,7 +48,6 @@ int main(int argc, char* argv[])
     assert(gray_image1.type() == CV_32FC1);
     assert(gray_image2.type() == CV_32FC1);
 
-    std::cout << "3" << std::endl;
     // initialize
     Tracker::Config config = {Params::depth_intrinsic.intrinsic, 5, true};
     Tracker tracker(config);

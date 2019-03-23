@@ -48,18 +48,24 @@ cv::Mat mapDepthtoGray(const cv::Mat& depth_image, const cv::Mat& gray_image)
             x_c = transform(Params::extrinsic.invT(), x_c);
             cv::Mat1f x_i = project(Params::rgb_intrinsic.intrinsic, x_c);
             float gray = Convert::getColorSubpix(gray_image, cv::Point2f(x_i));
-            p = gray;
+            if (gray <= 0)
+                p = Convert::INVALID;
+            else
+                p = gray;
         });
 
     return mapped_image;
 }
 
 // warp先の座標を返す
-cv::Point2f warp(const cv::Mat1f& xi, const cv::Point2f& x_i, const float depth, const cv::Mat1f& intrinsic_matrix)
+cv::Point2f warp(const cv::Mat1f& xi, const cv::Point2f& x_i, const float depth, const cv::Mat1f& intrinsic_matrix, float& warped_depth)
 {
     cv::Mat1f x_c = backProject(intrinsic_matrix, Convert::toMat1f(x_i.x, x_i.y), depth);
-    x_c = transform(xi, x_c);
-    cv::Mat1f transformed_x_i = project(intrinsic_matrix, x_c);
+    cv::Mat1f transformed_x_c = transform(xi, x_c);
+    cv::Mat1f transformed_x_i = project(intrinsic_matrix, transformed_x_c);
+    warped_depth = transformed_x_c(2);
+
+    std::cout << transformed_x_c.t() << " " << x_c.t() << std::endl;
     return cv::Point2f(transformed_x_i);
 }
 

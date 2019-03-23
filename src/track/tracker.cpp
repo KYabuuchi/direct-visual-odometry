@@ -17,26 +17,28 @@ void Tracker::optimize(Scene& scene)
                 cv::Point2f x_i = cv::Point2f(col, row);
 
                 // get depth
-                float depth1 = scene.pre_frame.m_depth_image.at<float>(x_i);
+                // float depth1 = scene.pre_frame.m_depth_image.at<float>(x_i);
                 float depth2 = scene.cur_frame.m_depth_image.at<float>(x_i);
-                if (depth2 < 0.001 or depth1 < 0.001)  //   1[mm]
+                if (depth2 < 0.050 /*or depth1 < 0.001*/)  //   50[mm]
                     continue;
 
                 // get warped coordinate
-                cv::Point2f wapred_x_i = Transform::warp(scene.xi, x_i, depth2, scene.pre_frame.m_intrinsic);
-                if ((!math::isRange(wapred_x_i.x, 0, scene.COL)) or (!math::isRange(wapred_x_i.y, 0, scene.ROW)))
+                float warped_depth = 0.0;
+                cv::Point2f warped_x_i = Transform::warp(scene.xi, x_i, depth2, scene.pre_frame.m_intrinsic, warped_depth);
+                if ((!math::isRange(warped_x_i.x, 0, scene.COL)) or (!math::isRange(warped_x_i.y, 0, scene.ROW)))
                     continue;
 
                 // get luminance
                 float I_1 = scene.pre_frame.m_gray_image.at<float>(x_i);
-                float I_2 = Convert::getColorSubpix(scene.cur_frame.m_gray_image, wapred_x_i);
-                scene.warped_image.at<float>(x_i) = I_2;
+                float I_2 = Convert::getColorSubpix(scene.cur_frame.m_gray_image, warped_x_i);
+                scene.warped_gray_image.at<float>(x_i) = I_2;
+                scene.warped_depth_image.at<float>(x_i) = Convert::getColorSubpix(scene.cur_frame.m_depth_image, warped_x_i);
                 if (Convert::isInvalid(I_1) or Convert::isInvalid(I_2))
                     continue;
 
                 // get gradient
-                float gx = Convert::getColorSubpix(scene.gradient_x_image, wapred_x_i);
-                float gy = Convert::getColorSubpix(scene.gradient_y_image, wapred_x_i);
+                float gx = Convert::getColorSubpix(scene.gradient_x_image, warped_x_i);
+                float gy = Convert::getColorSubpix(scene.gradient_y_image, warped_x_i);
                 if (Convert::isInvalid(gx) or Convert::isInvalid(gy))
                     continue;
 
@@ -130,7 +132,7 @@ cv::Mat visiblizeGradientImage(const cv::Mat& x_image, const cv::Mat& y_image)
     dst_image.forEach<cv::Vec3b>(
         [=](cv::Vec3b& p, const int* position) -> void {
             if (Convert::isInvalid(x_image.at<float>(position[0], position[1]))
-                or (Convert::isInvalid(x_image.at<float>(position[0], position[1])))) {
+                or (Convert::isInvalid(y_image.at<float>(position[0], position[1])))) {
                 p[2] = 255;
                 return;
             }
@@ -151,12 +153,13 @@ void Tracker::showImage(const Scene& scene)
 
     cv::hconcat(std::vector<cv::Mat>{
                     visiblizeGrayImage(scene.pre_frame.m_gray_image),
-                    visiblizeGrayImage(scene.warped_image),
+                    visiblizeGrayImage(scene.warped_gray_image),
                     visiblizeGrayImage(scene.cur_frame.m_gray_image)},
         upper_image);
     cv::hconcat(std::vector<cv::Mat>{
                     visiblizeDepthImage(scene.pre_frame.m_depth_image),
-                    visiblizeGradientImage(scene.gradient_x_image, scene.gradient_y_image),
+                    visiblizeDepthImage(scene.warped_depth_image),
+                    // visiblizeGradientImage(scene.gradient_x_image, scene.gradient_y_image),
                     visiblizeDepthImage(scene.cur_frame.m_depth_image),
                 },
         under_image);
@@ -164,6 +167,7 @@ void Tracker::showImage(const Scene& scene)
     cv::imshow("show", show_image);
     int key = cv::waitKey(0);
 }
+
 
 void Tracker::plot(bool block)
 {
@@ -199,7 +203,8 @@ cv::Mat1f Tracker::track(const cv::Mat& depth_image, const cv::Mat& gray_image)
         // vector of residual
         std::vector<float> residuals;
 
-        cv::Mat warped_image(cur_frame.m_depth_image.size(), CV_32FC1, Convert::INVALID);
+        cv::Mat warped_gray_image(cur_frame.m_depth_image.size(), CV_32FC1, Convert::INVALID);
+        cv::Mat warped_depth_image(cur_frame.m_depth_image.size(), CV_32FC1, Convert::INVALID);
         Scene scene = {
             pre_frame,
             cur_frame,
@@ -207,7 +212,8 @@ cv::Mat1f Tracker::track(const cv::Mat& depth_image, const cv::Mat& gray_image)
             gradient_image_y,
             pre_frame.m_cols,
             pre_frame.m_rows,
-            warped_image,
+            warped_gray_image,
+            warped_depth_image,
             xi};
 
         if (m_config.is_chatty)

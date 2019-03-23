@@ -99,7 +99,7 @@ public:
 
         cv::Mat undistorted_rgb_image;
         cv::Mat undistorted_depth_image;
-        cv::remap(rgb_image, undistorted_rgb_image, m_rgb_map.at(0), m_rgb_map.at(1), cv::INTER_LINEAR);
+        cv::remap(rgb_image, undistorted_rgb_image, m_rgb_map.at(0), m_rgb_map.at(1), 0);
         cv::remap(depth_image, undistorted_depth_image, m_depth_map.at(0), m_depth_map.at(1), 0);
 
         rgb_image = undistorted_rgb_image;

@@ -69,15 +69,15 @@ target_link_libraries(test-map ${OpenCV_LIBS})
 add_executable(test-load test/load.cpp src/core/params.cpp)
 target_link_libraries(test-load ${OpenCV_LIBS} camera-calibration)
 
- add_executable(test-gradient test/gradient.cpp ${CORE_SOURCES} )
- target_link_libraries(test-gradient ${OpenCV_LIBS})
+add_executable(test-gradient test/gradient.cpp ${CORE_SOURCES} )
+target_link_libraries(test-gradient ${OpenCV_LIBS})
 
- add_executable(test-axis test/axis_map.cpp ${CORE_SOURCES})
- target_link_libraries(test-axis ${OpenCV_LIBS})
+add_executable(test-axis test/axis_map.cpp ${CORE_SOURCES})
+target_link_libraries(test-axis ${OpenCV_LIBS})
 
-# add_executable(test-tracking test/tracking.cpp ${CORE_SOURCES} ${TRACK_SOURCES})
-# target_link_libraries(test-tracking ${OpenCV_LIBS} ${PYTHON_LIBRARIES})
-# target_include_directories(test-tracking PRIVATE SYSTEM external/matplotlib-cpp ${PYTHON_INCLUDE_DIRS})
+add_executable(test-tracking test/tracking.cpp ${CORE_SOURCES} ${TRACK_SOURCES})
+target_link_libraries(test-tracking ${OpenCV_LIBS} ${PYTHON_LIBRARIES})
+target_include_directories(test-tracking PRIVATE SYSTEM external/matplotlib-cpp ${PYTHON_INCLUDE_DIRS})
 
 # =============================
 # cmake-format: on

@@ -5,8 +5,6 @@
 
 namespace Transform
 {
-// xi,x(3x1) => Rx+t(3x1)
-// T(4x4),x(3x1) => Rx+t(3x1)
 cv::Mat1f transform(const cv::Mat1f& T, const cv::Mat1f& x)
 {
     if (T.size() == cv::Size(4, 4))
@@ -18,13 +16,11 @@ cv::Mat1f transform(const cv::Mat1f& T, const cv::Mat1f& x)
     abort();
 }
 
-// x_c => x_i
 cv::Mat1f project(const cv::Mat1f& intrinsic, const cv::Mat1f& point)
 {
     return Convert::toMat1f(point(0) * intrinsic(0, 0) / point(2) + intrinsic(0, 2), point(1) * intrinsic(1, 1) / point(2) + intrinsic(1, 2));
 }
 
-// x_i => x_c
 cv::Mat1f backProject(const cv::Mat1f& intrinsic, const cv::Mat1f& point, float depth)
 {
     return Convert::toMat1f(depth * (point(0) - intrinsic(0, 2)) / intrinsic(0, 0), depth * (point(1) - intrinsic(1, 2)) / intrinsic(1, 1), depth);
@@ -64,7 +60,6 @@ cv::Point2f warp(const cv::Mat1f& xi, const cv::Point2f& x_i, const float depth,
     cv::Mat1f transformed_x_c = transform(xi, x_c);
     cv::Mat1f transformed_x_i = project(intrinsic_matrix, transformed_x_c);
     warped_depth = transformed_x_c(2);
-
     // std::cout << transformed_x_c.t() << " " << x_c.t() << std::endl;
     return cv::Point2f(transformed_x_i);
 }

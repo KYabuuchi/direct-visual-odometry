@@ -42,15 +42,23 @@ cv::Mat1f log(const cv::Mat1f& R)
 }
 
 // 3x3
-cv::Mat1f R(std::array<float, 3> data)
+cv::Mat1f R(const std::array<float, 3> data)
 {
     return exp(omega(data));
 }
+cv::Mat1f R()
+{
+    return exp(omega({0, 0, 0}));
+}
 
 // 3x1
-cv::Mat1f omega(std::array<float, 3> data)
+cv::Mat1f omega(const std::array<float, 3> data)
 {
-    return cv::Mat1f(3, 1, data.data());
+    return (cv::Mat1f(3, 1) << data.at(0), data.at(1), data.at(2));
+}
+cv::Mat1f omega()
+{
+    return omega({0, 0, 0});
 }
 
 }  // namespace so3
@@ -117,24 +125,29 @@ cv::Mat1f log(const cv::Mat1f& T)
 // {6x1,6x1} => 6x1
 cv::Mat1f concatenate(const cv::Mat1f& xi0, const cv::Mat1f& xi1)
 {
-    assert(xi0.size() == cv::Size(6, 1) and xi1.size() == cv::Size(6, 1));
+    assert(xi0.size() == cv::Size(1, 6) and xi1.size() == cv::Size(1, 6));
     return se3::log(cv::Mat1f(se3::exp(xi0) * se3::exp(xi1)));
 }
 
 // 4x4
-cv::Mat1f T(std::array<float, 6> data)
+cv::Mat1f T(const std::array<float, 6>& data)
 {
     return exp(xi(data));
 }
-
-// 6x1
-cv::Mat xi(std::array<float, 6> data)
+cv::Mat1f T()
 {
-    cv::Mat tmp = cv::Mat(6, 1, CV_32FC1, data.data());
-    std::cout << "B" << tmp << std::endl;
-    return tmp;
+    return exp(xi({0, 0, 0, 0, 0, 0}));
 }
 
+// 6x1
+cv::Mat xi(const std::array<float, 6>& data)
+{
+    return (cv::Mat1f(6, 1) << data.at(0), data.at(1), data.at(2), data.at(3), data.at(4), data.at(5));
+}
+cv::Mat xi()
+{
+    return xi({0, 0, 0, 0, 0, 0});
+}
 
 }  // namespace se3
 }  // namespace math

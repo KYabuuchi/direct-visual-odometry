@@ -32,7 +32,20 @@ cv::Mat colorNormalize(const cv::Mat& color_image)
     return tmp_image;
 }
 
-// T(4x4) => T(4x4)
+cv::Mat cullImage(const cv::Mat& src_image, int times)
+{
+    assert(src_image.type() == CV_32FC1);
+    int reduction = math::pow(2, times);
+    cv::Mat1f culled_image(cv::Mat::zeros(src_image.size() / reduction, CV_32FC1));
+    culled_image.forEach(
+        [=](float& p, const int position[2]) -> void {
+            p = src_image.at<float>(position[0] * reduction, position[1] * reduction);
+        });
+
+    return culled_image;
+}
+
+
 cv::Mat1f inversePose(const cv::Mat1f& T)
 {
     cv::Mat1f tmp(cv::Mat1f::zeros(4, 4));
@@ -43,7 +56,6 @@ cv::Mat1f inversePose(const cv::Mat1f& T)
     return tmp;
 }
 
-// 勾配を計算(欠けていたら0)
 cv::Mat1f gradiate(const cv::Mat1f& gray_image, bool x)
 {
     assert(gray_image.type() == CV_32FC1);
@@ -110,15 +122,4 @@ float getColorSubpix(const cv::Mat1f& img, cv::Point2f pt)
     return INVALID;
 }
 
-cv::Mat cullImage(const cv::Mat& src_image)
-{
-    assert(src_image.type() == CV_32FC1);
-    cv::Mat1f culled_image = cv::Mat::zeros(src_image.size() / 2, CV_32FC1);
-    culled_image.forEach(
-        [=](float& p, const int position[2]) -> void {
-            p = src_image.at<float>(position[0] * 2, position[1] * 2);
-        });
-
-    return culled_image;
-}
 }  // namespace Convert

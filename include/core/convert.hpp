@@ -15,6 +15,7 @@ cv::Mat1f toMat1f(float x, float y, float z);
 cv::Mat depthNormalize(const cv::Mat& depth_image);
 cv::Mat colorNormalize(const cv::Mat& color_image);
 
+
 // T(4x4) => T(4x4)
 cv::Mat1f inversePose(const cv::Mat1f& T);
 
@@ -22,5 +23,6 @@ cv::Mat1f gradiate(const cv::Mat1f& gray_image, bool x);
 
 float getColorSubpix(const cv::Mat1f& img, cv::Point2f pt);
 
-cv::Mat cullImage(const cv::Mat& src_image);
+cv::Mat cullImage(const cv::Mat& src_image, int times = 1);
+
 }  // namespace Convert

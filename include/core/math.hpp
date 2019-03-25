@@ -6,6 +6,17 @@ namespace math
 {
 constexpr float EPSILON = 1e-6f;
 
+template <typename T>
+inline int pow(T base, int exponent)
+{
+    assert(exponent >= 0);
+    if (exponent == 0)
+        return 1;
+    if (exponent == 1)
+        return base;
+    return base * pow(base, exponent - 1);
+}
+
 inline bool isEpsilon(float num)
 {
     return std::abs(num) < EPSILON;
@@ -13,14 +24,14 @@ inline bool isEpsilon(float num)
 
 inline bool testXi(const cv::Mat1f& xi)
 {
-    assert(xi.size() == cv::Size(6, 1));
-    bool flag = true;
+    assert(xi.size() == cv::Size(1, 6));
 
-    // TODO:
-    for (int i = 0; i < 6; i++)
-        flag &= not std::isnan(xi(i));
+    for (int i = 0; i < 6; i++) {
+        if (std::isnan(xi(i)))
+            return false;
+    }
 
-    return flag;
+    return true;
 }
 
 template <typename T = float>
@@ -47,10 +58,12 @@ cv::Mat1f exp(const cv::Mat1f& twist);
 cv::Mat1f log(const cv::Mat1f& R);
 
 // 3x3
-cv::Mat1f R(std::array<float, 3> data = {0, 0, 0});
+cv::Mat1f R(const std::array<float, 3> data);
+cv::Mat1f R();
 
 // 3x1
-cv::Mat1f omega(std::array<float, 3> data = {0, 0, 0});
+cv::Mat1f omega(const std::array<float, 3> data);
+cv::Mat1f omega();
 }  // namespace so3
 
 namespace se3
@@ -65,10 +78,12 @@ cv::Mat1f log(const cv::Mat1f& T);
 cv::Mat1f concatenate(const cv::Mat1f& xi0, const cv::Mat1f& xi1);
 
 // 4x4
-cv::Mat1f T(std::array<float, 6> data = {0, 0, 0, 0, 0, 0});
+cv::Mat1f T(const std::array<float, 6>& data);
+cv::Mat1f T();
 
 // 6x1
-cv::Mat xi(std::array<float, 6> data = std::array<float, 6>{0, 0, 0, 0, 0, 0});
+cv::Mat xi(const std::array<float, 6>& data);
+cv::Mat xi();
 
 }  // namespace se3
 

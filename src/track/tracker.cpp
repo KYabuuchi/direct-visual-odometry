@@ -66,7 +66,7 @@ void Tracker::optimize(Scene& scene)
         assert(math::testXi(scene.xi));
 
         if (m_config.is_chatty)
-            std::cout << "iteration: " << iteration << " r : " << residual << " update " << cv::norm(xi_update) << std::endl;
+            std::cout << "iteration: " << iteration << " r: " << residual << " update: " << cv::norm(xi_update) << " xi: " << scene.xi.t() << std::endl;
     }
 }
 
@@ -140,7 +140,7 @@ cv::Mat1f Tracker::track(const cv::Mat& depth_image, const cv::Mat& gray_image)
     assert(m_initialized);
     m_vector_of_residuals.clear();
     m_cur_frames = createFramePyramid(depth_image, gray_image, m_config.intrinsic_matrix, m_config.level);
-    cv::Mat1f xi = cv::Mat1f(cv::Mat1f::zeros(6, 1));
+    cv::Mat1f xi = math::se3::xi();
 
     for (int level = 0; level < 4; level++) {
         const Frame& pre_frame = m_pre_frames.at(level);

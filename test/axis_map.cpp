@@ -17,10 +17,10 @@ int main()
     cv::resizeWindow("warp", 960, 720);
 
     // trackbar
-    const int MAX = 100;
-    std::array<int, 6> params = {MAX / 2, MAX / 2, MAX / 2, MAX / 2, MAX / 2, MAX / 2};
+    const int MAX = 50;
+    std::array<int, 6> params = {MAX, MAX, MAX, MAX, MAX, MAX};
     for (int i = 0; i < 6; i++) {
-        cv::createTrackbar("xi" + std::to_string(i), "map", &params.at(i), MAX);
+        cv::createTrackbar("xi" + std::to_string(i), "map", &params.at(i), MAX * 2);
     }
 
     // viz
@@ -35,28 +35,30 @@ int main()
     Calibration::Loader config_loader("../camera-calibration/data/kinectv2_00/config.yaml");
     Params::init(config_loader.rgb(), config_loader.depth(), config_loader.extrinsic());
     image_loader.getNormalizedUndistortedImages(0, rgb_image, depth_image);
-    mapped_gray_image = Convert::cullImage(Transform::mapDepthtoGray(depth_image, rgb_image));
-    mapped_depth_image = Convert::cullImage(depth_image);
-    mapped_depth_image = Convert::cullImage(mapped_depth_image);
-    mapped_gray_image = Convert::cullImage(mapped_gray_image);
+    mapped_gray_image = Transform::mapDepthtoGray(depth_image, rgb_image);
+    mapped_depth_image = depth_image;
+
+    mapped_depth_image = Convert::cullImage(mapped_depth_image, 1);
+    mapped_gray_image = Convert::cullImage(mapped_gray_image, 1);
+    cv::Mat1f intrinsic = config_loader.depth().intrinsic;
+    intrinsic = intrinsic / 2;
+    intrinsic(2, 2) = 1;
 
     while (1) {
-        std::cout << "1" << std::endl;
-        std::array<float, 6> params_f;
+        std::array<float, 6> params_f = {0, 0, 0, 0, 0, 0};
         for (int i = 0; i < 6; i++) {
-            params_f.at(i) = static_cast<float>(params.at(i) - 50) / 50.0f;
+            params_f.at(i) = static_cast<float>(params.at(i) - MAX) * 1.0f / MAX;
         }
 
-        // TODO:
-        cv::Mat1f xi = cv::Mat(6, 1, CV_32FC1, params_f.data());
-        std::cout << "A" << xi << std::endl;
+        cv::Mat1f xi = se3::xi(params_f);
+        std::cout << se3::exp(xi) << std::endl;
 
         // get warped coordinate
         cv::Mat warped_gray_image = cv::Mat(mapped_gray_image.size(), mapped_gray_image.type(), Convert::INVALID);
         cv::Mat warped_depth_image = cv::Mat(mapped_depth_image.size(), mapped_depth_image.type(), Convert::INVALID);
         const int COL = warped_depth_image.cols;
         const int ROW = warped_depth_image.rows;
-        std::cout << COL << " " << ROW << " " << xi << std::endl;
+
         for (int x = 0; x < COL; x += 1) {
             for (int y = 0; y < ROW; y += 1) {
                 cv::Point2i x_i(x, y);
@@ -66,8 +68,7 @@ int main()
                 if (depth < math::EPSILON)
                     continue;
                 cv::Point2f warped_x_i = Transform::warp(xi, x_i, depth, config_loader.depth().intrinsic, warped_depth);
-                std::cout << x_i << " " << warped_x_i << " " << depth << std::endl;
-                if (!math::isRange(warped_x_i.x, 0, COL) or !math::isRange(warped_x_i.y, 0, ROW))
+                if (!math::isRange(warped_x_i.x, 0, COL - 1) or !math::isRange(warped_x_i.y, 0, ROW - 1))
                     continue;
                 warped_gray_image.at<float>(warped_x_i) = gray;
                 warped_depth_image.at<float>(warped_x_i) = depth;

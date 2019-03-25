@@ -27,10 +27,11 @@ int main()
         if (flag1 == false or flag2 == false)
             return 0;
 
-        // map Depth->Color
-        //  cv::Mat undistorted_mapped_image = Transform::mapDepthtoGray(undistorted_depth_image, undistorted_rgb_image);
-        cv::Mat mapped_image = Transform::mapDepthtoGray(undistorted_depth_image, undistorted_rgb_image);
-        cv::imshow("mapped", Draw::visiblizeGrayImage(mapped_image));
+        cv::Mat undistorted_mapped_image = Transform::mapDepthtoGray(undistorted_depth_image, undistorted_rgb_image);
+        cv::Mat mapped_image = Transform::mapDepthtoGray(depth_image, rgb_image);
+        cv::Mat show_image;
+        cv::hconcat(Draw::visiblizeGrayImage(mapped_image), Draw::visiblizeGrayImage(undistorted_mapped_image), show_image);
+        cv::imshow("mapped", show_image);
 
         num++;
         if (cv::waitKey(0) == 'q')

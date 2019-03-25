@@ -8,8 +8,9 @@ int main()
 {
     using namespace math;
     // viz準備
-    cv::viz::Viz3d viz_window("3D-VIEW");
+    cv::viz::Viz3d viz_window("view");
     viz_window.showWidget("coordinate", cv::viz::WCoordinateSystem(0.5));
+    viz_window.setWindowSize(cv::Size(640, 480));
     viz_window.registerKeyboardCallback([](const cv::viz::KeyboardEvent&, void*) -> void { loop = false; }, &viz_window);
 
     // randomな回転行列の生成
@@ -19,15 +20,14 @@ int main()
     cv::Mat1f xi = se3::log(T);
 
     // 座標変換
-    cv::Point3f origin(0, 0, 0);
     cv::Mat1f before = (cv::Mat1f(4, 1) << 0, 0, 1, 1);
     cv::Mat1f after(T * before);
 
     // 移動前(黒)，移動後(白)
-    cv::viz::WArrow arrow_b(origin, cv::Point3f(before.rowRange(0, 3)), 0.01, cv::viz::Color::black());
-    cv::viz::WArrow arrow_a(cv::Point3f(T.col(3).rowRange(0, 3)), cv::Point3f(after.rowRange(0, 3)), 0.01, cv::viz::Color::white());
-    viz_window.showWidget("before", arrow_b);
-    viz_window.showWidget("after", arrow_a);
+    cv::viz::WArrow arrow_bottom(cv::Point3f(0, 0, 0), cv::Point3f(before.rowRange(0, 3)), 0.01, cv::viz::Color::black());
+    cv::viz::WArrow arrow_top(cv::Point3f(T.col(3).rowRange(0, 3)), cv::Point3f(after.rowRange(0, 3)), 0.01, cv::viz::Color::white());
+    viz_window.showWidget("bottom", arrow_bottom);
+    viz_window.showWidget("top", arrow_top);
 
     // 補完(黄)
     for (int i = 1; i < 10; i++) {

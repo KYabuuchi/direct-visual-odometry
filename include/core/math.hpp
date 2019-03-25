@@ -46,6 +46,11 @@ cv::Mat1f exp(const cv::Mat1f& twist);
 // 3x3 => 3x1
 cv::Mat1f log(const cv::Mat1f& R);
 
+// 3x3
+cv::Mat1f R(std::array<float, 3> data = {0, 0, 0});
+
+// 3x1
+cv::Mat1f omega(std::array<float, 3> data = {0, 0, 0});
 }  // namespace so3
 
 namespace se3
@@ -58,6 +63,12 @@ cv::Mat1f log(const cv::Mat1f& T);
 
 // {6x1,6x1} => 6x1
 cv::Mat1f concatenate(const cv::Mat1f& xi0, const cv::Mat1f& xi1);
+
+// 4x4
+cv::Mat1f T(std::array<float, 6> data = {0, 0, 0, 0, 0, 0});
+
+// 6x1
+cv::Mat xi(std::array<float, 6> data = std::array<float, 6>{0, 0, 0, 0, 0, 0});
 
 }  // namespace se3
 

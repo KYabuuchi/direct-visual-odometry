@@ -1,5 +1,6 @@
 // Convert::mapDepthToColorのテスト
 #include "calibration/loader.hpp"
+#include "core/draw.hpp"
 #include "core/loader.hpp"
 #include "core/transform.hpp"
 #include <iostream>
@@ -27,27 +28,9 @@ int main()
             return 0;
 
         // map Depth->Color
-        // cv::Mat undistorted_mapped_image = Transform::mapDepthtoGray(undistorted_depth_image, undistorted_rgb_image);
-        cv::Mat tmp_mapped_image = Transform::mapDepthtoGray(undistorted_depth_image, undistorted_rgb_image);
-        //  cv::Mat tmp_mapped_image = Transform::mapDepthtoGray(depth_image, rgb_image);
-
-        cv::Mat mapped_image = cv::Mat(tmp_mapped_image.size(), CV_8UC3);
-        mapped_image.forEach<cv::Vec3b>(
-            [=](cv::Vec3b& p, const int position[2]) -> void {
-                float v = tmp_mapped_image.at<float>(position[0], position[1]);
-                if (v < -1)
-                    p = cv::Vec3b(0, 0, 255);
-                else
-                    p = cv::Vec3b(v * 255, 0, 0);
-            });
-        cv::imshow("mapped", mapped_image);
-        // cv::Mat upper_image, lower_image, show_image;
-        // cv::hconcat(undistorted_mapped_image, mapped_image, upper_image);
-        // cv::hconcat(undistorted_depth_image, depth_image, lower_image);
-        // upper_image.convertTo(upper_image, CV_8UC1, 255);
-        // lower_image.convertTo(lower_image, CV_8UC1, 100);
-        // cv::vconcat(upper_image, lower_image, show_image);
-        // cv::imshow("mapped", show_image);
+        //  cv::Mat undistorted_mapped_image = Transform::mapDepthtoGray(undistorted_depth_image, undistorted_rgb_image);
+        cv::Mat mapped_image = Transform::mapDepthtoGray(undistorted_depth_image, undistorted_rgb_image);
+        cv::imshow("mapped", Draw::visiblizeGrayImage(mapped_image));
 
         num++;
         if (cv::waitKey(0) == 'q')

@@ -1,5 +1,6 @@
 #include "track/tracker.hpp"
 #include "core/convert.hpp"
+#include "core/draw.hpp"
 #include "core/math.hpp"
 #include "core/transform.hpp"
 #include "matplotlibcpp.h"
@@ -93,58 +94,6 @@ cv::Mat1f Tracker::calcJacobi(const Frame& frame, cv::Point2f x_i, float depth)
     return jacobi2;
 }
 
-namespace
-{
-cv::Mat visiblizeGrayImage(const cv::Mat& src_image)
-{
-    cv::Mat dst_image;
-    src_image.convertTo(dst_image, CV_8UC1, 255);            // change valud-depth
-    cv::cvtColor(dst_image, dst_image, cv::COLOR_GRAY2BGR);  // change number of channel
-    dst_image.forEach<cv::Vec3b>(
-        [](cv::Vec3b& p, const int* position) -> void {
-            if (p[0] != 0)
-                return;
-            p[2] = 255;
-        });
-    return dst_image;
-}
-
-cv::Mat visiblizeDepthImage(const cv::Mat& src_image)
-{
-    cv::Mat dst_image;
-    src_image.convertTo(dst_image, CV_8UC1, 100);            // change valud-depth
-    cv::cvtColor(dst_image, dst_image, cv::COLOR_GRAY2BGR);  // change number of channel
-    dst_image.forEach<cv::Vec3b>(
-        [](cv::Vec3b& p, const int* position) -> void {
-            if (p[0] != 0)
-                return;
-            p[2] = 255;
-        });
-    return dst_image;
-}
-
-cv::Mat visiblizeGradientImage(const cv::Mat& x_image, const cv::Mat& y_image)
-{
-    cv::Mat dst_image = cv::Mat::zeros(x_image.size(), CV_8UC3);
-    cv::Mat normalized_x_image, normalized_y_image;
-    x_image.convertTo(normalized_x_image, CV_8UC1, 127, 127);
-    y_image.convertTo(normalized_y_image, CV_8UC1, 127, 127);
-    dst_image.forEach<cv::Vec3b>(
-        [=](cv::Vec3b& p, const int* position) -> void {
-            if (Convert::isInvalid(x_image.at<float>(position[0], position[1]))
-                or (Convert::isInvalid(y_image.at<float>(position[0], position[1])))) {
-                p[2] = 255;
-                return;
-            }
-
-            p[0] = normalized_x_image.at<unsigned char>(position[0], position[1]);
-            p[1] = normalized_y_image.at<unsigned char>(position[0], position[1]);
-        });
-    return dst_image;
-}
-
-}  // namespace
-
 // show image
 void Tracker::showImage(const Scene& scene)
 {
@@ -152,15 +101,15 @@ void Tracker::showImage(const Scene& scene)
     cv::Mat show_image;
 
     cv::hconcat(std::vector<cv::Mat>{
-                    visiblizeGrayImage(scene.pre_frame.m_gray_image),
-                    visiblizeGrayImage(scene.warped_gray_image),
-                    visiblizeGrayImage(scene.cur_frame.m_gray_image)},
+                    Draw::visiblizeGrayImage(scene.pre_frame.m_gray_image),
+                    Draw::visiblizeGrayImage(scene.warped_gray_image),
+                    Draw::visiblizeGrayImage(scene.cur_frame.m_gray_image)},
         upper_image);
     cv::hconcat(std::vector<cv::Mat>{
-                    visiblizeDepthImage(scene.pre_frame.m_depth_image),
-                    visiblizeDepthImage(scene.warped_depth_image),
-                    // visiblizeGradientImage(scene.gradient_x_image, scene.gradient_y_image),
-                    visiblizeDepthImage(scene.cur_frame.m_depth_image),
+                    Draw::visiblizeDepthImage(scene.pre_frame.m_depth_image),
+                    Draw::visiblizeDepthImage(scene.warped_depth_image),
+                    // Draw::visiblizeGradientImage(scene.gradient_x_image, scene.gradient_y_image),
+                    Draw::visiblizeDepthImage(scene.cur_frame.m_depth_image),
                 },
         under_image);
     cv::vconcat(upper_image, under_image, show_image);

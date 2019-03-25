@@ -1,5 +1,6 @@
 #include "calibration/loader.hpp"
 #include "core/convert.hpp"
+#include "core/draw.hpp"
 #include "core/loader.hpp"
 #include "core/transform.hpp"
 #include <iostream>
@@ -29,12 +30,8 @@ int main()
         cv::Mat grad_x_image = Convert::gradiate(mapped_image, true);
         cv::Mat grad_y_image = Convert::gradiate(mapped_image, false);
 
-        mapped_image.convertTo(mapped_image, CV_8UC1, 255, 0);
-        grad_x_image.convertTo(grad_x_image, CV_8UC1, 127, 127);
-        grad_y_image.convertTo(grad_y_image, CV_8UC1, 127, 127);
-
         cv::Mat show_image;
-        cv::hconcat(std::vector<cv::Mat>{mapped_image, grad_x_image, grad_y_image}, show_image);
+        cv::hconcat(Draw::visiblizeGrayImage(mapped_image), Draw::visiblizeGradientImage(grad_x_image, grad_y_image), show_image);
         cv::imshow("grad", show_image);
 
         num++;

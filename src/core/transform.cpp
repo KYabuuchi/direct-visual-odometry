@@ -65,7 +65,7 @@ cv::Point2f warp(const cv::Mat1f& xi, const cv::Point2f& x_i, const float depth,
     cv::Mat1f transformed_x_i = project(intrinsic_matrix, transformed_x_c);
     warped_depth = transformed_x_c(2);
 
-    std::cout << transformed_x_c.t() << " " << x_c.t() << std::endl;
+    // std::cout << transformed_x_c.t() << " " << x_c.t() << std::endl;
     return cv::Point2f(transformed_x_i);
 }
 

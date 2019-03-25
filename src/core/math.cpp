@@ -41,6 +41,18 @@ cv::Mat1f log(const cv::Mat1f& R)
     return twist;
 }
 
+// 3x3
+cv::Mat1f R(std::array<float, 3> data)
+{
+    return exp(omega(data));
+}
+
+// 3x1
+cv::Mat1f omega(std::array<float, 3> data)
+{
+    return cv::Mat1f(3, 1, data.data());
+}
+
 }  // namespace so3
 
 namespace se3
@@ -108,6 +120,21 @@ cv::Mat1f concatenate(const cv::Mat1f& xi0, const cv::Mat1f& xi1)
     assert(xi0.size() == cv::Size(6, 1) and xi1.size() == cv::Size(6, 1));
     return se3::log(cv::Mat1f(se3::exp(xi0) * se3::exp(xi1)));
 }
+
+// 4x4
+cv::Mat1f T(std::array<float, 6> data)
+{
+    return exp(xi(data));
+}
+
+// 6x1
+cv::Mat xi(std::array<float, 6> data)
+{
+    cv::Mat tmp = cv::Mat(6, 1, CV_32FC1, data.data());
+    std::cout << "B" << tmp << std::endl;
+    return tmp;
+}
+
 
 }  // namespace se3
 }  // namespace math

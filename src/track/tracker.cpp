@@ -44,7 +44,7 @@ cv::Mat1f Tracker::track(const cv::Mat& depth_image, const cv::Mat& gray_image)
 
 void Tracker::optimize(Scene& scene)
 {
-    for (int iteration = 0; iteration < 30; iteration++) {
+    for (int iteration = 0; iteration < 15; iteration++) {
         // A xi + B = 0
         cv::Mat1f A(cv::Mat1f::zeros(0, 6));
         cv::Mat1f B(cv::Mat1f::zeros(0, 1));
@@ -52,10 +52,14 @@ void Tracker::optimize(Scene& scene)
 
         // NOTE: Xi
         cv::Mat warped_gray_image = Transform::warpImage(scene.xi, scene.cur_frame.m_gray_image, scene.cur_frame.m_depth_image, scene.cur_frame.m_intrinsic);
+#define TEST
+#ifdef TEST
         cv::Mat gradient_x_image = Convert::gradiate(warped_gray_image, true);
         cv::Mat gradient_y_image = Convert::gradiate(warped_gray_image, false);
-        // cv::Mat gradient_x_image = Convert::gradiate(scene.cur_frame.m_gray_image, true);
-        // cv::Mat gradient_y_image = Convert::gradiate(scene.cur_frame.m_gray_image, false);
+#else
+        cv::Mat gradient_x_image = Convert::gradiate(scene.cur_frame.m_gray_image, true);
+        cv::Mat gradient_y_image = Convert::gradiate(scene.cur_frame.m_gray_image, false);
+#endif
 
         for (int col = 0; col < scene.COL; col++) {
             for (int row = 0; row < scene.ROW; row++) {
@@ -79,10 +83,13 @@ void Tracker::optimize(Scene& scene)
 
                 // gradient
                 cv::Point2f warped_x_i = Transform::warp(scene.xi, x_i, depth2, scene.cur_frame.m_intrinsic);
+#ifdef TEST
+                float gx = gradient_x_image.at<float>(x_i);
+                float gy = gradient_y_image.at<float>(x_i);
+#else
                 float gx = Convert::getColorSubpix(gradient_x_image, warped_x_i);
                 float gy = Convert::getColorSubpix(gradient_y_image, warped_x_i);
-                // float gx = gradient_x_image.at<float>(warped_x_i);
-                // float gy = gradient_y_image.at<float>(warped_x_i);
+#endif
                 if (Convert::isInvalid(gx) or Convert::isInvalid(gy)) {
                     // std::cout << "grad: " << warped_x_i << " " << x_i << " " << gx << " " << gy << std::endl;
                     continue;
@@ -98,15 +105,15 @@ void Tracker::optimize(Scene& scene)
 
                 // stack coefficient
                 cv::vconcat(A, jacobi1 * jacobi2, A);
-                cv::vconcat(B, cv::Mat1f(cv::Mat1f(1, 1) << r * 1.5), B);
+                cv::vconcat(B, cv::Mat1f(cv::Mat1f(1, 1) << r), B);
 
-                std::cout << jacobi1 << " " << x_i << " " << r << std::endl;
+                // std::cout << jacobi1 << " " << x_i << " " << r << std::endl;
             }
         }
 
         cv::Mat tmp;
         cv::hconcat(A, B, tmp);
-        std::cout << tmp << std::endl;
+        // std::cout << tmp << std::endl;
 
         // 最小二乗法を解く
         cv::Mat1f xi_update;
@@ -117,7 +124,7 @@ void Tracker::optimize(Scene& scene)
 
         int stack = B.rows;
         if (m_config.is_chatty)
-            std::cout << "iteration: " << iteration << " stack: " << stack << " r: " << residual / stack << " update: " << xi_update.t() << /*" xi: " << scene.xi.t() <<*/ std::endl;
+            std::cout << "iteration: " << iteration << " stack: " << stack << " r: " << residual / stack << " update: " << xi_update.t() << " xi: " << scene.xi.t() << std::endl;
 
         // show image
         showImage(scene, warped_gray_image, Draw::visiblizeGradientImage(gradient_x_image, gradient_y_image));
@@ -142,12 +149,12 @@ cv::Mat1f Tracker::calcJacobi(const Frame& frame, cv::Point2f x_i, float depth)
     jacobi2(0, 2) = -fx * x / z / z;
     jacobi2(1, 2) = -fy * y / z / z;
 
-    // jacobi2(0, 3) = -fx * x * y / z / z;
-    // jacobi2(1, 3) = -fy * (1 + y * y / z / z);
-    // jacobi2(0, 4) = fx * (1 + x * x / z / z);
-    // jacobi2(1, 4) = fy * x * y / z / z;
-    // jacobi2(0, 5) = -fx * y / z;
-    // jacobi2(1, 5) = fy * x / z;
+    jacobi2(0, 3) = -fx * x * y / z / z;
+    jacobi2(1, 3) = -fy * (1.0f + y * y / z / z);
+    jacobi2(0, 4) = fx * (1.0f + x * x / z / z);
+    jacobi2(1, 4) = fy * x * y / z / z;
+    jacobi2(0, 5) = -fx * y / z;
+    jacobi2(1, 5) = fy * x / z;
     return jacobi2;
 }
 

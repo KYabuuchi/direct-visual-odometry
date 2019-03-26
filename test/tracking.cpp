@@ -8,7 +8,7 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
-//#define DEBUG
+// #define DEBUG
 
 int main(int argc, char* argv[])
 {

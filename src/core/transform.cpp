@@ -81,10 +81,15 @@ cv::Mat warpImage(const cv::Mat1f& xi, const cv::Mat& gray_image, const cv::Mat&
                 continue;
 
             warped_gray_image.at<float>(warped_x_i) = gray_image.at<float>(x_i);
+            // std::cout << warped_x_i << " " << x_i << std::endl;
+
+            //             if (warped_gray_image.at<float>(warped_x_i) == Convert::INVALID)
+            //                 warped_gray_image.at<float>(warped_x_i) = gray_image.at<float>(x_i);
+            //             else
+            //                 warped_gray_image.at<float>(warped_x_i) = (gray_image.at<float>(x_i) + warped_gray_image.at<float>(warped_x_i)) / 2;
         }
     }
     return warped_gray_image;
-    // return gray_image.clone();
 }  // namespace Transform
 
 

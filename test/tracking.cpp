@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
     assert(0 <= num1 and num1 <= 20);
 
     // loading
-    Loader image_loader("../data/KINECT_1DEG/info.txt");
+    Loader image_loader("../data/KINECT_50MM/info.txt");
     Calibration::Loader config_loader("../camera-calibration/data/kinectv2_00/config.yaml");
     Params::init(config_loader.rgb(), config_loader.depth(), config_loader.extrinsic());
 
@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
     assert(gray_image2.type() == CV_32FC1);
 
     // initialize
-    Tracker::Config config = {Params::depth_intrinsic.intrinsic, 5, true};
+    Tracker::Config config = {Params::depth_intrinsic.intrinsic, 6, true};
     Tracker tracker(config);
     tracker.init(depth_image1, gray_image1);
 

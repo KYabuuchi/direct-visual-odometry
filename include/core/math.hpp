@@ -34,12 +34,12 @@ inline bool testXi(const cv::Mat1f& xi)
     return true;
 }
 
-template <typename T = float>
-inline bool isRange(float num, T min, T max)
+template <typename T>
+inline bool isRange(T num, T min, T max)
 {
-    if (num <= static_cast<float>(min))
+    if (num < min)
         return false;
-    if (static_cast<float>(max) <= num)
+    if (max < num)
         return false;
     return true;
 }

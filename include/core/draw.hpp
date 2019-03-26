@@ -45,14 +45,15 @@ cv::Mat visiblizeGradientImage(const cv::Mat& x_image, const cv::Mat& y_image)
         [&](cv::Vec3b& p, const int* position) -> void {
             p[0] = p[1] = 0;
             p[2] = 255;
-            if (x_image.at<float>(position[0], position[1]) > -2) {
-                p[0] = normalized_x_image.at<unsigned char>(position[0], position[1]);
-                p[2] = 0;
+            if (x_image.at<float>(position[0], position[1]) < -1) {
+                return;
             }
-            if (y_image.at<float>(position[0], position[1]) > -2) {
-                p[1] = normalized_y_image.at<unsigned char>(position[0], position[1]);
-                p[2] = 0;
+            if (y_image.at<float>(position[0], position[1]) < -1) {
+                return;
             }
+            p[0] = normalized_x_image.at<unsigned char>(position[0], position[1]);
+            p[1] = normalized_y_image.at<unsigned char>(position[0], position[1]);
+            p[2] = 0;
         });
     return dst_image;
 }

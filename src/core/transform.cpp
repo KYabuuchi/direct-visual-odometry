@@ -54,14 +54,38 @@ cv::Mat mapDepthtoGray(const cv::Mat& depth_image, const cv::Mat& gray_image)
 }
 
 // warp先の座標を返す
-cv::Point2f warp(const cv::Mat1f& xi, const cv::Point2f& x_i, const float depth, const cv::Mat1f& intrinsic_matrix, float& warped_depth)
+cv::Point2f warp(const cv::Mat1f& xi, const cv::Point2f& x_i, const float depth, const cv::Mat1f& intrinsic_matrix)
 {
     cv::Mat1f x_c = backProject(intrinsic_matrix, Convert::toMat1f(x_i.x, x_i.y), depth);
     cv::Mat1f transformed_x_c = transform(xi, x_c);
     cv::Mat1f transformed_x_i = project(intrinsic_matrix, transformed_x_c);
-    warped_depth = transformed_x_c(2);
     // std::cout << transformed_x_c.t() << " " << x_c.t() << std::endl;
     return cv::Point2f(transformed_x_i);
 }
+
+// warpした画像を返す
+cv::Mat warpImage(const cv::Mat1f& xi, const cv::Mat& gray_image, const cv::Mat& depth_image, const cv::Mat1f& intrinsic_matrix)
+{
+    cv::Mat warped_gray_image = cv::Mat(gray_image.size(), gray_image.type(), Convert::INVALID);
+    const int COL = depth_image.cols;
+    const int ROW = depth_image.rows;
+
+    for (int x = 0; x < COL; x++) {
+        for (int y = 0; y < ROW; y++) {
+            cv::Point2i x_i(x, y);
+            float depth = depth_image.at<float>(x_i);
+            if (depth < math::EPSILON)
+                continue;
+            cv::Point2i warped_x_i = warp(xi, x_i, depth, intrinsic_matrix);
+            if (warped_x_i.x < 0 or warped_x_i.x >= COL or warped_x_i.y < 0 or warped_x_i.y >= ROW)
+                continue;
+
+            warped_gray_image.at<float>(warped_x_i) = gray_image.at<float>(x_i);
+        }
+    }
+    return warped_gray_image;
+    // return gray_image.clone();
+}  // namespace Transform
+
 
 }  // namespace Transform

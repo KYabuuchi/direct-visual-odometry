@@ -66,10 +66,10 @@ cv::Mat1f gradiate(const cv::Mat1f& gray_image, bool x)
     if (x) {
         gradiate_image.forEach<float>(
             [=](float& p, const int position[2]) -> void {
-                if (position[1] <= 1 or position[1] + 1 >= size.width)
+                if (position[1] - 1 <= -1 or position[1] + 1 >= size.width)
                     return;
 
-                float x0 = gray_image.at<float>(position[0], position[1]);
+                float x0 = gray_image.at<float>(position[0], position[1] - 1);
                 float x1 = gray_image.at<float>(position[0], position[1] + 1);
                 if (x0 < 0 or x1 < 0)
                     return;
@@ -78,10 +78,10 @@ cv::Mat1f gradiate(const cv::Mat1f& gray_image, bool x)
     } else {
         gradiate_image.forEach<float>(
             [=](float& p, const int position[2]) -> void {
-                if (position[0] <= 1 or position[0] + 1 >= size.height)
+                if (position[0] - 1 <= -1 or position[0] + 1 >= size.height)
                     return;
 
-                float y0 = gray_image.at<float>(position[0], position[1]);
+                float y0 = gray_image.at<float>(position[0] - 1, position[1]);
                 float y1 = gray_image.at<float>(position[0] + 1, position[1]);
                 if (y0 < 0 or y1 < 0)
                     return;

@@ -14,18 +14,14 @@ private:
     struct Scene {
         const Frame& pre_frame;
         const Frame& cur_frame;
-        const cv::Mat& gradient_x_image;
-        const cv::Mat& gradient_y_image;
         const int COL;
         const int ROW;
-        cv::Mat warped_gray_image;
-        cv::Mat warped_depth_image;
         cv::Mat1f xi;
         std::vector<float> residuals;
     };
 
     cv::Mat1f calcJacobi(const Frame& frame, cv::Point2f x_i, float depth);
-    void showImage(const Scene& scene);
+    void showImage(const Scene& scene, const cv::Mat& warped_image, const cv::Mat& grad_image);
     void optimize(Scene& scene);
 
     bool m_initialized;

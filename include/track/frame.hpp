@@ -8,6 +8,7 @@ public:
         : m_depth_image(depth_image), m_gray_image(gray_image),
           m_intrinsic(intrinsic),
           m_cols(depth_image.cols), m_rows(depth_image.rows) {}
+
     cv::Mat m_depth_image;
     cv::Mat m_gray_image;
     cv::Mat1f m_intrinsic;

@@ -66,6 +66,7 @@ cv::Point2f warp(const cv::Mat1f& xi, const cv::Point2f& x_i, const float depth,
 // warpした画像を返す
 cv::Mat warpImage(const cv::Mat1f& xi, const cv::Mat& gray_image, const cv::Mat& depth_image, const cv::Mat1f& intrinsic_matrix)
 {
+    std::cout << "warp" << xi.t() << std::endl;
     cv::Mat warped_gray_image = cv::Mat(gray_image.size(), gray_image.type(), Convert::INVALID);
     const int COL = depth_image.cols;
     const int ROW = depth_image.rows;
@@ -81,12 +82,6 @@ cv::Mat warpImage(const cv::Mat1f& xi, const cv::Mat& gray_image, const cv::Mat&
                 continue;
 
             warped_gray_image.at<float>(warped_x_i) = gray_image.at<float>(x_i);
-            // std::cout << warped_x_i << " " << x_i << std::endl;
-
-            //             if (warped_gray_image.at<float>(warped_x_i) == Convert::INVALID)
-            //                 warped_gray_image.at<float>(warped_x_i) = gray_image.at<float>(x_i);
-            //             else
-            //                 warped_gray_image.at<float>(warped_x_i) = (gray_image.at<float>(x_i) + warped_gray_image.at<float>(warped_x_i)) / 2;
         }
     }
     return warped_gray_image;

@@ -5,24 +5,25 @@ class Tracker
 {
 public:
     struct Config {
-        cv::Mat1f intrinsic_matrix;
+        cv::Mat1f intrinsic;
         int level;
         bool is_chatty;
     };
 
-private:
     struct Scene {
         const Frame& pre_frame;
         const Frame& cur_frame;
+        const cv::Mat& warped_image;
         const int COL;
         const int ROW;
         cv::Mat1f xi;
-        std::vector<float> residuals;
+        float residual;
     };
 
+private:
     cv::Mat1f calcJacobi(const Frame& frame, cv::Point2f x_i, float depth);
-    void showImage(const Scene& scene, const cv::Mat& warped_image, const cv::Mat& grad_image);
-    void optimize(Scene& scene);
+    void showImage(const Scene& scene);
+    cv::Mat1f optimize(Scene& scene);
 
     bool m_initialized;
 

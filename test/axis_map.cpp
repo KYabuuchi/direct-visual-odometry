@@ -30,15 +30,14 @@ int main()
     cv::Mat rgb_image, depth_image;
     cv::Mat mapped_gray_image, mapped_depth_image;
     Loader image_loader("../data/KINECT_1DEG/info.txt");
-    Calibration::Loader config_loader("../camera-calibration/data/kinectv2_00/config.yaml");
-    Params::init(config_loader.rgb(), config_loader.depth(), config_loader.extrinsic());
+    Params::init("../camera-calibration/data/kinectv2_00/config.yaml");
     image_loader.getNormalizedUndistortedImages(0, rgb_image, depth_image);
     mapped_gray_image = Transform::mapDepthtoGray(depth_image, rgb_image);
     mapped_depth_image = depth_image;
 
     mapped_depth_image = Convert::cullImage(mapped_depth_image, 1);
     mapped_gray_image = Convert::cullImage(mapped_gray_image, 1);
-    cv::Mat1f intrinsic = config_loader.depth().intrinsic;
+    cv::Mat1f intrinsic = Params::DEPTH().intrinsic;
     intrinsic = intrinsic / 2;
     intrinsic(2, 2) = 1;
 

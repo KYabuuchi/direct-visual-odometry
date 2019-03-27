@@ -5,13 +5,10 @@
 
 namespace Params
 {
-extern Calibration::IntrinsicParams rgb_intrinsic;
-extern Calibration::IntrinsicParams depth_intrinsic;
-extern Calibration::ExtrinsicParams extrinsic;
+const Calibration::IntrinsicParams RGB();
+const Calibration::IntrinsicParams DEPTH();
+const Calibration::ExtrinsicParams EXT();
 
-void init(
-    Calibration::IntrinsicParams rgb,
-    Calibration::IntrinsicParams depth,
-    Calibration::ExtrinsicParams ext);
+void init(const std::string& config_path);
 
 }  // namespace Params

@@ -28,10 +28,10 @@ private:
 
     void createUndistortionMap()
     {
-        cv::initUndistortRectifyMap(Params::depth_intrinsic.intrinsic, Params::depth_intrinsic.distortion, cv::Mat(),
-            Params::depth_intrinsic.intrinsic, Params::depth_intrinsic.resolution, CV_32FC1, m_depth_map.at(0), m_depth_map.at(1));
-        cv::initUndistortRectifyMap(Params::rgb_intrinsic.intrinsic, Params::rgb_intrinsic.distortion, cv::Mat(),
-            Params::rgb_intrinsic.intrinsic, Params::rgb_intrinsic.resolution, CV_32FC1, m_rgb_map.at(0), m_rgb_map.at(1));
+        cv::initUndistortRectifyMap(Params::DEPTH().intrinsic, Params::DEPTH().distortion, cv::Mat(),
+            Params::DEPTH().intrinsic, Params::DEPTH().resolution, CV_32FC1, m_depth_map.at(0), m_depth_map.at(1));
+        cv::initUndistortRectifyMap(Params::RGB().intrinsic, Params::RGB().distortion, cv::Mat(),
+            Params::RGB().intrinsic, Params::RGB().resolution, CV_32FC1, m_rgb_map.at(0), m_rgb_map.at(1));
 
         m_map_initialized = true;
     }

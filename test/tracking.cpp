@@ -1,5 +1,4 @@
 // 相対姿勢の計算(重みなし)
-#include "calibration/loader.hpp"
 #include "core/convert.hpp"
 #include "core/loader.hpp"
 #include "core/params.hpp"
@@ -7,8 +6,6 @@
 #include "track/tracker.hpp"
 #include <iostream>
 #include <opencv2/opencv.hpp>
-
-// #define DEBUG
 
 int main(int argc, char* argv[])
 {
@@ -21,8 +18,7 @@ int main(int argc, char* argv[])
 
     // loader
     Loader image_loader("../data/KINECT_50MM/info.txt");
-    Calibration::Loader config_loader("../camera-calibration/data/kinectv2_00/config.yaml");
-    Params::init(config_loader.rgb(), config_loader.depth(), config_loader.extrinsic());
+    Params::init("../camera-calibration/data/kinectv2_00/config.yaml");
 
     // loading
     cv::Mat depth_image1, depth_image2;
@@ -33,12 +29,10 @@ int main(int argc, char* argv[])
     gray_image1 = Transform::mapDepthtoGray(depth_image1, color_image1);
     gray_image2 = Transform::mapDepthtoGray(depth_image2, color_image2);
 
-    assert(gray_image1.type() == CV_32FC1);
-    assert(gray_image2.type() == CV_32FC1);
 
     // initialize
-    Tracker::Config config = {Params::depth_intrinsic.intrinsic, 6, true};
-    Tracker tracker(config);
+    Track::Config config = {Params::DEPTH().intrinsic, 6, true};
+    Track::Tracker tracker(config);
     tracker.init(depth_image1, gray_image1);
 
     // tracking

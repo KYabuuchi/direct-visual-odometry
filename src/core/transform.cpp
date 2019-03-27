@@ -40,9 +40,9 @@ cv::Mat mapDepthtoGray(const cv::Mat& depth_image, const cv::Mat& gray_image)
                 p = Convert::INVALID;
                 return;
             }
-            cv::Mat1f x_c = backProject(Params::depth_intrinsic.intrinsic, Convert::toMat1f(static_cast<float>(position[1]), static_cast<float>(position[0])), depth);
-            x_c = transform(Params::extrinsic.invT(), x_c);
-            cv::Mat1f x_i = project(Params::rgb_intrinsic.intrinsic, x_c);
+            cv::Mat1f x_c = backProject(Params::DEPTH().intrinsic, Convert::toMat1f(static_cast<float>(position[1]), static_cast<float>(position[0])), depth);
+            x_c = transform(Params::EXT().invT(), x_c);
+            cv::Mat1f x_i = project(Params::RGB().intrinsic, x_c);
             float gray = Convert::getColorSubpix(gray_image, cv::Point2f(x_i));
             if (gray <= 0)
                 p = Convert::INVALID;
@@ -66,7 +66,6 @@ cv::Point2f warp(const cv::Mat1f& xi, const cv::Point2f& x_i, const float depth,
 // warpした画像を返す
 cv::Mat warpImage(const cv::Mat1f& xi, const cv::Mat& gray_image, const cv::Mat& depth_image, const cv::Mat1f& intrinsic_matrix)
 {
-    std::cout << "warp" << xi.t() << std::endl;
     cv::Mat warped_gray_image = cv::Mat(gray_image.size(), gray_image.type(), Convert::INVALID);
     const int COL = depth_image.cols;
     const int ROW = depth_image.rows;

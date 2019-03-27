@@ -1,37 +1,13 @@
 #pragma once
+#include "core/transform.hpp"
 #include "track/frame.hpp"
+#include "track/optimize.hpp"
+
+namespace Track
+{
 
 class Tracker
 {
-public:
-    struct Config {
-        cv::Mat1f intrinsic;
-        int level;
-        bool is_chatty;
-    };
-
-    struct Scene {
-        const Frame& pre_frame;
-        const Frame& cur_frame;
-        const cv::Mat& warped_image;
-        const int COL;
-        const int ROW;
-        cv::Mat1f xi;
-        float residual;
-    };
-
-private:
-    cv::Mat1f calcJacobi(const Frame& frame, cv::Point2f x_i, float depth);
-    void showImage(const Scene& scene);
-    cv::Mat1f optimize(Scene& scene);
-
-    bool m_initialized;
-
-    Config m_config;
-    std::vector<Frame> m_pre_frames;
-    std::vector<Frame> m_cur_frames;
-    std::vector<std::vector<float>> m_vector_of_residuals;
-
 public:
     void plot(bool block = false);
 
@@ -42,5 +18,19 @@ public:
 
     void init(cv::Mat depth_image, cv::Mat gray_image);
 
+    // 相対姿勢を計算する(おまかせ)
     cv::Mat1f track(const cv::Mat& depth_image, const cv::Mat& gray_image);
+
+
+private:
+    void showImage(const Scene& scene);
+
+    bool m_initialized;
+
+    Config m_config;
+    std::vector<Frame> m_pre_frames;
+    std::vector<Frame> m_cur_frames;
+    std::vector<std::vector<float>> m_vector_of_residuals;
 };
+
+}  // namespace Track

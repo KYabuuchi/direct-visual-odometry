@@ -11,8 +11,7 @@ int main()
     cv::resizeWindow("depth", 960, 720);
 
     Loader image_loader("../data/KINECT_1DEG/info.txt");
-    Calibration::Loader config_loader("../camera-calibration/data/kinectv2_00/config.yaml");
-    Params::init(config_loader.rgb(), config_loader.depth(), config_loader.extrinsic());
+    Params::init("../camera-calibration/data/kinectv2_00/config.yaml");
 
     std::cout << "'q': quit, 'other': load next image\n"
               << std::endl;

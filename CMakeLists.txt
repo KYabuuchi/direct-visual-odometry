@@ -57,17 +57,17 @@ file(GLOB TRACK_SOURCES src/track/*.cpp)
 # cmake-format: off
 # =============================
 
-#add_executable(test-se3 test/se3.cpp src/core/math.cpp)
-#target_link_libraries(test-se3 ${OpenCV_LIBS})
+add_executable(test-se3 test/se3.cpp src/core/math.cpp)
+target_link_libraries(test-se3 ${OpenCV_LIBS})
 #
-#add_executable(test-map test/map.cpp ${CORE_SOURCES})
-#target_link_libraries(test-map ${OpenCV_LIBS})
+add_executable(test-map test/map.cpp ${CORE_SOURCES})
+target_link_libraries(test-map ${OpenCV_LIBS})
 #
-#add_executable(test-load test/load.cpp src/core/params.cpp)
-#target_link_libraries(test-load ${OpenCV_LIBS} camera-calibration)
+add_executable(test-load test/load.cpp src/core/params.cpp)
+target_link_libraries(test-load ${OpenCV_LIBS} camera-calibration)
 #
-#add_executable(test-gradient test/gradient.cpp ${CORE_SOURCES} )
-#target_link_libraries(test-gradient ${OpenCV_LIBS})
+add_executable(test-gradient test/gradient.cpp ${CORE_SOURCES} )
+target_link_libraries(test-gradient ${OpenCV_LIBS})
 #
 
 add_executable(test-axis test/axis_map.cpp ${CORE_SOURCES})

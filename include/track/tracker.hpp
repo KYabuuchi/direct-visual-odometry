@@ -1,36 +1,32 @@
 #pragma once
 #include "core/transform.hpp"
 #include "track/frame.hpp"
-#include "track/optimize.hpp"
 
 namespace Track
 {
 
+struct Config {
+    const cv::Mat1f intrinsic;
+    const int level;
+    const bool is_chatty;
+    const float minimum_update;
+    const float minimum_residual;
+};
+
 class Tracker
 {
 public:
-    void plot(bool block = false);
+    Tracker(const Config& config) : m_initialized(false), m_config(config) {}
 
-    Tracker(const Config& config) : m_initialized(false), m_config(config)
-    {
-        cv::namedWindow("show", cv::WINDOW_NORMAL);
-    }
-
-    void init(cv::Mat depth_image, cv::Mat gray_image);
-
-    // 相対姿勢を計算する(おまかせ)
+    // T(4xx4)[m]を返す
     cv::Mat1f track(const cv::Mat& depth_image, const cv::Mat& gray_image);
 
-
 private:
-    void showImage(const Scene& scene);
-
     bool m_initialized;
 
     Config m_config;
     std::vector<Frame> m_pre_frames;
     std::vector<Frame> m_cur_frames;
-    std::vector<std::vector<float>> m_vector_of_residuals;
 };
 
 }  // namespace Track

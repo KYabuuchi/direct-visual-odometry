@@ -1,6 +1,7 @@
 #pragma once
 #include "calibration/params_struct.hpp"
 #include "core/params.hpp"
+#include "core/transform.hpp"
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
@@ -61,6 +62,28 @@ public:
             }
         }
         ifs.close();
+    }
+
+    // 変形除歪画像を取得
+    bool getMappedImages(size_t num, cv::Mat& mapped_image, cv::Mat& depth_image)
+    {
+        cv::Mat rgb_image;
+        if (not getNormalizedUndistortedImages(num, rgb_image, depth_image))
+            return false;
+
+        mapped_image = Transform::mapDepthtoGray(depth_image, rgb_image);
+        return true;
+    }
+
+    // 変形画像を取得(歪あり)
+    bool getMappedDistortedImages(size_t num, cv::Mat& mapped_image, cv::Mat& depth_image)
+    {
+        cv::Mat rgb_image;
+        if (not getNormalizedImages(num, rgb_image, depth_image))
+            return false;
+
+        mapped_image = Transform::mapDepthtoGray(depth_image, rgb_image);
+        return true;
     }
 
     // 正規除歪画像を取得

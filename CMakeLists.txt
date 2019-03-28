@@ -54,28 +54,30 @@ include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
 file(GLOB CORE_SOURCES src/core/*.cpp)
 file(GLOB TRACK_SOURCES src/track/*.cpp)
 
+# library
+add_library(vo-core STATIC ${CORE_SOURCES})
+add_library(vo-track STATIC ${TRACK_SOURCES})
+target_link_libraries(vo-track vo-core)
+
 # cmake-format: off
 # =============================
-
-add_executable(test-se3 test/se3.cpp src/core/math.cpp)
-target_link_libraries(test-se3 ${OpenCV_LIBS})
+add_executable(test-se3 test/se3.cpp)
+target_link_libraries(test-se3 ${OpenCV_LIBS} vo-core)
 #
-add_executable(test-map test/map.cpp ${CORE_SOURCES})
-target_link_libraries(test-map ${OpenCV_LIBS})
+add_executable(test-map test/map.cpp)
+target_link_libraries(test-map ${OpenCV_LIBS} vo-core)
 #
 add_executable(test-load test/load.cpp src/core/params.cpp)
-target_link_libraries(test-load ${OpenCV_LIBS} camera-calibration)
+target_link_libraries(test-load ${OpenCV_LIBS} vo-core)
 #
-add_executable(test-gradient test/gradient.cpp ${CORE_SOURCES} )
-target_link_libraries(test-gradient ${OpenCV_LIBS})
+add_executable(test-gradient test/gradient.cpp)
+target_link_libraries(test-gradient ${OpenCV_LIBS} vo-core)
 #
-
-add_executable(test-axis test/axis_map.cpp ${CORE_SOURCES})
-target_link_libraries(test-axis ${OpenCV_LIBS})
-
-add_executable(test-tracking test/tracking.cpp ${CORE_SOURCES} ${TRACK_SOURCES})
-target_link_libraries(test-tracking ${OpenCV_LIBS} ${PYTHON_LIBRARIES})
-target_include_directories(test-tracking SYSTEM PRIVATE external/matplotlib-cpp ${PYTHON_INCLUDE_DIRS})
-
+add_executable(test-track test/track.cpp)
+target_link_libraries(test-track ${OpenCV_LIBS} ${PYTHON_LIBRARIES} vo-core vo-track)
+target_include_directories(test-track SYSTEM PRIVATE external/matplotlib-cpp ${PYTHON_INCLUDE_DIRS})
+#
+add_executable(test-seq test/sequence.cpp)
+target_link_libraries(test-seq ${OpenCV_LIBS} vo-core vo-track)
 # =============================
 # cmake-format: on

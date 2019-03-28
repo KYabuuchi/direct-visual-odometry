@@ -2,6 +2,7 @@
 
 namespace Track
 {
+// TODO: jacobi1とjacobi2を分割しない
 cv::Mat1f calcJacobi(const cv::Mat1f& intrinsic, cv::Point2f x_i, float depth)
 {
     cv::Point3f x_c = cv::Point3f(Transform::backProject(intrinsic, cv::Mat1f(x_i), depth));
@@ -26,14 +27,12 @@ cv::Mat1f calcJacobi(const cv::Mat1f& intrinsic, cv::Point2f x_i, float depth)
     return jacobi2;
 }
 
-
-// xi_updateを計算する
 Outcome optimize(const Scene& scene)
 {
 #define WARPED_GRAD
 #ifdef WARPED_GRAD
-    cv::Mat gradient_x_image = Convert::gradiate(scene.warped_image, true);
-    cv::Mat gradient_y_image = Convert::gradiate(scene.warped_image, false);
+    cv::Mat gradient_x_image = Convert::gradiate(scene.warped_gray, true);
+    cv::Mat gradient_y_image = Convert::gradiate(scene.warped_gray, false);
 #else
     cv::Mat gradient_x_image = Convert::gradiate(scene.cur_frame.m_gray_image, true);
     cv::Mat gradient_y_image = Convert::gradiate(scene.cur_frame.m_gray_image, false);
@@ -54,7 +53,7 @@ Outcome optimize(const Scene& scene)
 
             // luminance
             float I_1 = scene.pre_gray.at<float>(x_i);
-            float I_2 = scene.warped_image.at<float>(x_i);
+            float I_2 = scene.warped_gray.at<float>(x_i);
             if (Convert::isInvalid(I_1) or Convert::isInvalid(I_2)) {
                 continue;
             }
@@ -84,10 +83,12 @@ Outcome optimize(const Scene& scene)
         }
     }
 
+    // TODO: A,Bの個数によるreturn
+
     // solve equation (A xi + B = 0)
     cv::Mat1f xi_update;
     cv::solve(A, -B, xi_update, cv::DECOMP_SVD);
 
-    return Outcome{cv::Mat1f(-xi_update), residual, B.rows};
+    return Outcome{cv::Mat1f(-xi_update), residual / static_cast<float>(B.rows), B.rows};
 }
 }  // namespace Track

@@ -1,17 +1,11 @@
 #pragma once
 #include "core/convert.hpp"
+#include "core/draw.hpp"
 #include "core/transform.hpp"
 #include "track/frame.hpp"
 
 namespace Track
 {
-
-struct Config {
-    cv::Mat1f intrinsic;
-    int level;
-    bool is_chatty;
-};
-
 struct Scene {
     // Framex2 + xi
     Scene(
@@ -22,7 +16,7 @@ struct Scene {
           pre_depth(pre_frame.m_depth_image),
           cur_gray(cur_frame.m_gray_image),
           cur_depth(cur_frame.m_depth_image),
-          warped_image(Transform::warpImage(xi, cur_frame.m_gray_image, cur_frame.m_depth_image, cur_frame.m_intrinsic)),
+          warped_gray(Transform::warpImage(xi, cur_frame.m_gray_image, cur_frame.m_depth_image, cur_frame.m_intrinsic)),
           xi(xi), intrinsic(cur_frame.m_intrinsic), cols(cur_frame.cols), rows(cur_frame.rows) {}
 
     // 画像x4 + xi + K
@@ -37,14 +31,19 @@ struct Scene {
           pre_depth(pre_depth),
           cur_gray(cur_gray),
           cur_depth(cur_depth),
-          warped_image(Transform::warpImage(xi, cur_gray, cur_depth, intrinsic)),
+          warped_gray(Transform::warpImage(xi, cur_gray, cur_depth, intrinsic)),
           xi(xi), intrinsic(intrinsic), cols(cur_gray.cols), rows(cur_gray.rows) {}
+
+    void show(const std::string& window_name)
+    {
+        Draw::showImage(window_name, pre_gray, pre_depth, warped_gray, cur_gray, cur_depth);
+    }
 
     const cv::Mat pre_gray;
     const cv::Mat pre_depth;
     const cv::Mat cur_gray;
     const cv::Mat cur_depth;
-    const cv::Mat warped_image;
+    const cv::Mat warped_gray;
     const cv::Mat1f xi;
     const cv::Mat1f intrinsic;
     const int cols;
@@ -61,5 +60,6 @@ struct Outcome {
 
 // xi_updateを計算する
 Outcome optimize(const Scene& scene);
+
 
 }  // namespace Track

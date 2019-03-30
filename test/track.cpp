@@ -5,6 +5,7 @@
 #include "matplotlibcpp.h"
 #include "track/optimize.hpp"
 
+constexpr int LEVEL = 6;
 int main(int argc, char* argv[])
 {
     // argumentation
@@ -21,8 +22,8 @@ int main(int argc, char* argv[])
     cv::Mat gray_image1, gray_image2;
     loader.getMappedImages(num1, gray_image1, depth_image1);
     loader.getMappedImages(num2, gray_image2, depth_image2);
-    std::vector<Track::Frame> pre_frames = Track::createFramePyramid(depth_image1, gray_image1, Params::DEPTH().intrinsic, 6);
-    std::vector<Track::Frame> cur_frames = Track::createFramePyramid(depth_image2, gray_image2, Params::DEPTH().intrinsic, 6);
+    std::vector<Track::Frame> pre_frames = Track::createFramePyramid(depth_image1, gray_image1, Params::DEPTH().intrinsic, LEVEL);
+    std::vector<Track::Frame> cur_frames = Track::createFramePyramid(depth_image2, gray_image2, Params::DEPTH().intrinsic, LEVEL);
 
     // window
     const std::string window_name = "show";
@@ -33,7 +34,7 @@ int main(int argc, char* argv[])
     std::vector<std::vector<float>> vector_of_residuals;
 
     // iteration for pyramid
-    for (int level = 0; level < 6 - 1; level++) {
+    for (int level = 0; level < LEVEL - 1; level++) {
         const Track::Frame& pre_frame = pre_frames.at(level);
         const Track::Frame& cur_frame = cur_frames.at(level);
         const int COLS = pre_frame.cols;

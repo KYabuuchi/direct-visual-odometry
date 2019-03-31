@@ -2,27 +2,65 @@
 #include "core/convert.hpp"
 #include "core/draw.hpp"
 #include "core/transform.hpp"
-#include "track/frame.hpp"
 
 namespace Track
 {
+struct Outcome;
+struct Scene;
+
+Outcome optimize(const Scene& scene);
+
+struct Frame {
+    Frame(cv::Mat depth_image, cv::Mat gray_image, cv::Mat1f intrinsic)
+        : depth(depth_image), gray(gray_image),
+          intrinsic(intrinsic),
+          cols(depth_image.cols), rows(depth_image.rows) {}
+    cv::Mat depth;
+    cv::Mat gray;
+    cv::Mat1f intrinsic;
+    int cols;
+    int rows;
+
+    static std::vector<Frame> createFramePyramid(
+        const cv::Mat& depth_image,
+        const cv::Mat& gray_image,
+        const cv::Mat1f& intrinsic,
+        const int level)
+    {
+        std::vector<Frame> frames;
+        Frame origin = Frame(depth_image, gray_image, intrinsic);
+        for (int i = 0; i < level; i++) {
+            frames.push_back(downscaleFrame(origin, level - i - 1));  // level-1 , ... , 1 , 0
+        }
+        return frames;
+    }
+
+    static Frame downscaleFrame(const Frame& frame, int times = 1)
+    {
+        if (times == 0)
+            return Frame(frame);
+        cv::Mat depth_image = Convert::cullImage(frame.depth, times);
+        cv::Mat gray_image = Convert::cullImage(frame.gray, times);
+        cv::Mat1f intrinsic = Convert::cullIntrinsic(frame.intrinsic, times);
+        return Frame(depth_image, gray_image, intrinsic);
+    }
+};
+
 struct Scene {
-    // Framex2 + xi
     Scene(
         const Frame& pre_frame,
         const Frame& cur_frame,
         const cv::Mat1f& xi)
-        : pre_gray(pre_frame.m_gray_image),
-          pre_depth(pre_frame.m_depth_image),
-          cur_gray(cur_frame.m_gray_image),
-          cur_depth(cur_frame.m_depth_image),
-          grad_x(Convert::gradiate(cur_frame.m_gray_image, true)),
-          grad_y(Convert::gradiate(cur_frame.m_gray_image, false)),
-          warped_gray(Transform::warpImage(xi, cur_frame.m_gray_image,
-              cur_frame.m_depth_image, cur_frame.m_intrinsic)),
-          xi(xi), intrinsic(cur_frame.m_intrinsic), cols(cur_frame.cols), rows(cur_frame.rows) {}
+        : pre_gray(pre_frame.gray),
+          pre_depth(pre_frame.depth),
+          cur_gray(cur_frame.gray),
+          cur_depth(cur_frame.depth),
+          grad_x(Convert::gradiate(cur_frame.gray, true)),
+          grad_y(Convert::gradiate(cur_frame.gray, false)),
+          warped_gray(Transform::warpImage(xi, cur_frame.gray, cur_frame.depth, cur_frame.intrinsic)),
+          xi(xi), intrinsic(cur_frame.intrinsic),
+          cols(cur_frame.cols), rows(cur_frame.rows) {}
 
-    // 画像x4 + xi + K
     Scene(
         const cv::Mat& pre_gray,
         const cv::Mat& pre_depth,
@@ -72,7 +110,5 @@ struct Outcome {
     const int valid_pixels;
 };
 
-// xi_updateを計算する
-Outcome optimize(const Scene& scene);
 
 }  // namespace Track

@@ -1,6 +1,5 @@
 // track::trackerのテスト
 #include "core/loader.hpp"
-#include "core/math.hpp"
 #include "core/params.hpp"
 #include "track/tracker.hpp"
 
@@ -23,7 +22,6 @@ int main(/*int argc, char* argv[]*/)
         bool success = loader.getMappedImages(num++, gray_image, depth_image);
         if (not success)
             break;
-
 
         cv::Mat1f T = tracker.track(depth_image, gray_image);
         std::cout << "\n"

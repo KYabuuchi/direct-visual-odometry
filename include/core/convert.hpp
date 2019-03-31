@@ -24,5 +24,6 @@ cv::Mat1f gradiate(const cv::Mat1f& gray_image, bool x);
 float getColorSubpix(const cv::Mat1f& img, cv::Point2f pt);
 
 cv::Mat cullImage(const cv::Mat& src_image, int times = 1);
+cv::Mat1f cullIntrinsic(const cv::Mat1f& intrinsic, int times = 1);
 
 }  // namespace Convert

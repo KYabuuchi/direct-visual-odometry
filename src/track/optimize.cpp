@@ -9,19 +9,21 @@ inline float at(const cv::Mat& mat, const cv::Point2i& p)
     return reinterpret_cast<float*>(mat.data)[p.y * mat.step1() + p.x];
 }
 
-template <typename T>
+
+// #define USE_HUBER
+#ifdef USE_HUBER
+template <typename T = float>
 constexpr T sqrt(T s)
 {
-    T x = s / 2.0;
-    T prev = 0.0;
+    T x = s / 2.0f;
+    T prev = 0.0f;
 
     while (x != prev) {
         prev = x;
-        x = (x + s / x) / 2.0;
+        x = (x + s / x) / 2.0f;
     }
     return x;
 }
-
 // huber関数の平方根
 inline float huber(float n)
 {
@@ -42,6 +44,7 @@ inline float huber(float n)
 
     return -k0 - (k1 + k2 * (a - d)) * (a - d);
 }
+#endif
 
 Outcome optimize(const Scene& scene)
 {
@@ -94,7 +97,11 @@ Outcome optimize(const Scene& scene)
 
 
             // stack
+#ifdef USE_HUBER
+            float r = huber(I_2 - I_1);
+#else
             float r = I_2 - I_1;
+#endif
             residual += r * r;
             cv::vconcat(A, jacobi, A);
             cv::vconcat(B, cv::Mat1f(cv::Mat1f(1, 1) << r), B);
@@ -109,4 +116,6 @@ Outcome optimize(const Scene& scene)
 
     return Outcome{cv::Mat1f(-xi_update), residual / static_cast<float>(B.rows), B.rows};
 }
+
+
 }  // namespace Track

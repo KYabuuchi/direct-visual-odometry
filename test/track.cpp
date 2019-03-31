@@ -5,7 +5,7 @@
 #include "matplotlibcpp.h"
 #include "track/optimize.hpp"
 
-constexpr int LEVEL = 6;
+constexpr int LEVEL = 5;
 int main(int argc, char* argv[])
 {
     // argumentation
@@ -22,8 +22,8 @@ int main(int argc, char* argv[])
     cv::Mat gray_image1, gray_image2;
     loader.getMappedImages(num1, gray_image1, depth_image1);
     loader.getMappedImages(num2, gray_image2, depth_image2);
-    std::vector<Track::Frame> pre_frames = Track::createFramePyramid(depth_image1, gray_image1, Params::DEPTH().intrinsic, LEVEL);
-    std::vector<Track::Frame> cur_frames = Track::createFramePyramid(depth_image2, gray_image2, Params::DEPTH().intrinsic, LEVEL);
+    std::vector<Track::Frame> pre_frames = Track::Frame::createFramePyramid(depth_image1, gray_image1, Params::DEPTH().intrinsic, LEVEL);
+    std::vector<Track::Frame> cur_frames = Track::Frame::createFramePyramid(depth_image2, gray_image2, Params::DEPTH().intrinsic, LEVEL);
 
     // window
     const std::string window_name = "show";
@@ -43,11 +43,10 @@ int main(int argc, char* argv[])
 
         std::cout << "\nLEVEL: " << level << " ROW: " << ROWS << " COL: " << COLS << std::endl;
 
-        // TODO: 本当は勾配計算はここで1回でいい
+        Track::Scene scene = {pre_frame, cur_frame, xi};
 
         // iteration
         for (int iteration = 0; iteration < 15; iteration++) {
-            Track::Scene scene = {pre_frame, cur_frame, xi};
             Track::Outcome outcome = Track::optimize(scene);
 
             // update
@@ -55,6 +54,7 @@ int main(int argc, char* argv[])
             residuals.push_back(outcome.residual);
             if (math::testXi(updated_xi))
                 xi = updated_xi;
+            scene.update(xi);
 
             // show
             std::cout << "itr: " << iteration

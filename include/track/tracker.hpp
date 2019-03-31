@@ -1,6 +1,6 @@
 #pragma once
 #include "core/transform.hpp"
-#include "track/frame.hpp"
+#include "track/optimize.hpp"
 
 namespace Track
 {
@@ -12,6 +12,7 @@ struct Config {
     const float minimum_update;
     const float minimum_residual;
 };
+
 
 class Tracker
 {
@@ -28,5 +29,6 @@ private:
     std::vector<Frame> m_pre_frames;
     std::vector<Frame> m_cur_frames;
 };
+
 
 }  // namespace Track

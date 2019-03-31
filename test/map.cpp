@@ -30,7 +30,7 @@ int main()
     loader.getMappedDistortedImages(0, distorted_gray_image, distorted_depth_image);
     cv::Mat1f intrinsic = Params::DEPTH().intrinsic;
 
-    // cull to 1/(N+1)
+    // cull to 1/2^(N+1)
     const int N = 1;
     depth_image = Convert::cullImage(depth_image, N);
     gray_image = Convert::cullImage(gray_image, N);

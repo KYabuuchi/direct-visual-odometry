@@ -45,6 +45,12 @@ cv::Mat cullImage(const cv::Mat& src_image, int times)
     return culled_image;
 }
 
+cv::Mat1f cullIntrinsic(const cv::Mat1f& intrinsic, int times)
+{
+    cv::Mat1f K = intrinsic / math::pow(2, times);
+    K(2, 2) = 1;
+    return K;
+}
 
 cv::Mat1f inversePose(const cv::Mat1f& T)
 {

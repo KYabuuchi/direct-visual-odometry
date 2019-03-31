@@ -3,15 +3,14 @@
 #include "core/math.hpp"
 #include "core/transform.hpp"
 #include "track/optimize.hpp"
-
 #include <chrono>
 
 namespace Track
 {
 cv::Mat1f Tracker::track(const cv::Mat& depth_image, const cv::Mat& gray_image)
 {
-    m_cur_frames = createFramePyramid(depth_image, gray_image, m_config.intrinsic, m_config.level);
-    cv::Mat1f xi = math::se3::xi({0, 0, 0, 0, 0, 0});
+    m_cur_frames = Frame::createFramePyramid(depth_image, gray_image, m_config.intrinsic, m_config.level);
+    cv::Mat1f xi = math::se3::xi();
 
     if (m_initialized == false) {
         m_initialized = true;
@@ -25,7 +24,6 @@ cv::Mat1f Tracker::track(const cv::Mat& depth_image, const cv::Mat& gray_image)
         const int COLS = pre_frame.cols;
         const int ROWS = pre_frame.rows;
 
-        // TODO: 本当は勾配計算はここで1回でいい
 
         if (m_config.is_chatty)
             std::cout << "\nLEVEL: " << level << " ROW: " << ROWS << " COL: " << COLS << std::endl;
@@ -66,5 +64,6 @@ cv::Mat1f Tracker::track(const cv::Mat& depth_image, const cv::Mat& gray_image)
     m_pre_frames = std::move(m_cur_frames);
     return math::se3::exp(xi);
 }
+
 
 }  // namespace Track

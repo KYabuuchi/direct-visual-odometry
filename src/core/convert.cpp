@@ -99,7 +99,7 @@ float getColorSubpix(const cv::Mat1f& img, cv::Point2f pt)
 
     int x = (int)pt.x;
     int y = (int)pt.y;
-    if (x < 0 || x >= img.size().width || y < 0 || y >= img.size().height)
+    if (x < 0 || x + 1 >= img.size().width || y < 0 || y + 1 >= img.size().height)
         return INVALID;
 
     int x0 = x;      // cv::borderInterpolate(x, img.cols, cv::BORDER_REFLECT_101);
@@ -115,9 +115,11 @@ float getColorSubpix(const cv::Mat1f& img, cv::Point2f pt)
     float v10 = img(y1, x0);
     float v11 = img(y1, x1);
 
-    if (isValid(v00) and isValid(v01) and isValid(v10) and isValid(v11))
+
+    if (isValid(v00) and isValid(v01) and isValid(v10) and isValid(v11)) {
         return (v00 * (1.f - a) + v01 * a) * (1.f - c)
                + (v10 * (1.f - a) + v11 * a) * c;
+    }
 
     return INVALID;
 }

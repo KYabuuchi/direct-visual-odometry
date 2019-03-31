@@ -3,54 +3,84 @@
 
 namespace Track
 {
+// NOTE: cv::Mat.atは遅い
+inline float at(const cv::Mat& mat, const cv::Point2i& p)
+{
+    return reinterpret_cast<float*>(mat.data)[p.y * mat.step1() + p.x];
+}
+
+template <typename T>
+constexpr T sqrt(T s)
+{
+    T x = s / 2.0;
+    T prev = 0.0;
+
+    while (x != prev) {
+        prev = x;
+        x = (x + s / x) / 2.0;
+    }
+    return x;
+}
+
+// huber関数の平方根
+inline float huber(float n)
+{
+    constexpr float d = 0.5f;
+    constexpr float sqrt2d = sqrt(2.0f * d);
+    constexpr float sqrtd2 = sqrt(d / 2.0f);
+    constexpr float k0 = sqrtd2;
+    constexpr float k1 = 0.5f / sqrtd2;
+    constexpr float k2 = -1.0f / (sqrtd2 * d * 2.0f);
+
+    float a = std::abs(n);
+    if (a < d)
+        return n / sqrt2d;
+
+    // 2次近似
+    if (0 < d)
+        return k0 + (k1 + k2 * (a - d)) * (a - d);
+
+    return -k0 - (k1 + k2 * (a - d)) * (a - d);
+}
+
 Outcome optimize(const Scene& scene)
 {
-#define WARPED_GRAD
-#ifdef WARPED_GRAD
-    cv::Mat gradient_x_image = Convert::gradiate(scene.warped_gray, true);
-    cv::Mat gradient_y_image = Convert::gradiate(scene.warped_gray, false);
-#else
-    cv::Mat gradient_x_image = Convert::gradiate(scene.cur_gray, true);
-    cv::Mat gradient_y_image = Convert::gradiate(scene.cur_gray, false);
-#endif
-
     float residual = 0;
+
     cv::Mat1f A(cv::Mat1f::zeros(0, 6));
     cv::Mat1f B(cv::Mat1f::zeros(0, 1));
 
     for (int col = 0; col < scene.cols; col++) {
         for (int row = 0; row < scene.rows; row++) {
             cv::Point2i x_i = cv::Point2i(col, row);
-            // TODO: cv::Mat.atは遅い
 
             // depth
-            float depth = scene.cur_depth.at<float>(x_i);
+            float depth = at(scene.cur_depth, x_i);
             if (depth < 0.50) {
                 continue;
             }
 
             // luminance
-            float I_1 = scene.pre_gray.at<float>(x_i);
-            float I_2 = scene.warped_gray.at<float>(x_i);
+            float I_1 = at(scene.pre_gray, x_i);
+            float I_2 = at(scene.warped_gray, x_i);
             if (Convert::isInvalid(I_1) or Convert::isInvalid(I_2)) {
                 continue;
             }
 
             // gradient
-#ifdef WARPED_GRAD
-            float gx = gradient_x_image.at<float>(x_i);
-            float gy = gradient_y_image.at<float>(x_i);
-#else
-            cv::Point2f warped_x_i = Transform::warp(scene.xi, x_i, depth, scene.intrinsic);
-            float gx = gradient_x_image.at<float>(warped_x_i);
-            float gy = gradient_y_image.at<float>(warped_x_i);
-#endif
+            cv::Point2f warped_x_i = Transform::warp(-scene.xi, x_i, depth, scene.intrinsic);
+            if (warped_x_i.x < 0 or scene.cols <= warped_x_i.x
+                or warped_x_i.y < 0 or scene.rows <= warped_x_i.y)
+                continue;
+            float gx = at(scene.grad_x, warped_x_i);
+            float gy = at(scene.grad_y, warped_x_i);
+
             if (Convert::isInvalid(gx) or Convert::isInvalid(gy)) {
                 continue;
             }
 
             // calc jacobian
-            cv::Point3f x_c = cv::Point3f(Transform::backProject(scene.intrinsic, cv::Mat1f(cv::Point2f(x_i)), depth));
+            cv::Point3f x_c = cv::Point3f(Transform::backProject(scene.intrinsic, Convert::toMat1f(x_i.x, x_i.y), depth));
             float x = x_c.x, y = x_c.y, z = x_c.z;
             float fx = scene.intrinsic(0, 0), fy = scene.intrinsic(1, 1);
             float fgx = fx * gx, fgy = fy * gy;
@@ -70,8 +100,6 @@ Outcome optimize(const Scene& scene)
             cv::vconcat(B, cv::Mat1f(cv::Mat1f(1, 1) << r), B);
         }
     }
-
-    // TODO: A,Bの個数によるreturn
     if (B.rows == 0)
         return Outcome{math::se3::xi(), -1, B.rows};
 

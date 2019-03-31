@@ -80,7 +80,8 @@ cv::Mat warpImage(const cv::Mat1f& xi, const cv::Mat& gray_image, const cv::Mat&
             if (warped_x_i.x < 0 or warped_x_i.x >= COL or warped_x_i.y < 0 or warped_x_i.y >= ROW)
                 continue;
 
-            warped_gray_image.at<float>(warped_x_i) = gray_image.at<float>(x_i);
+            float gray = gray_image.at<float>(x_i);
+            warped_gray_image.at<float>(warped_x_i) = gray;
         }
     }
     return warped_gray_image;

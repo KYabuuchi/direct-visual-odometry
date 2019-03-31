@@ -57,17 +57,19 @@ int main(int argc, char* argv[])
                 xi = updated_xi;
 
             // show
-            std::cout << "iteration: " << iteration
+            std::cout << "itr: " << iteration
                       << " r: " << outcome.residual
-                      << " update: " << cv::norm(outcome.xi_update)
+                      << " upd: " << cv::norm(outcome.xi_update)
+                      << " rows : " << outcome.valid_pixels
                       << " xi: " << xi.t() << std::endl;
 
             scene.show(window_name);
-            cv::waitKey(1);
+            cv::waitKey(10);
 
             if (cv::norm(outcome.xi_update) < 0.005 or outcome.residual < 0.005f)
                 break;
         }
+        cv::waitKey(100);
 
         vector_of_residuals.push_back(residuals);
     }
@@ -78,7 +80,7 @@ int main(int argc, char* argv[])
         plt::subplot(1, vector_of_residuals.size(), i + 1);
         plt::plot(vector_of_residuals.at(i));
     }
-    plt::show(false);
+    plt::show(true);
 
     std::cout << "\n"
               << math::se3::exp(xi) << "\n"

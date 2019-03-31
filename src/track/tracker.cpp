@@ -30,18 +30,19 @@ cv::Mat1f Tracker::track(const cv::Mat& depth_image, const cv::Mat& gray_image)
         if (m_config.is_chatty)
             std::cout << "\nLEVEL: " << level << " ROW: " << ROWS << " COL: " << COLS << std::endl;
 
+        Scene scene = {pre_frame, cur_frame, xi};
         for (int iteration = 0; iteration < 10; iteration++) {
             auto start = std::chrono::system_clock::now();
 
-            Scene scene = {pre_frame, cur_frame, xi};
             Outcome outcome = optimize(scene);
 
             cv::Mat1f updated_xi = math::se3::concatenate(xi, outcome.xi_update);
             if (math::testXi(updated_xi)) {
                 xi = updated_xi;
             } else {
-                std::cout << outcome.xi_update.t();
+                std::cout << "ERROR: invalid xi_udpate" << outcome.xi_update.t() << std::endl;
             }
+            scene.update(xi);
 
             auto dur = std::chrono::system_clock::now() - start;
             int count = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
@@ -49,10 +50,10 @@ cv::Mat1f Tracker::track(const cv::Mat& depth_image, const cv::Mat& gray_image)
                 std::cout << "itr: " << iteration
                           << " r: " << outcome.residual
                           << " upd: " << cv::norm(outcome.xi_update)
+                          << " rows : " << outcome.valid_pixels
                           << " time: " << count << std::endl;
 
-            const std::string name = "show";
-            scene.show(name);
+            scene.show("show");
             cv::waitKey(1);
 
             if (cv::norm(outcome.xi_update) < m_config.minimum_update
@@ -60,7 +61,6 @@ cv::Mat1f Tracker::track(const cv::Mat& depth_image, const cv::Mat& gray_image)
                 or count > 1000)
                 break;
         }
-        std::cout << " xi: " << xi.t() << std::endl;
     }
 
     m_pre_frames = std::move(m_cur_frames);

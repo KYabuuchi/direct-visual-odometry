@@ -26,12 +26,12 @@ int main(/*int argc, char* argv[]*/)
 
 
         cv::Mat1f T = tracker.track(depth_image, gray_image);
-        // std::cout << "\n"
-        //           << T << "\n"
-        //           << std::endl;
+        std::cout << "\n"
+                  << T << "\n"
+                  << std::endl;
 
         // wait
-        if (cv::waitKey(500) == 'q')
+        if (cv::waitKey(0) == 'q')
             break;
     }
 }

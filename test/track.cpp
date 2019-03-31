@@ -22,8 +22,8 @@ int main(int argc, char* argv[])
     cv::Mat gray_image1, gray_image2;
     loader.getMappedImages(num1, gray_image1, depth_image1);
     loader.getMappedImages(num2, gray_image2, depth_image2);
-    std::vector<Track::Frame> pre_frames = Track::Frame::createFramePyramid(depth_image1, gray_image1, Params::DEPTH().intrinsic, LEVEL);
-    std::vector<Track::Frame> cur_frames = Track::Frame::createFramePyramid(depth_image2, gray_image2, Params::DEPTH().intrinsic, LEVEL);
+    std::vector<Track::Scene> pre_frames = Track::Scene::createFramePyramid(depth_image1, gray_image1, Params::DEPTH().intrinsic, LEVEL);
+    std::vector<Track::Scene> cur_frames = Track::Scene::createFramePyramid(depth_image2, gray_image2, Params::DEPTH().intrinsic, LEVEL);
 
     // window
     const std::string window_name = "show";
@@ -35,26 +35,26 @@ int main(int argc, char* argv[])
 
     // iteration for pyramid
     for (int level = 0; level < LEVEL - 1; level++) {
-        const Track::Frame& pre_frame = pre_frames.at(level);
-        const Track::Frame& cur_frame = cur_frames.at(level);
-        const int COLS = pre_frame.cols;
-        const int ROWS = pre_frame.rows;
+        const Track::Scene& pre_scene = pre_frames.at(level);
+        const Track::Scene& cur_scene = cur_frames.at(level);
+        const int COLS = pre_scene.cols;
+        const int ROWS = pre_scene.rows;
         std::vector<float> residuals;
 
         std::cout << "\nLEVEL: " << level << " ROW: " << ROWS << " COL: " << COLS << std::endl;
 
-        Track::Scene scene = {pre_frame, cur_frame, xi};
+        Track::Stuff stuff = {pre_scene, cur_scene, xi};
 
         // iteration
         for (int iteration = 0; iteration < 15; iteration++) {
-            Track::Outcome outcome = Track::optimize(scene);
+            Track::Outcome outcome = Track::optimize(stuff);
 
             // update
             cv::Mat1f updated_xi = math::se3::concatenate(xi, outcome.xi_update);
             residuals.push_back(outcome.residual);
             if (math::testXi(updated_xi))
                 xi = updated_xi;
-            scene.update(xi);
+            stuff.update(xi);
 
             // show
             std::cout << "itr: " << iteration
@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
                       << " rows : " << outcome.valid_pixels
                       << " xi: " << xi.t() << std::endl;
 
-            scene.show(window_name);
+            stuff.show(window_name);
             cv::waitKey(10);
 
             if (cv::norm(outcome.xi_update) < 0.005 or outcome.residual < 0.005f)

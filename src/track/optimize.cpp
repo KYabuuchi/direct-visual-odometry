@@ -48,46 +48,46 @@ inline float huber(float n)
 }
 }  // namespace
 
-Outcome optimize(const Scene& scene)
+Outcome optimize(const Stuff& stuff)
 {
     float residual = 0;
 
     cv::Mat1f A(cv::Mat1f::zeros(0, 6));
     cv::Mat1f B(cv::Mat1f::zeros(0, 1));
 
-    for (int col = 0; col < scene.cols; col++) {
-        for (int row = 0; row < scene.rows; row++) {
+    for (int col = 0; col < stuff.cols; col++) {
+        for (int row = 0; row < stuff.rows; row++) {
             cv::Point2i x_i = cv::Point2i(col, row);
 
             // depth
-            float depth = at(scene.cur_depth, x_i);
+            float depth = at(stuff.cur_depth, x_i);
             if (depth < 0.50) {
                 continue;
             }
 
             // luminance
-            float I_1 = at(scene.pre_gray, x_i);
-            float I_2 = at(scene.warped_gray, x_i);
+            float I_1 = at(stuff.pre_gray, x_i);
+            float I_2 = at(stuff.warped_gray, x_i);
             if (Convert::isInvalid(I_1) or Convert::isInvalid(I_2)) {
                 continue;
             }
 
             // gradient
-            cv::Point2f warped_x_i = Transform::warp(-scene.xi, x_i, depth, scene.intrinsic);
-            if (warped_x_i.x < 0 or scene.cols <= warped_x_i.x
-                or warped_x_i.y < 0 or scene.rows <= warped_x_i.y)
+            cv::Point2f warped_x_i = Transform::warp(-stuff.xi, x_i, depth, stuff.intrinsic);
+            if (warped_x_i.x < 0 or stuff.cols <= warped_x_i.x
+                or warped_x_i.y < 0 or stuff.rows <= warped_x_i.y)
                 continue;
-            float gx = at(scene.grad_x, warped_x_i);
-            float gy = at(scene.grad_y, warped_x_i);
+            float gx = at(stuff.grad_x, warped_x_i);
+            float gy = at(stuff.grad_y, warped_x_i);
 
             if (Convert::isInvalid(gx) or Convert::isInvalid(gy)) {
                 continue;
             }
 
             // calc jacobian
-            cv::Point3f x_c = cv::Point3f(Transform::backProject(scene.intrinsic, Convert::toMat1f(x_i.x, x_i.y), depth));
+            cv::Point3f x_c = cv::Point3f(Transform::backProject(stuff.intrinsic, Convert::toMat1f(x_i.x, x_i.y), depth));
             float x = x_c.x, y = x_c.y, z = x_c.z;
-            float fx = scene.intrinsic(0, 0), fy = scene.intrinsic(1, 1);
+            float fx = stuff.intrinsic(0, 0), fy = stuff.intrinsic(1, 1);
             float fgx = fx * gx, fgy = fy * gy;
             cv::Mat1f jacobi = cv::Mat1f(cv::Mat1f::zeros(1, 6));
             jacobi(0) = fgx / z;

@@ -26,8 +26,8 @@ private:
     bool m_initialized;
 
     Config m_config;
-    std::vector<Frame> m_pre_frames;
-    std::vector<Frame> m_cur_frames;
+    std::vector<Scene> m_pre_scene;
+    std::vector<Scene> m_cur_scene;
 };
 
 

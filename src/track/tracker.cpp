@@ -9,30 +9,30 @@ namespace Track
 {
 cv::Mat1f Tracker::track(const cv::Mat& depth_image, const cv::Mat& gray_image)
 {
-    m_cur_frames = Frame::createFramePyramid(depth_image, gray_image, m_config.intrinsic, m_config.level);
+    m_cur_scene = Scene::createFramePyramid(depth_image, gray_image, m_config.intrinsic, m_config.level);
     cv::Mat1f xi = math::se3::xi();
 
     if (m_initialized == false) {
         m_initialized = true;
-        m_pre_frames = std::move(m_cur_frames);
+        m_pre_scene = std::move(m_cur_scene);
         return math::se3::exp(xi);
     }
 
     for (int level = 0; level < m_config.level - 1; level++) {
-        const Frame& pre_frame = m_pre_frames.at(level);
-        const Frame& cur_frame = m_cur_frames.at(level);
-        const int COLS = pre_frame.cols;
-        const int ROWS = pre_frame.rows;
+        const Scene& pre_scene = m_pre_scene.at(level);
+        const Scene& cur_scene = m_cur_scene.at(level);
+        const int COLS = pre_scene.cols;
+        const int ROWS = pre_scene.rows;
 
 
         if (m_config.is_chatty)
             std::cout << "\nLEVEL: " << level << " ROW: " << ROWS << " COL: " << COLS << std::endl;
 
-        Scene scene = {pre_frame, cur_frame, xi};
+        Stuff stuff = {pre_scene, cur_scene, xi};
         for (int iteration = 0; iteration < 10; iteration++) {
             auto start = std::chrono::system_clock::now();
 
-            Outcome outcome = optimize(scene);
+            Outcome outcome = optimize(stuff);
 
             cv::Mat1f updated_xi = math::se3::concatenate(xi, outcome.xi_update);
             if (math::testXi(updated_xi)) {
@@ -40,7 +40,7 @@ cv::Mat1f Tracker::track(const cv::Mat& depth_image, const cv::Mat& gray_image)
             } else {
                 std::cout << "ERROR: invalid xi_udpate" << outcome.xi_update.t() << std::endl;
             }
-            scene.update(xi);
+            stuff.update(xi);
 
             auto dur = std::chrono::system_clock::now() - start;
             int count = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
@@ -51,7 +51,7 @@ cv::Mat1f Tracker::track(const cv::Mat& depth_image, const cv::Mat& gray_image)
                           << " rows : " << outcome.valid_pixels
                           << " time: " << count << std::endl;
 
-            scene.show("show");
+            stuff.show("show");
             cv::waitKey(1);
 
             if (cv::norm(outcome.xi_update) < m_config.minimum_update
@@ -61,7 +61,7 @@ cv::Mat1f Tracker::track(const cv::Mat& depth_image, const cv::Mat& gray_image)
         }
     }
 
-    m_pre_frames = std::move(m_cur_frames);
+    m_pre_scene = std::move(m_cur_scene);
     return math::se3::exp(xi);
 }
 

@@ -6,12 +6,12 @@
 namespace Track
 {
 struct Outcome;
-struct Scene;
+struct Stuff;
 
-Outcome optimize(const Scene& scene);
+Outcome optimize(const Stuff& stuff);
 
-struct Frame {
-    Frame(cv::Mat depth_image, cv::Mat gray_image, cv::Mat1f intrinsic)
+struct Scene {
+    Scene(cv::Mat depth_image, cv::Mat gray_image, cv::Mat1f intrinsic)
         : depth(depth_image), gray(gray_image),
           intrinsic(intrinsic),
           cols(depth_image.cols), rows(depth_image.rows) {}
@@ -21,62 +21,45 @@ struct Frame {
     int cols;
     int rows;
 
-    static std::vector<Frame> createFramePyramid(
+    static std::vector<Scene> createFramePyramid(
         const cv::Mat& depth_image,
         const cv::Mat& gray_image,
         const cv::Mat1f& intrinsic,
         const int level)
     {
-        std::vector<Frame> frames;
-        Frame origin = Frame(depth_image, gray_image, intrinsic);
+        std::vector<Scene> frames;
+        Scene origin = Scene(depth_image, gray_image, intrinsic);
         for (int i = 0; i < level; i++) {
             frames.push_back(downscaleFrame(origin, level - i - 1));  // level-1 , ... , 1 , 0
         }
         return frames;
     }
 
-    static Frame downscaleFrame(const Frame& frame, int times = 1)
+    static Scene downscaleFrame(const Scene& frame, int times = 1)
     {
         if (times == 0)
-            return Frame(frame);
+            return Scene(frame);
         cv::Mat depth_image = Convert::cullImage(frame.depth, times);
         cv::Mat gray_image = Convert::cullImage(frame.gray, times);
         cv::Mat1f intrinsic = Convert::cullIntrinsic(frame.intrinsic, times);
-        return Frame(depth_image, gray_image, intrinsic);
+        return Scene(depth_image, gray_image, intrinsic);
     }
 };
 
-struct Scene {
-    Scene(
-        const Frame& pre_frame,
-        const Frame& cur_frame,
+struct Stuff {
+    Stuff(
+        const Scene& pre,
+        const Scene& cur,
         const cv::Mat1f& xi)
-        : pre_gray(pre_frame.gray),
-          pre_depth(pre_frame.depth),
-          cur_gray(cur_frame.gray),
-          cur_depth(cur_frame.depth),
-          grad_x(Convert::gradiate(cur_frame.gray, true)),
-          grad_y(Convert::gradiate(cur_frame.gray, false)),
-          warped_gray(Transform::warpImage(xi, cur_frame.gray, cur_frame.depth, cur_frame.intrinsic)),
-          xi(xi), intrinsic(cur_frame.intrinsic),
-          cols(cur_frame.cols), rows(cur_frame.rows) {}
-
-    Scene(
-        const cv::Mat& pre_gray,
-        const cv::Mat& pre_depth,
-        const cv::Mat& cur_gray,
-        const cv::Mat& cur_depth,
-        const cv::Mat1f& xi,
-        const cv::Mat1f& intrinsic)
-        : pre_gray(pre_gray),
-          pre_depth(pre_depth),
-          cur_gray(cur_gray),
-          cur_depth(cur_depth),
-          grad_x(Convert::gradiate(cur_gray, true)),
-          grad_y(Convert::gradiate(cur_gray, false)),
-          warped_gray(Transform::warpImage(xi, cur_gray, cur_depth, intrinsic)),
-          xi(xi), intrinsic(intrinsic),
-          cols(cur_gray.cols), rows(cur_gray.rows) {}
+        : pre_gray(pre.gray),
+          pre_depth(pre.depth),
+          cur_gray(cur.gray),
+          cur_depth(cur.depth),
+          grad_x(Convert::gradiate(cur.gray, true)),
+          grad_y(Convert::gradiate(cur.gray, false)),
+          warped_gray(Transform::warpImage(xi, cur.gray, cur.depth, cur.intrinsic)),
+          xi(xi), intrinsic(cur.intrinsic),
+          cols(cur.cols), rows(cur.rows) {}
 
     void update(const cv::Mat1f _xi)
     {

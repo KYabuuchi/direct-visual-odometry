@@ -110,5 +110,4 @@ struct Outcome {
     const int valid_pixels;
 };
 
-
 }  // namespace Track

@@ -2,6 +2,7 @@
 #include "core/transform.hpp"
 #include "system/frame.hpp"
 #include "track/optimize.hpp"
+#include <memory>
 
 namespace Track
 {
@@ -18,24 +19,23 @@ struct Config {
 class Tracker
 {
 public:
-    Tracker(const Config& config) : m_initialized(false), m_config(config) {}
+    Tracker(const Config& config) : m_config(config), m_initialized(false) {}
 
-    // T(4x4)[m]
+    cv::Mat1f track(
+        const std::shared_ptr<System::Frame> ref_frame,
+        const std::shared_ptr<System::Frame> cur_frame);
+
+    // NOTE: use only in tracking test
     cv::Mat1f track(const cv::Mat& gray_image, const cv::Mat& depth_image);
 
-    // T(4x4)[m]
-    cv::Mat1f track(const System::Frame& frame)
-    {
-        // TODO: sigmaの考慮
-        return track(frame.m_gray, frame.m_depth);
-    }
-
 private:
-    bool m_initialized;
-
     Config m_config;
-    std::vector<Scene> m_pre_scene;
-    std::vector<Scene> m_cur_scene;
+
+    // cache
+    std::vector<Scene> m_pre_scenes;
+
+    // NOTE: use only in tracking mode
+    bool m_initialized;
 };
 
 

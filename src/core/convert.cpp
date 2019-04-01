@@ -35,6 +35,9 @@ cv::Mat colorNormalize(const cv::Mat& color_image)
 cv::Mat cullImage(const cv::Mat& src_image, int times)
 {
     assert(src_image.type() == CV_32FC1);
+    if (times == 0)
+        return cv::Mat1f(src_image);
+
     int reduction = math::pow(2, times);
     cv::Mat1f culled_image(cv::Mat::zeros(src_image.size() / reduction, CV_32FC1));
     culled_image.forEach(

@@ -7,7 +7,7 @@
 
 namespace Track
 {
-cv::Mat1f Tracker::track(const cv::Mat& depth_image, const cv::Mat& gray_image)
+cv::Mat1f Tracker::track(const cv::Mat& gray_image, const cv::Mat& depth_image)
 {
     m_cur_scene = Scene::createFramePyramid(depth_image, gray_image, m_config.intrinsic, m_config.level);
     cv::Mat1f xi = math::se3::xi();

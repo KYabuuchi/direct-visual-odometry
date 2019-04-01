@@ -1,4 +1,4 @@
-// track::trackerのテスト
+// Track::tracker.track()のテスト
 #include "core/loader.hpp"
 #include "core/params.hpp"
 #include "track/tracker.hpp"
@@ -23,7 +23,7 @@ int main(/*int argc, char* argv[]*/)
         if (not success)
             break;
 
-        cv::Mat1f T = tracker.track(depth_image, gray_image);
+        cv::Mat1f T = tracker.track(gray_image, depth_image);
         std::cout << "\n"
                   << T << "\n"
                   << std::endl;

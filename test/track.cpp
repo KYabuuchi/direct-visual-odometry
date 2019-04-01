@@ -1,4 +1,4 @@
-// 相対姿勢の計算(重みなし)
+// Track::optimize()のテスト
 #include "core/loader.hpp"
 #include "core/math.hpp"
 #include "core/params.hpp"

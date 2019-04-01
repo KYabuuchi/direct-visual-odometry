@@ -1,5 +1,6 @@
 #pragma once
 #include "core/transform.hpp"
+#include "system/frame.hpp"
 #include "track/optimize.hpp"
 
 namespace Track
@@ -19,8 +20,15 @@ class Tracker
 public:
     Tracker(const Config& config) : m_initialized(false), m_config(config) {}
 
-    // T(4xx4)[m]を返す
-    cv::Mat1f track(const cv::Mat& depth_image, const cv::Mat& gray_image);
+    // T(4x4)[m]
+    cv::Mat1f track(const cv::Mat& gray_image, const cv::Mat& depth_image);
+
+    // T(4x4)[m]
+    cv::Mat1f track(const System::Frame& frame)
+    {
+        // TODO: sigmaの考慮
+        return track(frame.m_gray, frame.m_depth);
+    }
 
 private:
     bool m_initialized;

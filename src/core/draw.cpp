@@ -4,7 +4,7 @@
 namespace Draw
 {
 // 無効画素は赤色へ
-cv::Mat visiblizeGrayImage(const cv::Mat& src_image)
+cv::Mat visiblizeGray(const cv::Mat& src_image)
 {
     cv::Mat dst_image;
     src_image.convertTo(dst_image, CV_8UC1, 255);            // change value-depth
@@ -19,7 +19,7 @@ cv::Mat visiblizeGrayImage(const cv::Mat& src_image)
 }
 
 // 無効画素は赤色へ
-cv::Mat visiblizeDepthImage(const cv::Mat& src_image)
+cv::Mat visiblizeDepth(const cv::Mat& src_image)
 {
     cv::Mat dst_image;
     src_image.convertTo(dst_image, CV_8UC1, 100);            // change value-depth
@@ -34,7 +34,7 @@ cv::Mat visiblizeDepthImage(const cv::Mat& src_image)
 }
 
 // 無効画素は赤色へ
-cv::Mat visiblizeGradientImage(const cv::Mat& x_image, const cv::Mat& y_image)
+cv::Mat visiblizeGradient(const cv::Mat& x_image, const cv::Mat& y_image)
 {
     cv::Mat dst_image = cv::Mat::zeros(x_image.size(), CV_8UC3);
     cv::Mat normalized_x_image, normalized_y_image;
@@ -65,14 +65,14 @@ void showImage(const std::string& window_name, const cv::Mat1f& pre_gray, const 
     cv::Mat show_image;
 
     cv::hconcat(std::vector<cv::Mat>{
-                    Draw::visiblizeGrayImage(pre_gray),
-                    Draw::visiblizeGrayImage(warped_gray),
-                    Draw::visiblizeGrayImage(cur_gray)},
+                    Draw::visiblizeGray(pre_gray),
+                    Draw::visiblizeGray(warped_gray),
+                    Draw::visiblizeGray(cur_gray)},
         upper_image);
     cv::hconcat(std::vector<cv::Mat>{
-                    Draw::visiblizeDepthImage(pre_depth),
+                    Draw::visiblizeDepth(pre_depth),
                     cv::Mat::zeros(pre_depth.size(), CV_8UC3),
-                    Draw::visiblizeDepthImage(cur_depth),
+                    Draw::visiblizeDepth(cur_depth),
                 },
         under_image);
     cv::vconcat(upper_image, under_image, show_image);

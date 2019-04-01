@@ -29,7 +29,7 @@ int main()
         cv::Mat grad_y_image = Convert::gradiate(mapped_image, false);
 
         cv::Mat show_image;
-        cv::hconcat(Draw::visiblizeGrayImage(mapped_image), Draw::visiblizeGradientImage(grad_x_image, grad_y_image), show_image);
+        cv::hconcat(Draw::visiblizeGray(mapped_image), Draw::visiblizeGradient(grad_x_image, grad_y_image), show_image);
         cv::imshow("grad", show_image);
 
         num++;

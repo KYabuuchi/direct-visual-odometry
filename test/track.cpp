@@ -22,8 +22,8 @@ int main(int argc, char* argv[])
     cv::Mat gray_image1, gray_image2;
     loader.getMappedImages(num1, gray_image1, depth_image1);
     loader.getMappedImages(num2, gray_image2, depth_image2);
-    std::vector<std::shared_ptr<Track::Scene>> pre_frames = Track::Scene::createScenePyramid(depth_image1, gray_image1, Params::DEPTH().intrinsic, LEVEL);
-    std::vector<std::shared_ptr<Track::Scene>> cur_frames = Track::Scene::createScenePyramid(depth_image2, gray_image2, Params::DEPTH().intrinsic, LEVEL);
+    std::vector<std::shared_ptr<Track::Scene>> pre_frames = Track::Scene::createScenePyramid(gray_image1, depth_image1, Params::DEPTH().intrinsic, LEVEL);
+    std::vector<std::shared_ptr<Track::Scene>> cur_frames = Track::Scene::createScenePyramid(gray_image2, depth_image2, Params::DEPTH().intrinsic, LEVEL);
 
     // window
     const std::string window_name = "show";

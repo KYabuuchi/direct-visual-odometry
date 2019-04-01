@@ -11,13 +11,15 @@ cv::Mat1f Tracker::track(
     const std::shared_ptr<System::Frame> ref_frame,
     const std::shared_ptr<System::Frame> cur_frame)
 {
+    std::cout << "init" << std::endl;
     std::vector<std::shared_ptr<Scene>> cur_scenes = Scene::createScenePyramid(cur_frame, m_config.level);
 
+    std::cout << "init done" << std::endl;
     // 未初期化ならreturn
     if (m_initialized == false) {
         m_initialized = true;
         m_pre_scenes = cur_scenes;
-        return math::se3::T();
+        return math::se3::xi();
     }
 
     // cacheの利用
@@ -79,7 +81,7 @@ cv::Mat1f Tracker::track(
 
     m_pre_scenes = cur_scenes;
 
-    return math::se3::exp(xi);
+    return xi;
 }
 
 }  // namespace Track

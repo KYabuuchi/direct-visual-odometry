@@ -24,7 +24,7 @@ int main(/*int argc, char* argv[]*/)
             break;
 
         // odometrize
-        cv::Mat1f T = vo.odometrize(gray_image, depth_image);
+        cv::Mat1f T = vo.odometrizeUsingDepth(gray_image, depth_image);
         std::cout << "\n"
                   << T << "\n"
                   << std::endl;

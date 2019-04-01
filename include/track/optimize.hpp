@@ -48,6 +48,7 @@ public:
         return scenes;
     }
 
+    // Only use in test/track.cpp
     static std::vector<std::shared_ptr<Scene>> createScenePyramid(
         const cv::Mat& gray_image,
         const cv::Mat& depth_image,

@@ -1,7 +1,6 @@
-// Track::tracker.track()のテスト
 #include "core/loader.hpp"
 #include "core/params.hpp"
-#include "track/tracker.hpp"
+#include "system/system.hpp"
 
 int main(/*int argc, char* argv[]*/)
 {
@@ -14,7 +13,8 @@ int main(/*int argc, char* argv[]*/)
     cv::namedWindow(window_name, cv::WINDOW_NORMAL);
     cv::resizeWindow(window_name, 1280, 720);
 
-    Track::Tracker tracker({Params::DEPTH().intrinsic, 5, true, 0.005f, 0.005f});
+    // main system
+    System::VisualOdometry vo{System::Config{Track::Config{Params::DEPTH().intrinsic, 5, true, 0.005f, 0.005f}}};
 
     int num = 0;
     while (true) {
@@ -23,7 +23,8 @@ int main(/*int argc, char* argv[]*/)
         if (not success)
             break;
 
-        cv::Mat1f T = tracker.track(gray_image, depth_image);
+        // odometrize
+        cv::Mat1f T = vo.odometrize(gray_image, depth_image);
         std::cout << "\n"
                   << T << "\n"
                   << std::endl;

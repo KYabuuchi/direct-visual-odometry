@@ -25,16 +25,12 @@ public:
         const std::shared_ptr<System::Frame> ref_frame,
         const std::shared_ptr<System::Frame> cur_frame);
 
-    // NOTE: use only in tracking test
-    cv::Mat1f track(const cv::Mat& gray_image, const cv::Mat& depth_image);
-
 private:
     Config m_config;
 
     // cache
-    std::vector<Scene> m_pre_scenes;
+    std::vector<std::shared_ptr<Scene>> m_pre_scenes;
 
-    // NOTE: use only in tracking mode
     bool m_initialized;
 };
 

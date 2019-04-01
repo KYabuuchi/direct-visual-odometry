@@ -31,8 +31,8 @@ public:
 
 private:
     const Config m_config;
-    std::shared_ptr<Frame> m_pre_frame;
     std::shared_ptr<Track::Tracker> m_tracker;
     std::shared_ptr<Map::Mapper> m_mapper;
+    std::shared_ptr<Frame> m_pre_frame;
 };
 }  // namespace System

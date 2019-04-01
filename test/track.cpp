@@ -22,8 +22,8 @@ int main(int argc, char* argv[])
     cv::Mat gray_image1, gray_image2;
     loader.getMappedImages(num1, gray_image1, depth_image1);
     loader.getMappedImages(num2, gray_image2, depth_image2);
-    std::vector<Track::Scene> pre_frames = Track::Scene::createScenePyramid(depth_image1, gray_image1, Params::DEPTH().intrinsic, LEVEL);
-    std::vector<Track::Scene> cur_frames = Track::Scene::createScenePyramid(depth_image2, gray_image2, Params::DEPTH().intrinsic, LEVEL);
+    std::vector<std::shared_ptr<Track::Scene>> pre_frames = Track::Scene::createScenePyramid(depth_image1, gray_image1, Params::DEPTH().intrinsic, LEVEL);
+    std::vector<std::shared_ptr<Track::Scene>> cur_frames = Track::Scene::createScenePyramid(depth_image2, gray_image2, Params::DEPTH().intrinsic, LEVEL);
 
     // window
     const std::string window_name = "show";
@@ -35,10 +35,10 @@ int main(int argc, char* argv[])
 
     // iteration for pyramid
     for (int level = 0; level < LEVEL - 1; level++) {
-        Track::Scene& pre_scene = pre_frames.at(level);
-        Track::Scene& cur_scene = cur_frames.at(level);
-        const int COLS = pre_scene.cols;
-        const int ROWS = pre_scene.rows;
+        std::shared_ptr<Track::Scene> pre_scene = pre_frames.at(level);
+        std::shared_ptr<Track::Scene> cur_scene = cur_frames.at(level);
+        const int COLS = pre_scene->cols;
+        const int ROWS = pre_scene->rows;
         std::vector<float> residuals;
 
         std::cout << "\nLEVEL: " << level << " ROW: " << ROWS << " COL: " << COLS << std::endl;

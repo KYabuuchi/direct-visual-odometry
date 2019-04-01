@@ -3,32 +3,44 @@
 #include "core/draw.hpp"
 #include "core/transform.hpp"
 #include "system/frame.hpp"
+#include <memory>
 
 namespace Track
 {
 class Scene
 {
 public:
-    Scene(const System::Frame& frame)
-        : m_depth(frame.m_depth), m_gray(frame.m_gray),
-          m_intrinsic(frame.m_intrinsic),
-          cols(frame.cols), rows(frame.rows), id(frame.id) {}
+    Scene(const std::shared_ptr<System::Frame> frame)
+        : cols(frame->cols), rows(frame->rows), id(frame->id),
+          m_depth(frame->m_depth), m_gray(frame->m_gray),
+          m_intrinsic(frame->m_intrinsic) {}
 
-    // use only in tracking mode
     Scene(const cv::Mat& gray_image, const cv::Mat& depth_image, const cv::Mat1f& intrinsic, int id)
-        : m_depth(depth_image), m_gray(gray_image),
-          m_intrinsic(intrinsic),
-          cols(depth_image.cols), rows(depth_image.rows), id(-1) {}
+        : cols(depth_image.cols), rows(depth_image.rows), id(id),
+          m_depth(depth_image), m_gray(gray_image),
+          m_intrinsic(intrinsic) {}
+
+    // Copy
+    Scene(const Scene& scene)
+        : cols(scene.cols), rows(scene.rows), id(scene.id),
+          m_depth(scene.m_depth), m_gray(scene.m_gray),
+          m_intrinsic(scene.m_intrinsic)
+    {
+        if (not scene.m_grad_x.empty())
+            m_grad_x = scene.m_grad_x;
+        if (not scene.m_grad_y.empty())
+            m_grad_y = scene.m_grad_y;
+    }
 
     const int cols;
     const int rows;
     const int id;
 
-    static std::vector<Scene> createScenePyramid(
-        const System::Frame& frame,
+    static std::vector<std::shared_ptr<Scene>> createScenePyramid(
+        const std::shared_ptr<System::Frame> frame,
         const int level)
     {
-        std::vector<Scene> scenes;
+        std::vector<std::shared_ptr<Scene>> scenes;
         Scene origin = Scene(frame);
         for (int i = 0; i < level; i++) {
             scenes.push_back(downscaleScene(origin, level - i - 1));  // level-1 , ... , 1 , 0
@@ -36,13 +48,13 @@ public:
         return scenes;
     }
 
-    static std::vector<Scene> createScenePyramid(
+    static std::vector<std::shared_ptr<Scene>> createScenePyramid(
         const cv::Mat& gray_image,
         const cv::Mat& depth_image,
         const cv::Mat1f& intrinsic,
         const int level)
     {
-        std::vector<Scene> scenes;
+        std::vector<std::shared_ptr<Scene>> scenes;
         Scene origin = Scene(gray_image, depth_image, intrinsic, -1);
         for (int i = 0; i < level; i++) {
             scenes.push_back(downscaleScene(origin, level - i - 1));  // level-1 , ... , 1 , 0
@@ -73,28 +85,28 @@ private:
     cv::Mat1f m_grad_x;
     cv::Mat1f m_grad_y;
 
-    static Scene downscaleScene(const Scene& scene, int times = 1)
+    static std::shared_ptr<Scene> downscaleScene(const Scene& scene, int times = 1)
     {
         if (times == 0)
-            return Scene(scene);
+            return std::make_shared<Scene>(scene);
         cv::Mat depth_image = Convert::cullImage(scene.depth(), times);
         cv::Mat gray_image = Convert::cullImage(scene.gray(), times);
         cv::Mat1f intrinsic = Convert::cullIntrinsic(scene.intrinsic(), times);
-        return Scene(gray_image, depth_image, intrinsic, scene.id);
+        return std::make_shared<Scene>(gray_image, depth_image, intrinsic, scene.id);
     }
 };
 
 struct Stuff {
     Stuff(
-        Scene& pre,
-        Scene& cur,
+        std::shared_ptr<Scene> pre,
+        std::shared_ptr<Scene> cur,
         const cv::Mat1f& xi)
-        : pre_gray(pre.gray()), pre_depth(pre.depth()),
-          cur_gray(cur.gray()), cur_depth(cur.depth()),
-          grad_x(cur.gradX()), grad_y(cur.gradY()),
-          warped_gray(Transform::warpImage(xi, cur.gray(), cur.depth(), cur.intrinsic())),
-          xi(xi), intrinsic(cur.intrinsic()),
-          cols(cur.cols), rows(cur.rows) {}
+        : pre_gray(pre->gray()), pre_depth(pre->depth()),
+          cur_gray(cur->gray()), cur_depth(cur->depth()),
+          grad_x(cur->gradX()), grad_y(cur->gradY()),
+          warped_gray(Transform::warpImage(xi, cur->gray(), cur->depth(), cur->intrinsic())),
+          xi(xi), intrinsic(cur->intrinsic()),
+          cols(cur->cols), rows(cur->rows) {}
 
     void update(const cv::Mat1f _xi)
     {

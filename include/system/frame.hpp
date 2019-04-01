@@ -19,8 +19,8 @@ public:
           m_depth(Convert::cullImage(depth_image, times)),
           m_sigma(cv::Mat::ones(gray_image.size(), CV_32FC1) * INITIAL_SIGMA),
           m_age(cv::Mat::zeros(gray_image.size(), CV_32FC1)),
-          id(++latest_id), cols(gray_image.cols), rows(gray_image.rows),
-          m_intrinsic(intrinsic) {}
+          m_intrinsic(intrinsic),
+          id(++latest_id), cols(gray_image.cols), rows(gray_image.rows) {}
 
     // copy constructor
     Frame(const Frame& frame)
@@ -28,8 +28,8 @@ public:
           m_depth(frame.m_depth),
           m_sigma(frame.m_sigma),
           m_age(frame.m_age),
-          id(frame.id), cols(frame.cols), rows(frame.rows),
-          m_intrinsic(frame.m_intrinsic) {}
+          m_intrinsic(frame.m_intrinsic),
+          id(frame.id), cols(frame.cols), rows(frame.rows) {}
 
     // TODO: 深度->逆深度
     // 輝度・深度・標準偏差・寿命

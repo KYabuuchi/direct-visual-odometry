@@ -61,13 +61,13 @@ cv::Mat1f Tracker::track(
             stuff.update(xi);
 
             auto dur = std::chrono::system_clock::now() - start;
-            int count = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+            long count = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
             if (m_config.is_chatty)
                 std::cout << "itr: " << iteration
                           << " r: " << outcome.residual
                           << " upd: " << cv::norm(outcome.xi_update)
                           << " rows : " << outcome.valid_pixels
-                          << " time: " << count << std::endl;
+                          << " time: " << count << " ms" << std::endl;
 
             stuff.show("show");
             cv::waitKey(1);

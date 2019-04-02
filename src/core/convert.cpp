@@ -6,6 +6,11 @@
 namespace Convert
 {
 
+cv::Mat1f toMat1f(int x, int y)
+{
+    return cv::Mat1f(2, 1) << x, y;
+}
+
 cv::Mat1f toMat1f(float x, float y)
 {
     return cv::Mat1f(2, 1) << x, y;
@@ -50,7 +55,7 @@ cv::Mat cullImage(const cv::Mat& src_image, int times)
 
 cv::Mat1f cullIntrinsic(const cv::Mat1f& intrinsic, int times)
 {
-    cv::Mat1f K = intrinsic / math::pow(2, times);
+    cv::Mat1f K = cv::Mat1f(intrinsic / math::pow(2, times));
     K(2, 2) = 1;
     return K;
 }

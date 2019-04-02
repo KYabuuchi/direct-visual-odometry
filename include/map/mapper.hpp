@@ -12,8 +12,8 @@ public:
     Mapper() {}
 
     void Estimate(
-        std::vector<std::shared_ptr<Frame>> frame_history,
-        std::shared_ptr<Frame> new_frame)
+        std::vector<std::shared_ptr<Frame>> /*frame_history*/,
+        std::shared_ptr<Frame> /*new_frame*/)
     {
         // bool flag= insertHistory(new_frame);
         // if(flag)

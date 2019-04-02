@@ -8,6 +8,7 @@ constexpr float INVALID = -2.0f;
 inline bool isValid(float num) { return INVALID < num; }
 inline bool isInvalid(float num) { return num <= INVALID; }
 
+cv::Mat1f toMat1f(int x, int y);
 cv::Mat1f toMat1f(float x, float y);
 cv::Mat1f toMat1f(float x, float y, float z);
 

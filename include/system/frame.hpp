@@ -62,11 +62,30 @@ public:
     std::shared_ptr<Frame> m_ref_frame;
 };
 
-
 class FrameHistory
 {
 public:
-private:
+    FrameHistory() {}
+
+    void reduceHistory(int remain)
+    {
+        if (remain < m_history.size())
+            m_history.erase(m_history.begin() + remain, m_history.end());
+        else
+            std::cout << " invalid remains" << std::endl;
+    }
+    void setRefFrame(std::shared_ptr<Frame> frame) { m_history.push_back(frame); }
+
+    std::shared_ptr<Frame> getRefFrame()
+    {
+        if (m_history.empty())
+            return nullptr;
+        return m_history.at(0);
+    }
+
+    size_t size() { m_history.size(); }
+
+    std::vector<std::shared_ptr<Frame>> m_history;
 };
 
 }  // namespace System

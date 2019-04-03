@@ -53,9 +53,9 @@ int main()
         // 画像描画
         cv::Mat show_image;
         cv::hconcat(std::vector<cv::Mat>{
-                        Draw::visiblizeGray(gray_image),
-                        Draw::visiblizeGray(warped_gray_image),
-                        Draw::visiblizeGray(distorted_warped_gray_image)},
+                        Draw::visualizeGray(gray_image),
+                        Draw::visualizeGray(warped_gray_image),
+                        Draw::visualizeGray(distorted_warped_gray_image)},
             show_image);
         cv::imshow("warp", show_image);
 

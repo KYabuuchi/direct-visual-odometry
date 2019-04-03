@@ -30,7 +30,7 @@ public:
         frame->update_xi(relative_xi, m_ref_frame);
 
         // Mapping
-        m_mapper->Estimate(m_history, frame);
+        m_mapper->estimate(m_history, frame);
 
         return math::se3::exp(relative_xi);
     }

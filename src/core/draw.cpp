@@ -4,7 +4,8 @@
 namespace Draw
 {
 // 無効画素は赤色へ
-cv::Mat visiblizeGray(const cv::Mat& src_image)
+
+cv::Mat visualizeGray(const cv::Mat1f& src_image)
 {
     cv::Mat dst_image;
     src_image.convertTo(dst_image, CV_8UC1, 255);            // change value-depth
@@ -18,23 +19,49 @@ cv::Mat visiblizeGray(const cv::Mat& src_image)
     return dst_image;
 }
 
-// 無効画素は赤色へ
-cv::Mat visiblizeDepth(const cv::Mat& src_image)
+cv::Mat visualizeDepth(const cv::Mat1f& src_image)
 {
     cv::Mat dst_image;
-    src_image.convertTo(dst_image, CV_8UC1, 100);            // change value-depth
-    cv::cvtColor(dst_image, dst_image, cv::COLOR_GRAY2BGR);  // change number of channel
+    src_image.convertTo(dst_image, CV_8UC1, 100);
+    cv::cvtColor(dst_image, dst_image, cv::COLOR_GRAY2BGR);
+    cv::cvtColor(dst_image, dst_image, cv::COLOR_BGR2HSV);
     dst_image.forEach<cv::Vec3b>(
         [&](cv::Vec3b& p, const int* position) -> void {
-            if (src_image.at<float>(position[0], position[1]) > -2)
-                return;
+            unsigned char tmp = 0;
+            p[0] = static_cast<unsigned char>(p[2] * 90.0 / 255);  // H in [0,179]
+            p[1] = 255;
             p[2] = 255;
         });
+    cv::cvtColor(dst_image, dst_image, cv::COLOR_HSV2BGR);
     return dst_image;
 }
 
-// 無効画素は赤色へ
-cv::Mat visiblizeGradient(const cv::Mat& x_image, const cv::Mat& y_image)
+cv::Mat visualizeDepth(const cv::Mat1f& src_image, const cv::Mat1f& sigma)
+{
+    cv::Mat dst_image;
+    src_image.convertTo(dst_image, CV_8UC1, 100);
+    cv::cvtColor(dst_image, dst_image, cv::COLOR_GRAY2BGR);
+    cv::cvtColor(dst_image, dst_image, cv::COLOR_BGR2HSV);
+    dst_image.forEach<cv::Vec3b>(
+        [&](cv::Vec3b& p, const int* pt) -> void {
+            unsigned char tmp = 0;
+            p[0] = static_cast<unsigned char>(p[2] * 90.0 / 255);  // H in [0,179]
+            p[1] = 255;
+            p[2] = -200 * sigma(pt[0], pt[1]) + 255;
+        });
+    cv::cvtColor(dst_image, dst_image, cv::COLOR_HSV2BGR);
+    return dst_image;
+}
+
+cv::Mat visualizeSigma(const cv::Mat1f& src_image)
+{
+    cv::Mat dst_image;
+    src_image.convertTo(dst_image, CV_8UC1, -200, 255);
+    cv::cvtColor(dst_image, dst_image, cv::COLOR_GRAY2BGR);
+    return dst_image;
+}
+
+cv::Mat visualizeGradient(const cv::Mat1f& x_image, const cv::Mat1f& y_image)
 {
     cv::Mat dst_image = cv::Mat::zeros(x_image.size(), CV_8UC3);
     cv::Mat normalized_x_image, normalized_y_image;
@@ -65,14 +92,14 @@ void showImage(const std::string& window_name, const cv::Mat1f& pre_gray, const 
     cv::Mat show_image;
 
     cv::hconcat(std::vector<cv::Mat>{
-                    Draw::visiblizeGray(pre_gray),
-                    Draw::visiblizeGray(warped_gray),
-                    Draw::visiblizeGray(cur_gray)},
+                    Draw::visualizeGray(pre_gray),
+                    Draw::visualizeGray(warped_gray),
+                    Draw::visualizeGray(cur_gray)},
         upper_image);
     cv::hconcat(std::vector<cv::Mat>{
-                    Draw::visiblizeDepth(pre_depth),
+                    Draw::visualizeDepth(pre_depth),
                     cv::Mat::zeros(pre_depth.size(), CV_8UC3),
-                    Draw::visiblizeDepth(cur_depth),
+                    Draw::visualizeDepth(cur_depth),
                 },
         under_image);
     cv::vconcat(upper_image, under_image, show_image);

@@ -7,7 +7,13 @@ namespace math
 constexpr float EPSILON = 1e-6f;
 
 template <typename T>
-inline int pow(T base, int exponent)
+inline T square(T num)
+{
+    return num * num;
+}
+
+template <typename T>
+inline T pow(T base, int exponent)
 {
     assert(exponent >= 0);
     if (exponent == 0)

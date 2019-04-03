@@ -103,32 +103,34 @@ private:
 
 struct Stuff {
     Stuff(
-        std::shared_ptr<Scene> pre,
-        std::shared_ptr<Scene> cur,
+        std::shared_ptr<Scene> now,
+        std::shared_ptr<Scene> ref,
         const cv::Mat1f& xi)
-        : pre_gray(pre->gray()), pre_depth(pre->depth()), pre_sigma(pre->sigma()),
-          cur_gray(cur->gray()), cur_depth(cur->depth()),
-          grad_x(cur->gradX()), grad_y(cur->gradY()),
-          warped_gray(Transform::warpImage(xi, cur->gray(), cur->depth(), cur->intrinsic())),
-          xi(xi), intrinsic(cur->intrinsic()),
-          cols(cur->cols), rows(cur->rows) {}
+        : now_gray(now->gray()), now_depth(now->depth()), ref_sigma(ref->sigma()),
+          ref_gray(ref->gray()), ref_depth(ref->depth()),
+          grad_x(ref->gradX()), grad_y(ref->gradY()),
+          warped_gray(Transform::warpImage(xi, ref->gray(), ref->depth(), ref->intrinsic())),
+          xi(xi), intrinsic(ref->intrinsic()),
+          cols(ref->cols), rows(ref->rows) {}
 
     void update(const cv::Mat1f _xi)
     {
         xi = _xi;
-        warped_gray = Transform::warpImage(xi, cur_gray, cur_depth, intrinsic);
+        warped_gray = Transform::warpImage(xi, ref_gray, ref_depth, intrinsic);
     }
 
     void show(const std::string& window_name) const
     {
-        Draw::showImage(window_name, pre_gray, pre_depth, warped_gray, cur_gray, cur_depth, pre_sigma);
+        Draw::showImage(window_name,
+            Draw::visualizeGray(now_gray), Draw::visualizeGray(warped_gray), Draw::visualizeGray(ref_gray),
+            Draw::visualizeDepth(ref_depth,ref_sigma), Draw::visualizeSigma(ref_sigma), Draw::visualizeGradient(grad_x, grad_y));
     }
 
-    const cv::Mat1f pre_gray;
-    const cv::Mat1f pre_depth;
-    const cv::Mat1f pre_sigma;
-    const cv::Mat1f cur_gray;
-    const cv::Mat1f cur_depth;
+    const cv::Mat1f now_gray;
+    const cv::Mat1f now_depth;
+    const cv::Mat1f ref_sigma;
+    const cv::Mat1f ref_gray;
+    const cv::Mat1f ref_depth;
     const cv::Mat1f grad_x;
     const cv::Mat1f grad_y;
     cv::Mat1f warped_gray;

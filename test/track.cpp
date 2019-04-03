@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
 
         std::cout << "\nLEVEL: " << level << " ROW: " << ROWS << " COL: " << COLS << std::endl;
 
-        Track::Stuff stuff = {pre_scene, cur_scene, xi};
+        Track::Stuff stuff = {cur_scene, pre_scene, xi};
 
         // iteration
         for (int iteration = 0; iteration < 15; iteration++) {

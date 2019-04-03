@@ -36,15 +36,15 @@ cv::Mat1f Tracker::track(
 
     cv::Mat1f xi = math::se3::xi();
     for (int level = 0; level < m_config.level - 1; level++) {
-        std::shared_ptr<Scene> pre_scene = ref_scenes.at(level);
+        std::shared_ptr<Scene> ref_scene = ref_scenes.at(level);
         std::shared_ptr<Scene> cur_scene = cur_scenes.at(level);
-        const int COLS = pre_scene->cols;
-        const int ROWS = pre_scene->rows;
+        const int COLS = ref_scene->cols;
+        const int ROWS = ref_scene->rows;
 
         if (m_config.is_chatty)
             std::cout << "\nLEVEL: " << level << " ROW: " << ROWS << " COL: " << COLS << std::endl;
 
-        Stuff stuff = {pre_scene, cur_scene, xi};
+        Stuff stuff = {cur_scene, ref_scene, xi};
         for (int iteration = 0; iteration < 10; iteration++) {
             auto start = std::chrono::system_clock::now();
 

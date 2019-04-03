@@ -83,23 +83,22 @@ cv::Mat visualizeGradient(const cv::Mat1f& x_image, const cv::Mat1f& y_image)
     return dst_image;
 }
 
-// window名,画像x5
-void showImage(const std::string& window_name, const cv::Mat1f& pre_gray, const cv::Mat1f& pre_depth,
-    const cv::Mat1f& warped_gray, const cv::Mat1f& cur_gray, const cv::Mat1f& cur_depth, const cv::Mat1f& pre_sigma)
+void showImage(const std::string& window_name,
+    const cv::Mat& ref_gray, const cv::Mat& warped_gray, const cv::Mat& cur_gray,
+    const cv::Mat& ref_depth, const cv::Mat& ref_sigma, const cv::Mat& ref_grad)
 {
     cv::Mat upper_image, under_image;
     cv::Mat show_image;
 
     cv::hconcat(std::vector<cv::Mat>{
-                    Draw::visualizeGray(pre_gray),
-                    Draw::visualizeGray(warped_gray),
-                    Draw::visualizeGray(cur_gray)},
+                    ref_gray,
+                    warped_gray,
+                    cur_gray},
         upper_image);
     cv::hconcat(std::vector<cv::Mat>{
-                    Draw::visualizeDepth(pre_depth, pre_sigma),
-                    Draw::visualizeSigma(pre_sigma),
-                    Draw::visualizeDepth(cur_depth),
-                },
+                    ref_depth,
+                    ref_sigma,
+                    ref_grad},
         under_image);
     cv::vconcat(upper_image, under_image, show_image);
     cv::imshow(window_name, show_image);

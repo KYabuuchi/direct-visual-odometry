@@ -60,13 +60,13 @@ Outcome optimize(const Stuff& stuff)
             cv::Point2i x_i = cv::Point2i(col, row);
 
             // depth
-            float depth = at(stuff.cur_depth, x_i);
+            float depth = at(stuff.ref_depth, x_i);
             if (depth < 0.50) {
                 continue;
             }
 
             // luminance
-            float I_1 = at(stuff.pre_gray, x_i);
+            float I_1 = at(stuff.now_gray, x_i);
             float I_2 = at(stuff.warped_gray, x_i);
             if (math::isInvalid(I_1) or math::isInvalid(I_2)) {
                 continue;
@@ -77,7 +77,7 @@ Outcome optimize(const Stuff& stuff)
             if (warped_x_i.x < 0 or stuff.cols <= warped_x_i.x
                 or warped_x_i.y < 0 or stuff.rows <= warped_x_i.y)
                 continue;
-            // TODO: 補完
+
             float gx = at(stuff.grad_x, warped_x_i);
             float gy = at(stuff.grad_y, warped_x_i);
 

@@ -37,9 +37,8 @@ cv::Mat colorNormalize(const cv::Mat& color_image)
     return tmp_image;
 }
 
-cv::Mat cullImage(const cv::Mat& src_image, int times)
+cv::Mat1f cullImage(const cv::Mat1f& src_image, int times)
 {
-    assert(src_image.type() == CV_32FC1);
     if (times == 0)
         return cv::Mat1f(src_image);
 
@@ -72,54 +71,52 @@ cv::Mat1f inversePose(const cv::Mat1f& T)
 
 cv::Mat1f gradiate(const cv::Mat1f& gray_image, bool x)
 {
-    assert(gray_image.type() == CV_32FC1);
-
+    using namespace math;
     cv::Size size = gray_image.size();
-    cv::Mat gradiate_image = cv::Mat(gray_image.size(), CV_32FC1, INVALID);
+    cv::Mat1f gradiate_image(cv::Mat1f::zeros(size));
 
     if (x) {
-        gradiate_image.forEach<float>(
-            [=](float& p, const int position[2]) -> void {
-                if (position[1] - 1 <= -1 or position[1] + 1 >= size.width)
+        gradiate_image.forEach(
+            [=](float& p, const int pt[2]) -> void {
+                if (pt[1] - 1 <= -1 or pt[1] + 1 >= size.width)
                     return;
 
-                float x0 = gray_image.at<float>(position[0], position[1] - 1);
-                float x1 = gray_image.at<float>(position[0], position[1] + 1);
-                if (x0 < 0 or x1 < 0)
+                float x0 = gray_image(pt[0], pt[1] - 1);
+                float x1 = gray_image(pt[0], pt[1] + 1);
+
+                if (isInvalid(x0) or isInvalid(x1))
                     return;
                 p = x1 - x0;
             });
     } else {
-        gradiate_image.forEach<float>(
-            [=](float& p, const int position[2]) -> void {
-                if (position[0] - 1 <= -1 or position[0] + 1 >= size.height)
+        gradiate_image.forEach(
+            [=](float& p, const int pt[2]) -> void {
+                if (pt[0] - 1 <= -1 or pt[0] + 1 >= size.height)
                     return;
 
-                float y0 = gray_image.at<float>(position[0] - 1, position[1]);
-                float y1 = gray_image.at<float>(position[0] + 1, position[1]);
-                if (y0 < 0 or y1 < 0)
+                float y0 = gray_image(pt[0] - 1, pt[1]);
+                float y1 = gray_image(pt[0] + 1, pt[1]);
+                if (isInvalid(y0) or isInvalid(y1))
                     return;
-
                 p = y1 - y0;
             });
     }
     return gradiate_image;
 }
 
-// 画素を計算(欠けていたらINVALID)
 float getColorSubpix(const cv::Mat1f& img, cv::Point2f pt)
 {
-    assert(img.type() == CV_32FC1);
+    using namespace math;
 
     int x = (int)pt.x;
     int y = (int)pt.y;
     if (x < 0 || x + 1 >= img.size().width || y < 0 || y + 1 >= img.size().height)
-        return INVALID;
+        return math::INVALID;
 
-    int x0 = x;      // cv::borderInterpolate(x, img.cols, cv::BORDER_REFLECT_101);
-    int x1 = x + 1;  // cv::borderInterpolate(x + 1, img.cols, cv::BORDER_REFLECT_101);
-    int y0 = y;      // cv::borderInterpolate(y, img.rows, cv::BORDER_REFLECT_101);
-    int y1 = y + 1;  // cv::borderInterpolate(y + 1, img.rows, cv::BORDER_REFLECT_101);
+    int x0 = x;
+    int x1 = x + 1;
+    int y0 = y;
+    int y1 = y + 1;
 
     float a = pt.x - (float)x;
     float c = pt.y - (float)y;
@@ -129,13 +126,11 @@ float getColorSubpix(const cv::Mat1f& img, cv::Point2f pt)
     float v10 = img(y1, x0);
     float v11 = img(y1, x1);
 
-
-    if (isValid(v00) and isValid(v01) and isValid(v10) and isValid(v11)) {
+    if (isValid(v00) and isValid(v01) and isValid(v10) and isValid(v11))
         return (v00 * (1.f - a) + v01 * a) * (1.f - c)
                + (v10 * (1.f - a) + v11 * a) * c;
-    }
 
-    return INVALID;
+    return math::INVALID;
 }
 
 }  // namespace Convert

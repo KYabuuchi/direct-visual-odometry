@@ -5,6 +5,10 @@
 namespace math
 {
 constexpr float EPSILON = 1e-6f;
+constexpr float INVALID = -2.0f;
+
+inline bool isValid(float num) { return INVALID < num; }
+inline bool isInvalid(float num) { return num <= INVALID; }
 
 template <typename T>
 inline T square(T num)
@@ -40,8 +44,17 @@ inline bool testXi(const cv::Mat1f& xi)
     return true;
 }
 
+inline bool inRange(cv::Point2i pt, cv::Size size)
+{
+    if (pt.x < 0 || size.width <= pt.x)
+        return false;
+    if (pt.y < 0 || size.height <= pt.y)
+        return false;
+    return true;
+}
+
 template <typename T>
-inline bool isRange(T num, T min, T max)
+inline bool inRange(T num, T min, T max)
 {
     if (num < min)
         return false;

@@ -1,5 +1,6 @@
 #pragma once
 #include "calibration/params_struct.hpp"
+#include "core/math.hpp"
 #include "core/params.hpp"
 #include "core/transform.hpp"
 #include <iostream>
@@ -64,57 +65,56 @@ public:
         ifs.close();
     }
 
-    // 変形除歪画像を取得
-    bool getMappedImages(size_t num, cv::Mat& mapped_image, cv::Mat& depth_image)
+    // 変形除歪画像を取得 CV_32FC1,CV_32FC1
+    bool getMappedImages(size_t num, cv::Mat1f& mapped_image, cv::Mat1f& depth_image, cv::Mat1f& sigma_image)
     {
-        cv::Mat rgb_image;
+        cv::Mat1f rgb_image;
         if (not getNormalizedUndistortedImages(num, rgb_image, depth_image))
             return false;
 
-        mapped_image = Transform::mapDepthtoGray(depth_image, rgb_image);
+        std::pair<cv::Mat1f, cv::Mat1f> pair = Transform::mapDepthtoGray(depth_image, rgb_image);
+        mapped_image = pair.first;
+        sigma_image = pair.second;
         return true;
     }
 
-    // 変形画像を取得(歪あり)
-    bool getMappedDistortedImages(size_t num, cv::Mat& mapped_image, cv::Mat& depth_image)
+    // 変形画像を取得(歪あり) CV_32FC1,CV_32FC1
+    bool getMappedDistortedImages(size_t num, cv::Mat1f& mapped_image, cv::Mat1f& depth_image, cv::Mat1f& sigma_image)
     {
-        cv::Mat rgb_image;
+        cv::Mat1f rgb_image;
         if (not getNormalizedImages(num, rgb_image, depth_image))
             return false;
 
-        mapped_image = Transform::mapDepthtoGray(depth_image, rgb_image);
+        std::pair<cv::Mat1f, cv::Mat1f> pair = Transform::mapDepthtoGray(depth_image, rgb_image);
+        mapped_image = pair.first;
+        sigma_image = pair.second;
         return true;
     }
 
-    // 正規除歪画像を取得
-    bool getNormalizedUndistortedImages(size_t num, cv::Mat& rgb_image, cv::Mat& depth_image)
+
+    // 正規除歪画像を取得 CV_32FC1,CV_32FC1
+    bool getNormalizedUndistortedImages(size_t num, cv::Mat1f& rgb_image, cv::Mat1f& depth_image)
     {
-        if (not getUndistortedImages(num, rgb_image, depth_image))
+        cv::Mat1f normalized_rgb_image;
+        cv::Mat1f normalized_depth_image;
+        if (not getNormalizedImages(num, normalized_rgb_image, normalized_depth_image))
             return false;
 
-        cv::cvtColor(rgb_image, rgb_image, cv::COLOR_BGR2GRAY);
-        rgb_image.convertTo(rgb_image, CV_32FC1, 1.0 / 255.0);       // 0~1
-        depth_image.convertTo(depth_image, CV_32FC1, 1.0 / 5000.0);  // [m]
+        if (not m_map_initialized)
+            createUndistortionMap();
+
+        cv::remap(normalized_rgb_image, rgb_image, m_rgb_map.at(0), m_rgb_map.at(1), 0, 0, math::INVALID);
+        cv::remap(normalized_depth_image, depth_image, m_depth_map.at(0), m_depth_map.at(1), 0, 0, 0);
+
+        rgb_image = normalized_rgb_image;
+        depth_image = normalized_depth_image;
         return true;
     }
 
-    // 正規画像を取得
-    bool getNormalizedImages(size_t num, cv::Mat& rgb_image, cv::Mat& depth_image)
-    {
-        if (not getRowImages(num, rgb_image, depth_image))
-            return false;
-
-        cv::cvtColor(rgb_image, rgb_image, cv::COLOR_BGR2GRAY);
-        rgb_image.convertTo(rgb_image, CV_32FC1, 1.0 / 255.0);       // 0~1
-        depth_image.convertTo(depth_image, CV_32FC1, 1.0 / 5000.0);  // [m]
-        return true;
-    }
-
-
-    // 除歪画像を取得
+    // 除歪画像 CV_8UC3,CV_16UC1
     bool getUndistortedImages(size_t num, cv::Mat& rgb_image, cv::Mat& depth_image)
     {
-        if (not getRowImages(num, rgb_image, depth_image))
+        if (not getRawImages(num, rgb_image, depth_image))
             return false;
 
         if (not m_map_initialized)
@@ -122,16 +122,29 @@ public:
 
         cv::Mat undistorted_rgb_image;
         cv::Mat undistorted_depth_image;
-        cv::remap(rgb_image, undistorted_rgb_image, m_rgb_map.at(0), m_rgb_map.at(1), 0);
-        cv::remap(depth_image, undistorted_depth_image, m_depth_map.at(0), m_depth_map.at(1), 0);
+        cv::remap(rgb_image, undistorted_rgb_image, m_rgb_map.at(0), m_rgb_map.at(1), 0, 0, math::INVALID);
+        cv::remap(depth_image, undistorted_depth_image, m_depth_map.at(0), m_depth_map.at(1), 0, 0, 0);
 
         rgb_image = undistorted_rgb_image;
         depth_image = undistorted_depth_image;
         return true;
     }
 
-    // 生画像を取得
-    bool getRowImages(size_t num, cv::Mat& rgb_image, cv::Mat& depth_image)
+    // 正規画像 CV_32FC1,CV_32FC1
+    bool getNormalizedImages(size_t num, cv::Mat1f& normalized_rgb_image, cv::Mat1f& normalized_depth_image)
+    {
+        cv::Mat rgb_image, depth_image;
+        if (not getRawImages(num, rgb_image, depth_image))
+            return false;
+
+        cv::cvtColor(rgb_image, rgb_image, cv::COLOR_BGR2GRAY);
+        rgb_image.convertTo(normalized_rgb_image, CV_32FC1, 1.0 / 255.0);       // 0~1
+        depth_image.convertTo(normalized_depth_image, CV_32FC1, 1.0 / 5000.0);  // [m]
+        return true;
+    }
+
+    // 生画像 CV_8UC3,CV_16UC1
+    bool getRawImages(size_t num, cv::Mat& rgb_image, cv::Mat& depth_image)
     {
         if (num >= m_file_paths1.size()) {
             std::cout << "[ERROR] can not open " << num << std::endl;

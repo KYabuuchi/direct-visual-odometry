@@ -9,7 +9,7 @@ constexpr int LEVEL = 5;
 int main(int argc, char* argv[])
 {
     // argumentation
-    int num1 = 8, num2 = 10;
+    int num1 = 9, num2 = 10;
     if (argc == 2)
         num1 = std::atoi(argv[1]) + 10;
     std::cout << num1 << " " << num2 << std::endl;
@@ -18,12 +18,12 @@ int main(int argc, char* argv[])
     // loading
     Loader loader("../data/KINECT_50MM/info.txt");
     Params::init("../camera-calibration/data/kinectv2_00/config.yaml");
-    cv::Mat depth_image1, depth_image2;
-    cv::Mat gray_image1, gray_image2;
-    loader.getMappedImages(num1, gray_image1, depth_image1);
-    loader.getMappedImages(num2, gray_image2, depth_image2);
-    std::vector<std::shared_ptr<Track::Scene>> pre_frames = Track::Scene::createScenePyramid(gray_image1, depth_image1, Params::DEPTH().intrinsic, LEVEL);
-    std::vector<std::shared_ptr<Track::Scene>> cur_frames = Track::Scene::createScenePyramid(gray_image2, depth_image2, Params::DEPTH().intrinsic, LEVEL);
+    cv::Mat1f gray_image1, depth_image1, sigma_image1;
+    cv::Mat1f gray_image2, depth_image2, sigma_image2;
+    loader.getMappedImages(num1, gray_image1, depth_image1, sigma_image1);
+    loader.getMappedImages(num2, gray_image2, depth_image2, sigma_image2);
+    std::vector<std::shared_ptr<Track::Scene>> pre_frames = Track::Scene::createScenePyramid(gray_image1, depth_image1, sigma_image1, Params::DEPTH().intrinsic, LEVEL);
+    std::vector<std::shared_ptr<Track::Scene>> cur_frames = Track::Scene::createScenePyramid(gray_image2, depth_image2, sigma_image2, Params::DEPTH().intrinsic, LEVEL);
 
     // window
     const std::string window_name = "show";
@@ -75,12 +75,12 @@ int main(int argc, char* argv[])
     }
 
     // plot residuals
-    namespace plt = matplotlibcpp;
-    for (size_t i = 0; i < vector_of_residuals.size(); i++) {
-        plt::subplot(1, vector_of_residuals.size(), i + 1);
-        plt::plot(vector_of_residuals.at(i));
-    }
-    plt::show(true);
+    // namespace plt = matplotlibcpp;
+    // for (size_t i = 0; i < vector_of_residuals.size(); i++) {
+    //     plt::subplot(1, vector_of_residuals.size(), i + 1);
+    //     plt::plot(vector_of_residuals.at(i));
+    // }
+    // plt::show(true);
 
     std::cout << "\n"
               << math::se3::exp(xi) << "\n"

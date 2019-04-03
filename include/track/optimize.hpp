@@ -12,12 +12,12 @@ class Scene
 public:
     Scene(const std::shared_ptr<System::Frame> frame)
         : cols(frame->cols), rows(frame->rows), id(frame->id),
-          m_depth(frame->m_depth), m_gray(frame->m_gray),
+          m_depth(frame->m_depth), m_gray(frame->m_gray), m_sigma(frame->m_sigma),
           m_intrinsic(frame->m_intrinsic) {}
 
-    Scene(const cv::Mat& gray_image, const cv::Mat& depth_image, const cv::Mat1f& intrinsic, int id)
+    Scene(const cv::Mat& gray_image, const cv::Mat& depth_image, const cv::Mat& sigma_image, const cv::Mat1f& intrinsic, int id)
         : cols(depth_image.cols), rows(depth_image.rows), id(id),
-          m_depth(depth_image), m_gray(gray_image),
+          m_depth(depth_image), m_gray(gray_image), m_sigma(sigma_image),
           m_intrinsic(intrinsic) {}
 
     // Copy
@@ -50,13 +50,14 @@ public:
 
     // Only use in test/track.cpp
     static std::vector<std::shared_ptr<Scene>> createScenePyramid(
-        const cv::Mat& gray_image,
-        const cv::Mat& depth_image,
+        const cv::Mat1f& gray_image,
+        const cv::Mat1f& depth_image,
+        const cv::Mat1f& sigma_image,
         const cv::Mat1f& intrinsic,
         const int level)
     {
         std::vector<std::shared_ptr<Scene>> scenes;
-        Scene origin = Scene(gray_image, depth_image, intrinsic, -1);
+        Scene origin = Scene(gray_image, depth_image, sigma_image, intrinsic, -1);
         for (int i = 0; i < level; i++) {
             scenes.push_back(downscaleScene(origin, level - i - 1));  // level-1 , ... , 1 , 0
         }
@@ -65,6 +66,7 @@ public:
 
     cv::Mat1f depth() const { return m_depth; }
     cv::Mat1f gray() const { return m_gray; }
+    cv::Mat1f sigma() const { return m_sigma; }
     cv::Mat1f intrinsic() const { return m_intrinsic; }
     cv::Mat1f gradX()
     {
@@ -82,6 +84,7 @@ public:
 private:
     cv::Mat1f m_depth;
     cv::Mat1f m_gray;
+    cv::Mat1f m_sigma;
     cv::Mat1f m_intrinsic;
     cv::Mat1f m_grad_x;
     cv::Mat1f m_grad_y;
@@ -92,8 +95,9 @@ private:
             return std::make_shared<Scene>(scene);
         cv::Mat depth_image = Convert::cullImage(scene.depth(), times);
         cv::Mat gray_image = Convert::cullImage(scene.gray(), times);
+        cv::Mat sigma_image = Convert::cullImage(scene.sigma(), times);
         cv::Mat1f intrinsic = Convert::cullIntrinsic(scene.intrinsic(), times);
-        return std::make_shared<Scene>(gray_image, depth_image, intrinsic, scene.id);
+        return std::make_shared<Scene>(gray_image, depth_image, sigma_image, intrinsic, scene.id);
     }
 };
 
@@ -102,7 +106,7 @@ struct Stuff {
         std::shared_ptr<Scene> pre,
         std::shared_ptr<Scene> cur,
         const cv::Mat1f& xi)
-        : pre_gray(pre->gray()), pre_depth(pre->depth()),
+        : pre_gray(pre->gray()), pre_depth(pre->depth()), pre_sigma(pre->sigma()),
           cur_gray(cur->gray()), cur_depth(cur->depth()),
           grad_x(cur->gradX()), grad_y(cur->gradY()),
           warped_gray(Transform::warpImage(xi, cur->gray(), cur->depth(), cur->intrinsic())),
@@ -117,16 +121,17 @@ struct Stuff {
 
     void show(const std::string& window_name) const
     {
-        Draw::showImage(window_name, pre_gray, pre_depth, warped_gray, cur_gray, cur_depth);
+        Draw::showImage(window_name, pre_gray, pre_depth, warped_gray, cur_gray, cur_depth, pre_sigma);
     }
 
-    const cv::Mat pre_gray;
-    const cv::Mat pre_depth;
-    const cv::Mat cur_gray;
-    const cv::Mat cur_depth;
-    const cv::Mat grad_x;
-    const cv::Mat grad_y;
-    cv::Mat warped_gray;
+    const cv::Mat1f pre_gray;
+    const cv::Mat1f pre_depth;
+    const cv::Mat1f pre_sigma;
+    const cv::Mat1f cur_gray;
+    const cv::Mat1f cur_depth;
+    const cv::Mat1f grad_x;
+    const cv::Mat1f grad_y;
+    cv::Mat1f warped_gray;
     cv::Mat1f xi;
     const cv::Mat1f intrinsic;
     const int cols;

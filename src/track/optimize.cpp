@@ -68,7 +68,7 @@ Outcome optimize(const Stuff& stuff)
             // luminance
             float I_1 = at(stuff.pre_gray, x_i);
             float I_2 = at(stuff.warped_gray, x_i);
-            if (Convert::isInvalid(I_1) or Convert::isInvalid(I_2)) {
+            if (math::isInvalid(I_1) or math::isInvalid(I_2)) {
                 continue;
             }
 
@@ -81,7 +81,7 @@ Outcome optimize(const Stuff& stuff)
             float gx = at(stuff.grad_x, warped_x_i);
             float gy = at(stuff.grad_y, warped_x_i);
 
-            if (Convert::isInvalid(gx) or Convert::isInvalid(gy)) {
+            if (math::isInvalid(gx) or math::isInvalid(gy)) {
                 continue;
             }
 

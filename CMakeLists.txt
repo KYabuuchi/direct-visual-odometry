@@ -62,17 +62,17 @@ add_library(vo-core STATIC ${SOURCES})
 
 # cmake-format: off
 # =============================
-# add_executable(test-se3 test/se3.cpp)
-# target_link_libraries(test-se3 ${OpenCV_LIBS} vo-core)
+add_executable(test-se3 test/se3.cpp)
+target_link_libraries(test-se3 ${OpenCV_LIBS} vo-core)
 # #
 add_executable(test-warp test/warp.cpp)
 target_link_libraries(test-warp ${OpenCV_LIBS} vo-core)
 # #
-# add_executable(test-load test/load.cpp )
-# target_link_libraries(test-load ${OpenCV_LIBS} vo-core)
-# #
-# add_executable(test-gradient test/gradient.cpp)
-# target_link_libraries(test-gradient ${OpenCV_LIBS} vo-core)
+add_executable(test-load test/load.cpp )
+target_link_libraries(test-load ${OpenCV_LIBS} vo-core)
+#
+add_executable(test-gradient test/gradient.cpp)
+target_link_libraries(test-gradient ${OpenCV_LIBS} vo-core)
 #
 add_executable(test-track test/track.cpp)
 target_link_libraries(test-track ${OpenCV_LIBS} ${PYTHON_LIBRARIES} vo-core)
@@ -83,9 +83,5 @@ target_link_libraries(test-seq ${OpenCV_LIBS} vo-core)
 #
 add_executable(test-regularize test/regularize.cpp)
 target_link_libraries(test-regularize ${OpenCV_LIBS} vo-core)
-#
-# add_executable(main main.cpp)
-# target_link_libraries(main ${OpenCV_LIBS} vo-core)
-#
 # =============================
 # cmake-format: on

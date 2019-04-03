@@ -18,18 +18,20 @@ int main()
 
     int num = 0;
     while (true) {
-        cv::Mat rgb_image, depth_image;
-        bool flag = image_loader.getNormalizedUndistortedImages(num, rgb_image, depth_image);
+        cv::Mat1f gray_image, depth_image, sigma_image;
+        bool flag = image_loader.getMappedImages(num, gray_image, depth_image, sigma_image);
         if (flag == false)
             return 0;
 
         // map Depth->Color
-        cv::Mat mapped_image = Transform::mapDepthtoGray(depth_image, rgb_image);
-        cv::Mat grad_x_image = Convert::gradiate(mapped_image, true);
-        cv::Mat grad_y_image = Convert::gradiate(mapped_image, false);
+        cv::Mat1f grad_x_image = Convert::gradiate(gray_image, true);
+        cv::Mat1f grad_y_image = Convert::gradiate(gray_image, false);
 
         cv::Mat show_image;
-        cv::hconcat(Draw::visiblizeGray(mapped_image), Draw::visiblizeGradient(grad_x_image, grad_y_image), show_image);
+        cv::hconcat(
+            Draw::visualizeGray(gray_image),
+            Draw::visualizeGradient(grad_x_image, grad_y_image),
+            show_image);
         cv::imshow("grad", show_image);
 
         num++;

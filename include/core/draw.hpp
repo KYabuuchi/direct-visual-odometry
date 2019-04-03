@@ -20,6 +20,6 @@ cv::Mat visualizeSigma(const cv::Mat1f& src_image);
 
 // window名,画像x5
 void showImage(const std::string& window_name, const cv::Mat1f& pre_gray, const cv::Mat1f& pre_depth,
-    const cv::Mat1f& warped_gray, const cv::Mat1f& cur_gray, const cv::Mat1f& cur_depth);
+    const cv::Mat1f& warped_gray, const cv::Mat1f& cur_gray, const cv::Mat1f& cur_depth, const cv::Mat1f& pre_sigma);
 
 }  // namespace Draw

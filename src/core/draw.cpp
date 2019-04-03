@@ -1,5 +1,6 @@
 #include "core/draw.hpp"
 #include "core/convert.hpp"
+#include "core/math.hpp"
 
 namespace Draw
 {
@@ -11,10 +12,10 @@ cv::Mat visualizeGray(const cv::Mat1f& src_image)
     src_image.convertTo(dst_image, CV_8UC1, 255);            // change value-depth
     cv::cvtColor(dst_image, dst_image, cv::COLOR_GRAY2BGR);  // change number of channel
     dst_image.forEach<cv::Vec3b>(
-        [&](cv::Vec3b& p, const int* position) -> void {
-            if (src_image.at<float>(position[0], position[1]) > -2)
+        [&](cv::Vec3b& p, const int* pt) -> void {
+            if (math::isValid(src_image(pt[0], pt[1])))
                 return;
-            p[2] = 255;
+            p[0] = 255;
         });
     return dst_image;
 }
@@ -26,8 +27,7 @@ cv::Mat visualizeDepth(const cv::Mat1f& src_image)
     cv::cvtColor(dst_image, dst_image, cv::COLOR_GRAY2BGR);
     cv::cvtColor(dst_image, dst_image, cv::COLOR_BGR2HSV);
     dst_image.forEach<cv::Vec3b>(
-        [&](cv::Vec3b& p, const int* position) -> void {
-            unsigned char tmp = 0;
+        [&](cv::Vec3b& p, const int*) -> void {
             p[0] = static_cast<unsigned char>(p[2] * 90.0 / 255);  // H in [0,179]
             p[1] = 255;
             p[2] = 255;
@@ -44,10 +44,9 @@ cv::Mat visualizeDepth(const cv::Mat1f& src_image, const cv::Mat1f& sigma)
     cv::cvtColor(dst_image, dst_image, cv::COLOR_BGR2HSV);
     dst_image.forEach<cv::Vec3b>(
         [&](cv::Vec3b& p, const int* pt) -> void {
-            unsigned char tmp = 0;
             p[0] = static_cast<unsigned char>(p[2] * 90.0 / 255);  // H in [0,179]
             p[1] = 255;
-            p[2] = -200 * sigma(pt[0], pt[1]) + 255;
+            p[2] = static_cast<unsigned char>(-200 * sigma(pt[0], pt[1]) + 255);
         });
     cv::cvtColor(dst_image, dst_image, cv::COLOR_HSV2BGR);
     return dst_image;
@@ -86,7 +85,7 @@ cv::Mat visualizeGradient(const cv::Mat1f& x_image, const cv::Mat1f& y_image)
 
 // window名,画像x5
 void showImage(const std::string& window_name, const cv::Mat1f& pre_gray, const cv::Mat1f& pre_depth,
-    const cv::Mat1f& warped_gray, const cv::Mat1f& cur_gray, const cv::Mat1f& cur_depth)
+    const cv::Mat1f& warped_gray, const cv::Mat1f& cur_gray, const cv::Mat1f& cur_depth, const cv::Mat1f& pre_sigma)
 {
     cv::Mat upper_image, under_image;
     cv::Mat show_image;
@@ -97,8 +96,8 @@ void showImage(const std::string& window_name, const cv::Mat1f& pre_gray, const 
                     Draw::visualizeGray(cur_gray)},
         upper_image);
     cv::hconcat(std::vector<cv::Mat>{
-                    Draw::visualizeDepth(pre_depth),
-                    cv::Mat::zeros(pre_depth.size(), CV_8UC3),
+                    Draw::visualizeDepth(pre_depth, pre_sigma),
+                    Draw::visualizeSigma(pre_sigma),
                     Draw::visualizeDepth(cur_depth),
                 },
         under_image);

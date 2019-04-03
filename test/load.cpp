@@ -20,16 +20,15 @@ int main()
     while (true) {
         cv::Mat rgb_image, depth_image;
         cv::Mat undistorted_rgb_image, undistorted_depth_image;
-        bool flag1 = image_loader.getNormalizedUndistortedImages(num, undistorted_rgb_image, undistorted_depth_image);
-        bool flag2 = image_loader.getNormalizedImages(num, rgb_image, depth_image);
+        bool flag1 = image_loader.getUndistortedImages(num, undistorted_rgb_image, undistorted_depth_image);
+        bool flag2 = image_loader.getRawImages(num, rgb_image, depth_image);
         if (flag1 == false or flag2 == false) {
             return 0;
         }
+        std::cout << "RETURN" << std::endl;
 
         cv::vconcat(rgb_image, undistorted_rgb_image, undistorted_rgb_image);
         cv::vconcat(depth_image, undistorted_depth_image, undistorted_depth_image);
-        undistorted_rgb_image.convertTo(undistorted_rgb_image, CV_8UC1, 255);
-        undistorted_depth_image.convertTo(undistorted_depth_image, CV_8UC1, 100);
         cv::imshow("rgb", undistorted_rgb_image);
         cv::imshow("depth", undistorted_depth_image);
 

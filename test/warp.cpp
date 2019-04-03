@@ -22,12 +22,12 @@ int main()
     }
 
     // load
-    cv::Mat gray_image, depth_image;
-    cv::Mat distorted_gray_image, distorted_depth_image;
+    cv::Mat1f gray_image, depth_image, sigma_image;
+    cv::Mat1f distorted_gray_image, distorted_depth_image, distorted_sigma_image;
     Loader loader("../data/KINECT_1DEG/info.txt");
     Params::init("../camera-calibration/data/kinectv2_00/config.yaml");
-    loader.getMappedImages(0, gray_image, depth_image);
-    loader.getMappedDistortedImages(0, distorted_gray_image, distorted_depth_image);
+    loader.getMappedImages(0, gray_image, depth_image, sigma_image);
+    loader.getMappedDistortedImages(0, distorted_gray_image, distorted_depth_image, distorted_sigma_image);
     cv::Mat1f intrinsic = Params::DEPTH().intrinsic;
 
     // cull to 1/2^(N+1)

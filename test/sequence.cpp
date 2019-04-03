@@ -18,13 +18,13 @@ int main(/*int argc, char* argv[]*/)
 
     int num = 0;
     while (true) {
-        cv::Mat depth_image, gray_image;
-        bool success = loader.getMappedImages(num++, gray_image, depth_image);
+        cv::Mat1f depth_image, gray_image, sigma_image;
+        bool success = loader.getMappedImages(num++, gray_image, depth_image, sigma_image);
         if (not success)
             break;
 
         // odometrize
-        cv::Mat1f T = vo.odometrizeUsingDepth(gray_image, depth_image);
+        cv::Mat1f T = vo.odometrizeUsingDepth(gray_image, depth_image, sigma_image);
         std::cout << "\n"
                   << T << "\n"
                   << std::endl;

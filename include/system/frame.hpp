@@ -7,15 +7,22 @@ namespace System
 {
 namespace
 {
-const float INITIAL_SIGMA = 100.0f;
+const float INITIAL_SIGMA = 0.01f;
 }
 
 class Frame
 {
 public:
-    // NOTE: sigmaとageは適当
-    Frame(const cv::Mat1f& gray_image, const cv::Mat1f& depth_image,
-        const cv::Mat1f& intrinsic, const int times)
+    Frame(const cv::Mat1f& gray_image, const cv::Mat1f& depth_image, const cv::Mat1f& sigma_image, const cv::Mat1f& intrinsic, const int times)
+        : id(++latest_id), cols(gray_image.cols), rows(gray_image.rows),
+          m_gray(Convert::cullImage(gray_image, times)),
+          m_depth(Convert::cullImage(depth_image, times)),
+          m_sigma(Convert::cullImage(sigma_image, times)),
+          m_age(cv::Mat::zeros(gray_image.size(), CV_32FC1)),
+          m_intrinsic(intrinsic),
+          m_xi(math::se3::xi()), m_relative_xi(math::se3::xi()), m_ref_frame(nullptr) {}
+
+    Frame(const cv::Mat1f& gray_image, const cv::Mat1f& depth_image, const cv::Mat1f& intrinsic, const int times)
         : id(++latest_id), cols(gray_image.cols), rows(gray_image.rows),
           m_gray(Convert::cullImage(gray_image, times)),
           m_depth(Convert::cullImage(depth_image, times)),
@@ -67,7 +74,7 @@ class FrameHistory
 public:
     FrameHistory() {}
 
-    void reduceHistory(int remain)
+    void reduceHistory(size_t remain)
     {
         if (remain < m_history.size())
             m_history.erase(m_history.begin() + remain, m_history.end());
@@ -83,7 +90,7 @@ public:
         return m_history.at(0);
     }
 
-    size_t size() { m_history.size(); }
+    size_t size() { return m_history.size(); }
 
     std::vector<std::shared_ptr<Frame>> m_history;
 };

@@ -18,7 +18,7 @@ int main(/*int argc, char* argv[]*/)
 
     while (true) {
         cv::Mat1f depth_image, gray_image, sigma_image;
-        bool success = loader.getMappedImages(0, gray_image, depth_image);
+        bool success = loader.getMappedImages(0, gray_image, depth_image, sigma_image);
         if (not success)
             break;
 

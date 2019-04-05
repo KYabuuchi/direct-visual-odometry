@@ -44,6 +44,17 @@ inline bool testXi(const cv::Mat1f& xi)
     return true;
 }
 
+inline std::function<bool(cv::Point2i)> generateInRange(cv::Size size)
+{
+    return [=](cv::Point2i pt) -> bool {
+        if (pt.x < 0 || size.width <= pt.x)
+            return false;
+        if (pt.y < 0 || size.height <= pt.y)
+            return false;
+        return true;
+    };
+}
+
 inline bool inRange(cv::Point2i pt, cv::Size size)
 {
     if (pt.x < 0 || size.width <= pt.x)

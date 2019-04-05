@@ -83,6 +83,15 @@ cv::Mat visualizeGradient(const cv::Mat1f& x_image, const cv::Mat1f& y_image)
     return dst_image;
 }
 
+cv::Mat visualizeAge(const cv::Mat1f& src_image)
+{
+    cv::Mat dst_image;
+    src_image.convertTo(dst_image, CV_8UC1, 20);
+    cv::cvtColor(dst_image, dst_image, cv::COLOR_GRAY2BGR);
+    return dst_image;
+}
+
+
 void showImage(const std::string& window_name,
     const cv::Mat& ref_gray, const cv::Mat& warped_gray, const cv::Mat& cur_gray,
     const cv::Mat& ref_depth, const cv::Mat& ref_sigma, const cv::Mat& ref_grad)

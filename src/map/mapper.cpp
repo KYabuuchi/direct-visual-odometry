@@ -5,7 +5,7 @@
 namespace Map
 {
 
-void Mapper::estimate(FrameHistory frame_history, pFrame frame)
+void Mapper::estimate(FrameHistory& frame_history, pFrame frame)
 {
     if (frame_history.size() == 0) {
         initializeHistory(frame_history, frame);
@@ -130,8 +130,7 @@ float Mapper::sigmaEstimate(
     if (m_config.is_chatty)
         std::cout << "sigmaEstimate" << std::endl;
 
-    const float lambda = cv::norm(es.start - es.end);
-    const float alpha = (es.max - es.min) / lambda;
+    const float alpha = (es.max - es.min) / es.length;
 
     float gx = ref_grad_x(ref_x_i), gy = ref_grad_y(ref_x_i);
     float lx = (es.start - es.end).x, ly = (es.start - es.end).y;
@@ -144,8 +143,39 @@ float Mapper::sigmaEstimate(
     float epipolar = m_config.epipolar_variance / gl2;
     float luminance = 2 * m_config.luminance_variance / g2;
 
-    return  math::square(alpha) * (epipolar + luminance);
+    return math::square(alpha) * (epipolar + luminance);
 }
 
+cv::Point2f Mapper::doMatching(const cv::Mat1f& ref_gray, const float gray, const EpipolarSegment& es)
+{
+    cv::Point2f pt = es.start;
+    cv::Point2f dir = (es.start - es.end) / es.length;
+
+    cv::Point2f best_pt = pt;
+    const int N = 3;
+    float min_ssd = N;  // たかだかN
+
+    while (cv::norm(pt - es.start) < es.length) {
+        float ssd = 0;
+        pt += dir;
+
+        // TODO: 1/Nにできるはず
+        for (int i = 0; i < N; i++) {
+            float subpixel_gray = Convert::getColorSubpix(ref_gray, pt + (i - N / 2) * dir);
+            if (math::isInvalid(subpixel_gray)) {
+                std::cout << "invalid in doMatching" << std::endl;
+            }
+            float diff = subpixel_gray - gray;
+            ssd += math::square(diff);
+        }
+
+        if (ssd < min_ssd) {
+            best_pt = pt;
+            min_ssd = ssd;
+        }
+    }
+
+    return best_pt;
+}
 
 }  // namespace Map

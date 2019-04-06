@@ -1,5 +1,6 @@
 #pragma once
 #include "core/math.hpp"
+#include "core/transform.hpp"
 #include "system/frame.hpp"
 #include <memory>
 
@@ -44,14 +45,14 @@ class Mapper
 public:
     Mapper(const Config& config) : m_config(config) {}
 
-    void estimate(FrameHistory frame_history, pFrame frame);
+    void estimate(FrameHistory& frame_history, pFrame frame);
 
     // 十分移動したか否かを判定
     bool needNewFrame(pFrame frame);
 
     // 分散を適切に設定する
     void initializeHistory(const cv::Mat1f& depth, cv::Mat1f& sigma);
-    void initializeHistory(FrameHistory frame_history, pFrame frame)
+    void initializeHistory(FrameHistory& frame_history, pFrame frame)
     {
         initializeHistory(frame->m_depth, frame->m_sigma);
         frame_history.setRefFrame(frame);
@@ -59,7 +60,7 @@ public:
 
     // ====Propagate====
     // ref_frameをframeへ移す
-    void propagate(FrameHistory frame_history, pFrame frame)
+    void propagate(FrameHistory& frame_history, pFrame frame)
     {
         if (m_config.is_chatty)
             std::cout << "propagate" << std::endl;
@@ -82,9 +83,9 @@ public:
 
     // ====Update====
     // 深度・分散を更新
-    void update(FrameHistory frame_history, pFrame frame);
+    void update(FrameHistory& frame_history, pFrame frame);
     // 該当する画素を探索する
-    cv::Point2f doMatching(const cv::Mat1f ref_gray, float gray, const EpipolarSegment& es);
+    cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float gray, const EpipolarSegment& es);
     // 深度を推定
     float depthEstimate(
         const cv::Mat1f& ref_x_i,
@@ -101,7 +102,7 @@ public:
     // ====Regularize====
     // 深度を拡散
     void regularize(cv::Mat1f& depth, const cv::Mat1f& sigma);
-    void regularize(FrameHistory frame_history)
+    void regularize(FrameHistory& frame_history)
     {
         pFrame frame = frame_history.getRefFrame();
         regularize(frame->m_depth, frame->m_sigma);
@@ -140,16 +141,18 @@ private:
             const float min)
             : min(min), max(max),
               start(Transform::warp(xi, x_i, max, K)),
-              end(Transform::warp(xi, x_i, min, K)) {}
+              end(Transform::warp(xi, x_i, min, K)),
+              length(cv::norm(start - end)) {}
 
         // copy constractor
         EpipolarSegment(const EpipolarSegment& es)
-            : min(es.min), max(es.max), start(es.start), end(es.end) {}
+            : min(es.min), max(es.max), start(es.start), end(es.end), length(es.length) {}
 
         const float min;
         const float max;
         const cv::Point2f start;
         const cv::Point2f end;
+        const float length;
     };
 };
 }  // namespace Map

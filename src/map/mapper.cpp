@@ -38,7 +38,7 @@ void Mapper::initializeHistory(const cv::Mat1f& depth, cv::Mat1f& sigma)
             if (depth(p[0], p[1]) > 0.01f) {
                 s = 0.01f;  // 10[mm]
             } else {
-                s = m_config.initial_sigma;  // 1[m]
+                s = m_config.initial_sigma;
             }
         });
 }
@@ -58,10 +58,7 @@ void Mapper::propagate(
 
     ref_depth.forEach(
         [&](float& rd, const int pt[2]) -> void {
-            // cv::Point2i x_i(col, row);
             cv::Point2i x_i(pt[1], pt[0]);
-
-            // float rd = ref_depth(x_i);
             if (math::isEpsilon(rd))
                 return;
 

@@ -81,7 +81,7 @@ target_include_directories(test-track SYSTEM PRIVATE external/matplotlib-cpp ${P
 add_executable(test-seq test/sequence.cpp)
 target_link_libraries(test-seq ${OpenCV_LIBS} vo-core)
 #
-add_executable(test-regularize test/regularize.cpp)
-target_link_libraries(test-regularize ${OpenCV_LIBS} vo-core)
+add_executable(test-propagate test/propagate.cpp)
+target_link_libraries(test-propagate ${OpenCV_LIBS} vo-core)
 # =============================
 # cmake-format: on

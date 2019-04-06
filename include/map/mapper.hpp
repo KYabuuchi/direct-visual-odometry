@@ -8,7 +8,7 @@ namespace Map
 struct Config {
     const bool is_chatty = true;
     const float minimum_movement = 0.10f;  // [m]
-    const float predict_sigma = 0.05f;     // [m]
+    const float predict_sigma = 0.10f;     // [m]
     const float initial_sigma = 0.50f;     // [m]
 };
 

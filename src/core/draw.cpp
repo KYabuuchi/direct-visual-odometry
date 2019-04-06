@@ -46,7 +46,7 @@ cv::Mat visualizeDepth(const cv::Mat1f& src_image, const cv::Mat1f& sigma)
         [&](cv::Vec3b& p, const int* pt) -> void {
             p[0] = static_cast<unsigned char>(p[2] * 90.0 / 255);  // H in [0,179]
             p[1] = 255;
-            p[2] = static_cast<unsigned char>(-200 * sigma(pt[0], pt[1]) + 255);
+            p[2] = static_cast<unsigned char>(-500 * sigma(pt[0], pt[1]) + 255);
         });
     cv::cvtColor(dst_image, dst_image, cv::COLOR_HSV2BGR);
     return dst_image;
@@ -55,7 +55,7 @@ cv::Mat visualizeDepth(const cv::Mat1f& src_image, const cv::Mat1f& sigma)
 cv::Mat visualizeSigma(const cv::Mat1f& src_image)
 {
     cv::Mat dst_image;
-    src_image.convertTo(dst_image, CV_8UC1, -200, 255);
+    src_image.convertTo(dst_image, CV_8UC1, -500, 255);
     cv::cvtColor(dst_image, dst_image, cv::COLOR_GRAY2BGR);
     return dst_image;
 }

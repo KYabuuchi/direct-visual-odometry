@@ -1,19 +1,42 @@
 #pragma once
+#include "core/math.hpp"
 #include "system/frame.hpp"
 #include <memory>
 
 namespace Map
 {
-
 struct Config {
-    const bool is_chatty = true;
+    Config()
+        : is_chatty(true),
+          minimum_movement(0.10f),
+          predict_sigma(0.10f),
+          predict_variance(math::square(predict_sigma)),
+          initial_sigma(0.50f),
+          initial_variance(math::square(initial_sigma)),
+          luminance_sigma(1.00f),
+          luminance_variance(math::square(luminance_sigma)),
+          epipolar_sigma(2.00f),
+          epipolar_variance(math::square(epipolar_sigma)) {}
+
+    // NOTE: 宣言の順番に注意
+    const bool is_chatty;
     const float minimum_movement = 0.10f;  // [m]
     const float predict_sigma = 0.10f;     // [m]
     const float initial_sigma = 0.50f;     // [m]
+    const float luminance_sigma = 1.00f;   // [pixel]
+    const float epipolar_sigma = 2.00f;    // [pixel]
+
+    const float predict_variance;
+    const float initial_variance;
+    const float luminance_variance;
+    const float epipolar_variance;
 };
 
 class Mapper
 {
+    struct Gaussian;
+    struct EpipolarSegment;
+
     using Frame = System::Frame;
     using FrameHistory = System::FrameHistory;
     using pFrame = std::shared_ptr<System::Frame>;
@@ -21,21 +44,7 @@ class Mapper
 public:
     Mapper(const Config& config) : m_config(config) {}
 
-    void estimate(FrameHistory frame_history, pFrame frame)
-    {
-        if (frame_history.size() == 0) {
-            initializeHistory(frame_history, frame);
-        } else {
-
-
-            if (needNewFrame(frame)) {
-                propagate(frame_history, frame);
-            } else {
-                // update(frame_history, frame);
-            }
-        }
-        regularize(frame_history);
-    }
+    void estimate(FrameHistory frame_history, pFrame frame);
 
     // 十分移動したか否かを判定
     bool needNewFrame(pFrame frame);
@@ -48,12 +57,13 @@ public:
         frame_history.setRefFrame(frame);
     }
 
-    // ref_frameをframeで置き換える
+    // ====Propagate====
+    // ref_frameをframeへ移す
     void propagate(FrameHistory frame_history, pFrame frame)
     {
-        // copy
+        if (m_config.is_chatty)
+            std::cout << "propagate" << std::endl;
         const pFrame& ref = frame->m_ref_frame;
-
         propagate(
             ref->m_depth, ref->m_sigma, ref->m_age,
             frame->m_depth, frame->m_sigma, frame->m_age,
@@ -70,10 +80,25 @@ public:
         const cv::Mat1f& xi,
         const cv::Mat1f& intrinsic);
 
-
+    // ====Update====
     // 深度・分散を更新
-    // void update(FrameHistory frame_history, pFrame frame);
+    void update(FrameHistory frame_history, pFrame frame);
+    // 該当する画素を探索する
+    cv::Point2f doMatching(const cv::Mat1f ref_gray, float gray, const EpipolarSegment& es);
+    // 深度を推定
+    float depthEstimate(
+        const cv::Mat1f& ref_x_i,
+        const cv::Mat1f& obj_x_i,
+        const cv::Mat1f& K,
+        const cv::Mat1f& xi);
+    // 分散を推定
+    float sigmaEstimate(
+        const cv::Mat1f& ref_grad_x,
+        const cv::Mat1f& ref_grad_y,
+        const cv::Point2f& ref_x_i,
+        const EpipolarSegment& es);
 
+    // ====Regularize====
     // 深度を拡散
     void regularize(cv::Mat1f& depth, const cv::Mat1f& sigma);
     void regularize(FrameHistory frame_history)
@@ -84,5 +109,47 @@ public:
 
 private:
     const Config m_config;
+
+    struct Gaussian {
+        Gaussian(float depth, float sigma) : depth(depth), sigma(sigma) {}
+        float depth;
+        float sigma;
+
+        void operator()(float d, float s)
+        {
+            float v1 = math::square(sigma);
+            float v2 = math::square(s);
+            float v = v1 + v2;
+
+            // 期待値が離れすぎていたら反映しない
+            float diff = std::abs(d - depth);
+            if (diff > std::max(sigma, s))
+                return;
+
+            depth = (v2 * depth + v1 * d) / v;
+            sigma = (v1 * v2) / v;
+        }
+    };
+
+    struct EpipolarSegment {
+        EpipolarSegment(
+            const cv::Mat1f& xi,
+            const cv::Point2i& x_i,
+            const cv::Mat1f& K,
+            const float max,
+            const float min)
+            : min(min), max(max),
+              start(Transform::warp(xi, x_i, max, K)),
+              end(Transform::warp(xi, x_i, min, K)) {}
+
+        // copy constractor
+        EpipolarSegment(const EpipolarSegment& es)
+            : min(es.min), max(es.max), start(es.start), end(es.end) {}
+
+        const float min;
+        const float max;
+        const cv::Point2f start;
+        const cv::Point2f end;
+    };
 };
 }  // namespace Map

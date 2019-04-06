@@ -1,28 +1,24 @@
 #include "map/mapper.hpp"
 #include "core/transform.hpp"
+#include <cmath>
 
 namespace Map
 {
-struct Gaussian {
-    Gaussian(float depth, float sigma) : depth(depth), sigma(sigma) {}
-    float depth;
-    float sigma;
 
-    void multi(float d, float s)
-    {
-        float v1 = math::square(sigma);
-        float v2 = math::square(s);
-        float v = v1 + v2;
+void Mapper::estimate(FrameHistory frame_history, pFrame frame)
+{
+    if (frame_history.size() == 0) {
+        initializeHistory(frame_history, frame);
+    } else {
 
-        // 期待値が離れすぎていたら反映しない
-        float diff = std::abs(d - depth);
-        if (diff > std::max(sigma, s))
-            return;
-
-        depth = (v2 * depth + v1 * d) / v;
-        sigma = (v1 * v2) / v;
+        if (needNewFrame(frame)) {
+            propagate(frame_history, frame);
+        } else {
+            // update(frame_history, frame);
+        }
     }
-};
+    regularize(frame_history);
+}
 
 bool Mapper::needNewFrame(pFrame frame)
 {
@@ -33,10 +29,12 @@ bool Mapper::needNewFrame(pFrame frame)
 
 void Mapper::initializeHistory(const cv::Mat1f& depth, cv::Mat1f& sigma)
 {
+    if (m_config.is_chatty)
+        std::cout << "init History" << std::endl;
     sigma.forEach(
         [&](float& s, const int p[2]) -> void {
             if (depth(p[0], p[1]) > 0.01f) {
-                s = 0.01f;  // 10[mm]
+                s = 0.1f;  // accuracy of kinect
             } else {
                 s = m_config.initial_sigma;
             }
@@ -69,7 +67,7 @@ void Mapper::propagate(
                 s = m_config.initial_sigma;
             else
                 s = std::sqrt(math::pow(d1 / d0, 4) * math::square(s)
-                              + math::square(m_config.predict_sigma));
+                              + m_config.predict_variance);
 
             cv::Point2f warped_x_i = Transform::warp(xi, x_i, rd, intrinsic);
 
@@ -90,17 +88,64 @@ void Mapper::regularize(cv::Mat1f& depth, const cv::Mat1f& sigma)
 
     depth.forEach(
         [&](float& d, const int p[2]) -> void {
-            Gaussian g{d, sigma(p[0], p[1])};
+            Gaussian gauss{d, sigma(p[0], p[1])};
 
             for (const std::pair<int, int> offset : offsets) {
                 cv::Point2i pt(p[1] + offset.second, p[0] + offset.first);
                 if (not inRange(pt))
                     continue;
 
-                g.multi(origin_depth.at<float>(pt), sigma.at<float>(pt));
+                gauss(origin_depth.at<float>(pt), sigma.at<float>(pt));
             }
-            d = g.depth;
+            d = gauss.depth;
         });
 }
+
+float Mapper::depthEstimate(
+    const cv::Mat1f& ref_x_i,
+    const cv::Mat1f& obj_x_i,
+    const cv::Mat1f& K,
+    const cv::Mat1f& xi)
+{
+    if (m_config.is_chatty)
+        std::cout << "depthEstimate" << std::endl;
+    const cv::Mat1f& x_i = ref_x_i;
+    const cv::Mat1f x_q = Transform::backProject(K, obj_x_i, 1);
+    const cv::Mat1f t = xi.rowRange(0, 3);
+    const cv::Mat1f R = math::se3::exp(xi).colRange(0, 3).rowRange(0, 3);
+    const cv::Mat1f r3 = R.row(2);
+
+    const cv::Mat1f a = r3.dot(x_q) * x_i - K * R * x_q;
+    const cv::Mat1f b = t(2) * x_i - K * t;
+
+    return a.dot(b) / a.dot(a);
+}
+
+float Mapper::sigmaEstimate(
+    const cv::Mat1f& ref_grad_x,
+    const cv::Mat1f& ref_grad_y,
+    const cv::Point2f& ref_x_i,
+    const EpipolarSegment& es)
+{
+    if (m_config.is_chatty)
+        std::cout << "sigmaEstimate" << std::endl;
+
+    const float lambda = cv::norm(es.start - es.end);
+    const float alpha = (es.max - es.min) / lambda;
+
+    float gx = ref_grad_x(ref_x_i), gy = ref_grad_y(ref_x_i);
+    float lx = (es.start - es.end).x, ly = (es.start - es.end).y;
+
+    // ( \vec{g} \cdot \vec{l} ) ^2
+    float gl2 = math::square(gx * lx + gy * ly);
+    // ( \vec{g} \cdot \vec{l} ) ^2 /  |\vec{l}|^2
+    float g2 = gl2 / math::square(lx * lx + ly * ly);
+
+    float epipolar = m_config.epipolar_variance / gl2;
+    float luminance = 2 * m_config.luminance_variance / g2;
+
+    return  math::square(alpha) * (epipolar + luminance);
+}
+
 
 }  // namespace Map

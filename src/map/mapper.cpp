@@ -101,6 +101,35 @@ void Mapper::regularize(cv::Mat1f& depth, const cv::Mat1f& sigma)
         });
 }
 
+void Mapper::update(FrameHistory& frame_history, pFrame frame)
+{
+    pFrame ref = frame_history.getRefFrame();
+    const cv::Mat1f xi = frame->m_xi;
+
+    auto inRange = math::generateInRange(frame->m_depth.size());
+    const cv::Mat1f K = frame->m_intrinsic;
+
+    ref->m_depth.forEach(
+        [=](float d, const int pt[2]) -> void {
+            cv::Point2i x_i(pt[1], pt[0]);
+            cv::Point2i warped_x_i = Transform::warp(xi, x_i, d, K);
+            if (not inRange(warped_x_i))
+                return;
+
+            int age = static_cast<int>(ref->m_age(x_i));
+            pFrame key = frame_history.m_history.at(age);
+
+            float sigma = ref->m_sigma(x_i);
+            EpipolarSegment es(xi, warped_x_i, K, d + sigma, d - sigma);
+            cv::Point2f matched_x_i = doMatching(key->m_gray, frame->m_gray(warped_x_i), es);
+
+            float new_depth = depthEstimate(
+                Convert::toMat1f(matched_x_i),
+                Convert::toMat1f(warped_x_i), K, xi);
+        });
+}
+
+
 float Mapper::depthEstimate(
     const cv::Mat1f& ref_x_i,
     const cv::Mat1f& obj_x_i,

@@ -92,6 +92,8 @@ public:
 
     size_t size() { return m_history.size(); }
 
+    std::shared_ptr<Frame> operator[](size_t i){return m_history.at(i);}
+
     std::vector<std::shared_ptr<Frame>> m_history;
 };
 

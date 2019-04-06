@@ -3,9 +3,26 @@
 
 namespace Convert
 {
-cv::Mat1f toMat1f(int x, int y);
-cv::Mat1f toMat1f(float x, float y);
-cv::Mat1f toMat1f(float x, float y, float z);
+template <typename T>
+cv::Mat1f toMat1f(T x, T y)
+{
+    return cv::Mat1f(2, 1) << x, y;
+}
+template <typename T>
+cv::Mat1f toMat1f(cv::Point_<T> pt)
+{
+    return cv::Mat1f(2, 1) << pt.x, pt.y;
+}
+template <typename T>
+cv::Mat1f toMat1f(T x, T y, T z)
+{
+    return cv::Mat1f(3, 1) << x, y, z;
+}
+template <typename T>
+cv::Mat1f toMat1f(cv::Point3_<T> pt)
+{
+    return cv::Mat1f(3, 1) << pt.x, pt.y, pt.z;
+}
 
 // 正規化
 cv::Mat depthNormalize(const cv::Mat& depth_image);

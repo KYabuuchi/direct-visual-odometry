@@ -5,22 +5,6 @@
 
 namespace Convert
 {
-
-cv::Mat1f toMat1f(int x, int y)
-{
-    return cv::Mat1f(2, 1) << x, y;
-}
-
-cv::Mat1f toMat1f(float x, float y)
-{
-    return cv::Mat1f(2, 1) << x, y;
-}
-
-cv::Mat1f toMat1f(float x, float y, float z)
-{
-    return cv::Mat1f(3, 1) << x, y, z;
-}
-
 cv::Mat depthNormalize(const cv::Mat& depth_image)
 {
     cv::Mat tmp_image;

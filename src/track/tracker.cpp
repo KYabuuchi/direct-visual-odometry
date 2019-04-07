@@ -1,6 +1,7 @@
 #include "track/tracker.hpp"
 #include "core/convert.hpp"
 #include "core/math.hpp"
+#include "core/timer.hpp"
 #include "core/transform.hpp"
 #include "track/optimize.hpp"
 #include <chrono>
@@ -46,7 +47,7 @@ cv::Mat1f Tracker::track(
 
         Stuff stuff = {cur_scene, ref_scene, xi};
         for (int iteration = 0; iteration < 10; iteration++) {
-            auto start = std::chrono::system_clock::now();
+            Timer timer;
 
             Outcome outcome = optimize(stuff);
 
@@ -58,8 +59,7 @@ cv::Mat1f Tracker::track(
             }
             stuff.update(xi);
 
-            auto dur = std::chrono::system_clock::now() - start;
-            long count = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+            long count = timer.millSeconds();
             if (m_config.is_chatty)
                 std::cout << "itr: " << iteration
                           << " r: " << outcome.residual

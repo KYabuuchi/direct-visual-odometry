@@ -91,30 +91,51 @@ cv::Mat1f gradiate(const cv::Mat1f& gray_image, bool x)
 float getColorSubpix(const cv::Mat1f& img, cv::Point2f pt)
 {
     using namespace math;
+    auto inRange = generateInRange(img.size());
 
-    int x = (int)pt.x;
-    int y = (int)pt.y;
-    if (x < 0 || x + 1 >= img.size().width || y < 0 || y + 1 >= img.size().height)
-        return math::INVALID;
+    int x0 = (int)pt.x;
+    int y0 = (int)pt.y;
 
-    int x0 = x;
-    int x1 = x + 1;
-    int y0 = y;
-    int y1 = y + 1;
+    if (not inRange({x0, y0}))
+        return INVALID;
 
-    float a = pt.x - (float)x;
-    float c = pt.y - (float)y;
+    int x1 = x0 + 1;
+    int y1 = y0 + 1;
+    float h = pt.x - (float)x0;
+    float v = pt.y - (float)y0;
 
-    float v00 = img(y0, x0);
-    float v01 = img(y0, x1);
-    float v10 = img(y1, x0);
-    float v11 = img(y1, x1);
+    std::array<float, 4> g = {INVALID, INVALID, INVALID, INVALID};
+    g[0] = g[1] = g[2] = g[3] = img(y0, x0);
 
-    if (isValid(v00) and isValid(v01) and isValid(v10) and isValid(v11))
-        return (v00 * (1.f - a) + v01 * a) * (1.f - c)
-               + (v10 * (1.f - a) + v11 * a) * c;
+    if (inRange({x1, y0}))
+        g[1] = img(y0, x1);
+    if (inRange({x0, y1}))
+        g[2] = img(y1, x0);
+    if (inRange({x1, y1}))
+        g[3] = img(y1, x1);
 
-    return math::INVALID;
+    int valid = 0;
+    int id = 0;
+    float last = -1;
+    while (true) {
+        if (isValid(g[id])) {
+            valid++;
+            last = g[id];
+        } else if (last > 0) {
+            g[id] = last;
+            valid++;
+        }
+
+        if (valid == 4)
+            break;
+        if (id == 3 and valid == 0) {  // 全部invalid
+            return INVALID;
+        }
+        id = (id + 1) % 4;
+    }
+
+    return (g[0] * (1.f - h) + g[1] * h) * (1.f - v)
+           + (g[2] * (1.f - h) + g[3] * h) * v;
 }
 
 }  // namespace Convert

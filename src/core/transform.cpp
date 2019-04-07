@@ -74,7 +74,7 @@ cv::Mat warpImage(const cv::Mat1f& xi, const cv::Mat1f& gray_image, const cv::Ma
             if (math::isEpsilon(depth))
                 continue;
 
-            cv::Point2i warped_x_i = warp(xi, x_i, depth, intrinsic_matrix);
+            cv::Point2f warped_x_i = warp(xi, x_i, depth, intrinsic_matrix);
             if (not math::inRange(warped_x_i, depth_image.size()))
                 continue;
 

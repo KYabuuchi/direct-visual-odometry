@@ -132,14 +132,14 @@ private:
         }
     };
 
+    // Eipolar線分
     struct EpipolarSegment {
         EpipolarSegment(
             const cv::Mat1f& xi,
             const cv::Point2i& x_i,
             const cv::Mat1f& K,
             const float min,
-            const float max
-            )
+            const float max)
             : min(min), max(max),
               start(Transform::warp(xi, x_i, max, K)),
               end(Transform::warp(xi, x_i, min, K)),

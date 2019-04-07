@@ -103,8 +103,10 @@ public:
         if (not m_map_initialized)
             createUndistortionMap();
 
-        cv::remap(normalized_rgb_image, rgb_image, m_rgb_map.at(0), m_rgb_map.at(1), 0, 0, math::INVALID);
-        cv::remap(normalized_depth_image, depth_image, m_depth_map.at(0), m_depth_map.at(1), 0, 0, 0);
+        cv::remap(normalized_rgb_image, rgb_image, m_rgb_map.at(0), m_rgb_map.at(1),
+            cv::InterpolationFlags::INTER_NEAREST, cv::BorderTypes::BORDER_CONSTANT, math::INVALID);
+        cv::remap(normalized_depth_image, depth_image, m_depth_map.at(0), m_depth_map.at(1),
+            cv::InterpolationFlags::INTER_NEAREST, cv::BorderTypes::BORDER_CONSTANT, 0);
 
         rgb_image = normalized_rgb_image;
         depth_image = normalized_depth_image;
@@ -122,8 +124,10 @@ public:
 
         cv::Mat undistorted_rgb_image;
         cv::Mat undistorted_depth_image;
-        cv::remap(rgb_image, undistorted_rgb_image, m_rgb_map.at(0), m_rgb_map.at(1), 0, 0, math::INVALID);
-        cv::remap(depth_image, undistorted_depth_image, m_depth_map.at(0), m_depth_map.at(1), 0, 0, 0);
+        cv::remap(rgb_image, undistorted_rgb_image, m_rgb_map.at(0), m_rgb_map.at(1),
+            cv::InterpolationFlags::INTER_NEAREST, cv::BorderTypes::BORDER_CONSTANT, 0);
+        cv::remap(depth_image, undistorted_depth_image, m_depth_map.at(0), m_depth_map.at(1),
+            cv::InterpolationFlags::INTER_NEAREST, cv::BorderTypes::BORDER_CONSTANT, 0);
 
         rgb_image = undistorted_rgb_image;
         depth_image = undistorted_depth_image;

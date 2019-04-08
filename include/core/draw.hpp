@@ -13,7 +13,7 @@ cv::Mat visualizeDepth(const cv::Mat1f& src_image);
 cv::Mat visualizeDepth(const cv::Mat1f& depth, const cv::Mat1f& sigma);
 
 // 勾配
-cv::Mat visualizeGradient(const cv::Mat1f& x_image, const cv::Mat1f& y_image);
+cv::Mat visualizeGradient(const cv::Mat1f& src_image);
 
 // 標準偏差
 cv::Mat visualizeSigma(const cv::Mat1f& src_image);

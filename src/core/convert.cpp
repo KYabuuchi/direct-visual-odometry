@@ -58,7 +58,7 @@ cv::Mat1f gradiate(const cv::Mat1f& gray_image, bool x)
 {
     using namespace math;
     cv::Size size = gray_image.size();
-    cv::Mat1f gradiate_image(cv::Mat1f::zeros(size));
+    cv::Mat1f gradiate_image(size, math::INVALID);
 
     if (x) {
         gradiate_image.forEach(
@@ -68,8 +68,9 @@ cv::Mat1f gradiate(const cv::Mat1f& gray_image, bool x)
 
                 float x0 = getSubpixel(gray_image, {pt[1] - 1, pt[0]});
                 float x1 = getSubpixel(gray_image, {pt[1] + 1, pt[0]});
-                if (isInvalid(x0) or isInvalid(x1))
+                if (isInvalid(x0) or isInvalid(x1)) {
                     return;
+                }
                 p = x1 - x0;
             });
     } else {
@@ -80,8 +81,9 @@ cv::Mat1f gradiate(const cv::Mat1f& gray_image, bool x)
 
                 float y0 = getSubpixel(gray_image, {pt[1], pt[0] - 1});
                 float y1 = getSubpixel(gray_image, {pt[1], pt[0] + 1});
-                if (isInvalid(y0) or isInvalid(y1))
+                if (isInvalid(y0) or isInvalid(y1)) {
                     return;
+                }
                 p = y1 - y0;
             });
     }

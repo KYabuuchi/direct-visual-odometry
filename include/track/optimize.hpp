@@ -123,7 +123,7 @@ struct Stuff {
     {
         Draw::showImage(window_name,
             Draw::visualizeGray(now_gray), Draw::visualizeGray(warped_gray), Draw::visualizeGray(ref_gray),
-            Draw::visualizeDepth(ref_depth,ref_sigma), Draw::visualizeSigma(ref_sigma), Draw::visualizeGradient(grad_x, grad_y));
+            Draw::visualizeDepth(ref_depth, ref_sigma), Draw::visualizeGradient(grad_x), Draw::visualizeGradient(grad_y));
     }
 
     const cv::Mat1f now_gray;

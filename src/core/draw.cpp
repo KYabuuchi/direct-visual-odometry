@@ -60,25 +60,18 @@ cv::Mat visualizeSigma(const cv::Mat1f& src_image)
     return dst_image;
 }
 
-cv::Mat visualizeGradient(const cv::Mat1f& x_image, const cv::Mat1f& y_image)
+cv::Mat visualizeGradient(const cv::Mat1f& src_image)
 {
-    cv::Mat dst_image = cv::Mat::zeros(x_image.size(), CV_8UC3);
-    cv::Mat normalized_x_image, normalized_y_image;
-    x_image.convertTo(normalized_x_image, CV_8UC1, 127, 127);
-    y_image.convertTo(normalized_y_image, CV_8UC1, 127, 127);
+    cv::Mat dst_image = cv::Mat::zeros(src_image.size(), CV_8UC3);
     dst_image.forEach<cv::Vec3b>(
-        [&](cv::Vec3b& p, const int* position) -> void {
-            p[0] = p[1] = 0;
-            p[2] = 255;
-            if (x_image.at<float>(position[0], position[1]) < -1) {
+        [&](cv::Vec3b& p, const int* pt) -> void {
+            float gray = src_image(pt[0], pt[1]);
+            if (math::isInvalid(gray)) {
+                p[0] = 255;
                 return;
             }
-            if (y_image.at<float>(position[0], position[1]) < -1) {
-                return;
-            }
-            p[0] = normalized_x_image.at<unsigned char>(position[0], position[1]);
-            p[1] = normalized_y_image.at<unsigned char>(position[0], position[1]);
-            p[2] = 0;
+            p[1] = static_cast<unsigned char>(255 * std::max(gray, 0.0f));
+            p[2] = static_cast<unsigned char>(-255 * std::min(gray, 0.0f));
         });
     return dst_image;
 }

@@ -41,7 +41,7 @@ std::pair<cv::Mat1f, cv::Mat1f> mapDepthtoGray(const cv::Mat1f& depth_image, con
             x_c = transform(Params::EXT().invT(), x_c);
             cv::Mat1f x_i = project(Params::RGB().intrinsic, x_c);
 
-            float gray = Convert::getColorSubpix(gray_image, cv::Point2f(x_i));
+            float gray = Convert::getSubpixel(gray_image, cv::Point2f(x_i));
             sigma_image(pt[0], pt[1]) = 0.1f;
 
             p = gray;
@@ -78,7 +78,7 @@ cv::Mat warpImage(const cv::Mat1f& xi, const cv::Mat1f& gray_image, const cv::Ma
             if (not math::inRange(warped_x_i, depth_image.size()))
                 continue;
 
-            float gray = gray_image(x_i);
+            float gray = Convert::getSubpixel(gray_image, x_i);
             warped_image(warped_x_i) = gray;
         }
     }

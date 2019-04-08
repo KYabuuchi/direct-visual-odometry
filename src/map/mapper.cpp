@@ -190,7 +190,7 @@ cv::Point2f Mapper::doMatching(const cv::Mat1f& ref_gray, const float gray, cons
 
         // TODO: 1/Nにできるはず
         for (int i = 0; i < N; i++) {
-            float subpixel_gray = Convert::getColorSubpix(ref_gray, pt + (i - N / 2) * dir);
+            float subpixel_gray = Convert::getSubpixel(ref_gray, pt + (i - N / 2) * dir);
             if (math::isInvalid(subpixel_gray)) {
                 std::cout << "invalid in doMatching" << std::endl;
             }

@@ -30,7 +30,8 @@ cv::Mat1f cullImage(const cv::Mat1f& src_image, int times)
     cv::Mat1f culled_image(cv::Mat::zeros(src_image.size() / reduction, CV_32FC1));
     culled_image.forEach(
         [=](float& p, const int position[2]) -> void {
-            p = src_image.at<float>(position[0] * reduction, position[1] * reduction);
+            p = getSubpixel(src_image, {position[1] * reduction, position[0] * reduction});
+            // p = src_image.at<float>(position[0] * reduction, position[1] * reduction);
         });
 
     return culled_image;
@@ -65,9 +66,8 @@ cv::Mat1f gradiate(const cv::Mat1f& gray_image, bool x)
                 if (pt[1] - 1 <= -1 or pt[1] + 1 >= size.width)
                     return;
 
-                float x0 = gray_image(pt[0], pt[1] - 1);
-                float x1 = gray_image(pt[0], pt[1] + 1);
-
+                float x0 = getSubpixel(gray_image, {pt[1] - 1, pt[0]});
+                float x1 = getSubpixel(gray_image, {pt[1] + 1, pt[0]});
                 if (isInvalid(x0) or isInvalid(x1))
                     return;
                 p = x1 - x0;
@@ -78,8 +78,8 @@ cv::Mat1f gradiate(const cv::Mat1f& gray_image, bool x)
                 if (pt[0] - 1 <= -1 or pt[0] + 1 >= size.height)
                     return;
 
-                float y0 = gray_image(pt[0] - 1, pt[1]);
-                float y1 = gray_image(pt[0] + 1, pt[1]);
+                float y0 = getSubpixel(gray_image, {pt[1], pt[0] - 1});
+                float y1 = getSubpixel(gray_image, {pt[1], pt[0] + 1});
                 if (isInvalid(y0) or isInvalid(y1))
                     return;
                 p = y1 - y0;
@@ -88,7 +88,7 @@ cv::Mat1f gradiate(const cv::Mat1f& gray_image, bool x)
     return gradiate_image;
 }
 
-float getColorSubpix(const cv::Mat1f& img, cv::Point2f pt)
+float getSubpixel(const cv::Mat1f& img, cv::Point2f pt)
 {
     using namespace math;
     auto inRange = generateInRange(img.size());

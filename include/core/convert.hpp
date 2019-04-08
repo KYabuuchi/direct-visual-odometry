@@ -35,7 +35,7 @@ cv::Mat1f inversePose(const cv::Mat1f& T);
 // 勾配
 cv::Mat1f gradiate(const cv::Mat1f& gray_image, bool x);
 
-float getColorSubpix(const cv::Mat1f& img, cv::Point2f pt);
+float getSubpixel(const cv::Mat1f& img, cv::Point2f pt);
 
 // 間引く
 cv::Mat1f cullImage(const cv::Mat1f& src_image, int times = 1);

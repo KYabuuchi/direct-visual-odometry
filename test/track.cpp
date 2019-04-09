@@ -23,8 +23,8 @@ int main(int argc, char* argv[])
     cv::Mat1f gray_image2, depth_image2, sigma_image2;
     loader.getMappedImages(num1, gray_image1, depth_image1, sigma_image1);
     loader.getMappedImages(num2, gray_image2, depth_image2, sigma_image2);
-    System::Frame pre_frame(gray_image1, depth_image1, sigma_image1, Params::DEPTH().intrinsic, 4, 2);
-    System::Frame cur_frame(gray_image2, depth_image2, sigma_image2, Params::DEPTH().intrinsic, 4, 2);
+    System::Frame pre_frame(gray_image1, depth_image1, sigma_image1, Params::DEPTH().intrinsic, 4, 1);
+    System::Frame cur_frame(gray_image2, depth_image2, sigma_image2, Params::DEPTH().intrinsic, 4, 1);
 
     // window
     const std::string window_name = "show";

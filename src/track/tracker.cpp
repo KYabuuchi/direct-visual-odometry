@@ -23,7 +23,7 @@ cv::Mat1f Tracker::track(
             std::cout << "\nLEVEL: " << level << " ROW: " << ROWS << " COL: " << COLS << std::endl;
 
         Stuff stuff = {obj_scene, ref_scene, xi};
-        for (int iteration = 0; iteration < 10; iteration++) {
+        for (int iteration = 0; iteration < 15; iteration++) {
             Timer timer;
 
             Outcome outcome = optimize(stuff);

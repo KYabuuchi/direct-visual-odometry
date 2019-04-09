@@ -38,7 +38,7 @@ public:
     // Only use tracking-mode
     cv::Mat1f odometrizeUsingDepth(const cv::Mat1f& gray_image, const cv::Mat1f& depth_image, const cv::Mat1f& sigma_image)
     {
-        std::shared_ptr<Frame> frame = std::make_shared<Frame>(gray_image, depth_image, sigma_image, m_config.track_config.intrinsic, 4, 2);
+        std::shared_ptr<Frame> frame = std::make_shared<Frame>(gray_image, depth_image, sigma_image, m_config.track_config.intrinsic, 4, 1);
         if (m_ref_frame == nullptr) {
             m_ref_frame = frame;
             return math::se3::T();

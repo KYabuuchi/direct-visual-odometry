@@ -5,6 +5,7 @@
 
 namespace System
 {
+
 class Scene
 {
 public:

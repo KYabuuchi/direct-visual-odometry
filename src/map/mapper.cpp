@@ -51,90 +51,90 @@ void Mapper::propagate(
     const cv::Mat1f& xi,
     const cv::Mat1f& intrinsic)
 {
-    // const float tz = xi(2);
-    // std::function<bool(cv::Point2i)> inRange = math::generateInRange(age.size());
+    const float tz = xi(2);
+    std::function<bool(cv::Point2i)> inRange = math::generateInRange(age.size());
 
-    // ref_depth.forEach(
-    //     [&](float& rd, const int pt[2]) -> void {
-    //         cv::Point2i x_i(pt[1], pt[0]);
-    //         if (math::isEpsilon(rd))
-    //             return;
+    ref_depth.forEach(
+        [&](float& rd, const int pt[2]) -> void {
+            cv::Point2i x_i(pt[1], pt[0]);
+            if (math::isEpsilon(rd))
+                return;
 
-    //         float s = ref_sigma(x_i);
-    //         float d0 = rd;
-    //         float d1 = d0 - tz;
-    //         if (s > 0.5 or d0 < 0.05)
-    //             s = m_config.initial_sigma;
-    //         else
-    //             s = std::sqrt(math::pow(d1 / d0, 4) * math::square(s)
-    //                           + m_config.predict_variance);
+            float s = ref_sigma(x_i);
+            float d0 = rd;
+            float d1 = d0 - tz;
+            if (s > 0.5 or d0 < 0.05)
+                s = m_config.initial_sigma;
+            else
+                s = std::sqrt(math::pow(d1 / d0, 4) * math::square(s)
+                              + m_config.predict_variance);
 
-    //         cv::Point2f warped_x_i = Transform::warp(xi, x_i, rd, intrinsic);
+            cv::Point2f warped_x_i = Transform::warp(xi, x_i, rd, intrinsic);
 
-    //         if (inRange(warped_x_i)) {
-    //             depth(warped_x_i) = std::max(d1, 0.0f);
-    //             sigma(warped_x_i) = s;
-    //             age(warped_x_i) = ref_age(x_i) + 1;
-    //         }
-    //     });
+            if (inRange(warped_x_i)) {
+                depth(warped_x_i) = std::max(d1, 0.0f);
+                sigma(warped_x_i) = s;
+                age(warped_x_i) = ref_age(x_i) + 1;
+            }
+        });
 }
 
 void Mapper::regularize(cv::Mat1f& depth, const cv::Mat1f& sigma)
 {
-    // cv::Mat1f origin_depth(depth);
+    cv::Mat1f origin_depth(depth);
 
-    // std::vector<std::pair<int, int>> offsets = {{0, -1}, {0, 1}, {1, 0}, {-1, 0}};
-    // std::function<bool(cv::Point2i)> inRange = math::generateInRange(depth.size());
+    std::vector<std::pair<int, int>> offsets = {{0, -1}, {0, 1}, {1, 0}, {-1, 0}};
+    std::function<bool(cv::Point2i)> inRange = math::generateInRange(depth.size());
 
-    // depth.forEach(
-    //     [&](float& d, const int p[2]) -> void {
-    //         Gaussian gauss{d, sigma(p[0], p[1])};
+    depth.forEach(
+        [&](float& d, const int p[2]) -> void {
+            Gaussian gauss{d, sigma(p[0], p[1])};
 
-    //         for (const std::pair<int, int> offset : offsets) {
-    //             cv::Point2i pt(p[1] + offset.second, p[0] + offset.first);
-    //             if (not inRange(pt))
-    //                 continue;
+            for (const std::pair<int, int> offset : offsets) {
+                cv::Point2i pt(p[1] + offset.second, p[0] + offset.first);
+                if (not inRange(pt))
+                    continue;
 
-    //             gauss(origin_depth.at<float>(pt), sigma.at<float>(pt));
-    //         }
-    //         d = gauss.depth;
-    //     });
+                gauss(origin_depth.at<float>(pt), sigma.at<float>(pt));
+            }
+            d = gauss.depth;
+        });
 }
 
 void Mapper::update(FrameHistory& frame_history, pFrame frame)
 {
-    // pScene ref = frame_history.getRefFrame()->top();
-    // const cv::Mat1f xi = frame->m_xi;
+    pScene ref = frame_history.getRefFrame()->top();
+    const cv::Mat1f xi = frame->m_xi;
 
-    // auto inRange = math::generateInRange(frame->top->m_depth.size());
-    // const cv::Mat1f K = frame->top->m_K;
+    auto inRange = math::generateInRange(ref->depth().size());
+    const cv::Mat1f K = frame->top()->K();
 
-    // ref->m_depth.forEach(
-    //     [=](float d, const int pt[2]) -> void {
-    //         cv::Point2i x_i(pt[1], pt[0]);
-    //         cv::Point2i warped_x_i = Transform::warp(xi, x_i, d, K);
-    //         if (not inRange(warped_x_i))
-    //             return;
+    ref->depth().forEach(
+        [=](float d, const int pt[2]) -> void {
+            cv::Point2i x_i(pt[1], pt[0]);
+            cv::Point2i warped_x_i = Transform::warp(xi, x_i, d, K);
+            if (not inRange(warped_x_i))
+                return;
 
-    //         int age = static_cast<int>(ref->m_age(x_i));
-    //         pFrame key = frame_history.m_history.at(age);
+            int age = static_cast<int>(frame->m_age(x_i));
+            pScene key = frame_history.m_history.at(age)->top();
 
-    //         float sigma = ref->m_sigma(x_i);
-    //         EpipolarSegment es(xi, warped_x_i, K, d + sigma, d - sigma);
-    //         cv::Point2f matched_x_i = doMatching(key->m_gray, frame->m_gray(warped_x_i), es);
+            float sigma = ref->sigma()(x_i);
+            EpipolarSegment es(xi, warped_x_i, K, d + sigma, d - sigma);
+            cv::Point2f matched_x_i = doMatching(key->gray(), ref->gray()(warped_x_i), es);
 
-    //         float new_depth = depthEstimate(
-    //             Convert::toMat1f(matched_x_i),
-    //             Convert::toMat1f(warped_x_i), K, xi);
+            float new_depth = depthEstimate(
+                Convert::toMat1f(matched_x_i),
+                Convert::toMat1f(warped_x_i), K, xi);
 
-    //         // float new_sigma = sigmaEstimate(
-    //         //     frame->m_gradX,
-    //         //     frame->m_gradY,
-    //         //     warped_x_i,
-    //         //     es);
+            // float new_sigma = sigmaEstimate(
+            //     frame->m_gradX,
+            //     frame->m_gradY,
+            //     warped_x_i,
+            //     es);
 
-    //         //  ガウス分布の掛け合わせ
-    //     });
+            //  ガウス分布の掛け合わせ
+        });
 }
 
 

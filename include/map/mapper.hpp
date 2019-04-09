@@ -6,6 +6,8 @@
 
 namespace Map
 {
+using pScene = std::shared_ptr<System::Scene>;
+
 struct Config {
     Config()
         : is_chatty(true),

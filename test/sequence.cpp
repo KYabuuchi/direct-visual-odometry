@@ -14,7 +14,7 @@ int main(/*int argc, char* argv[]*/)
     cv::resizeWindow(window_name, 1280, 720);
 
     // main system
-    System::VisualOdometry vo{System::Config{Track::Config{Params::DEPTH().intrinsic, 5, true, 0.005f, 0.005f}}};
+    System::VisualOdometry vo{System::Config{Track::Config{Params::DEPTH().intrinsic, 4, true, 0.005f, 0.005f}}};
 
     int num = 0;
     while (true) {

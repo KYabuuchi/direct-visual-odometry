@@ -4,9 +4,9 @@
 #include "core/params.hpp"
 #include "core/timer.hpp"
 #include "matplotlibcpp.h"
+#include "system/frame.hpp"
 #include "track/optimize.hpp"
 
-constexpr int LEVEL = 5;
 int main(int argc, char* argv[])
 {
     // argumentation
@@ -21,11 +21,10 @@ int main(int argc, char* argv[])
     Params::init("../camera-calibration/data/kinectv2_00/config.yaml");
     cv::Mat1f gray_image1, depth_image1, sigma_image1;
     cv::Mat1f gray_image2, depth_image2, sigma_image2;
-    cv::Mat1f K;
-    loader.getCulledMappedImages(num1, gray_image1, depth_image1, sigma_image1, K, 1);
-    loader.getCulledMappedImages(num2, gray_image2, depth_image2, sigma_image2, K, 1);
-    std::vector<std::shared_ptr<Track::Scene>> pre_scenes = Track::Scene::createScenePyramid(gray_image1, depth_image1, sigma_image1, K, LEVEL);
-    std::vector<std::shared_ptr<Track::Scene>> cur_scenes = Track::Scene::createScenePyramid(gray_image2, depth_image2, sigma_image2, K, LEVEL);
+    loader.getMappedImages(num1, gray_image1, depth_image1, sigma_image1);
+    loader.getMappedImages(num2, gray_image2, depth_image2, sigma_image2);
+    System::Frame pre_frame(gray_image1, depth_image1, sigma_image1, Params::DEPTH().intrinsic, 4, 2);
+    System::Frame cur_frame(gray_image2, depth_image2, sigma_image2, Params::DEPTH().intrinsic, 4, 2);
 
     // window
     const std::string window_name = "show";
@@ -36,9 +35,9 @@ int main(int argc, char* argv[])
     std::vector<std::vector<float>> vector_of_residuals;
 
     // iteration for pyramid
-    for (int level = 0; level < LEVEL; level++) {
-        std::shared_ptr<Track::Scene> pre_scene = pre_scenes.at(level);
-        std::shared_ptr<Track::Scene> cur_scene = cur_scenes.at(level);
+    for (int level = 0; level < pre_frame.m_scenes.size(); level++) {
+        std::shared_ptr<System::Scene> pre_scene = pre_frame.at(level);
+        std::shared_ptr<System::Scene> cur_scene = cur_frame.at(level);
         const int COLS = pre_scene->cols;
         const int ROWS = pre_scene->rows;
         std::vector<float> residuals;

@@ -19,15 +19,15 @@ public:
     {
     }
 
-    cv::Mat1f odometrize(const cv::Mat1f& gray_image, const cv::Mat1f& depth_image)
+    cv::Mat1f odometrize(const cv::Mat1f& gray_image)
     {
         // creating a Frame pair
         std::shared_ptr<Frame> ref_frame = m_history.getRefFrame();
-        std::shared_ptr<Frame> frame = std::make_shared<Frame>(gray_image, depth_image, m_config.track_config.intrinsic, 0);
+        std::shared_ptr<Frame> frame = std::make_shared<Frame>(gray_image, m_config.track_config.intrinsic, 4, 2);
 
         // Tracking
         cv::Mat1f relative_xi = m_tracker->track(m_ref_frame, frame);
-        frame->update_xi(relative_xi, m_ref_frame);
+        frame->updateXi(relative_xi, m_ref_frame);
 
         // Mapping
         m_mapper->estimate(m_history, frame);
@@ -38,10 +38,14 @@ public:
     // Only use tracking-mode
     cv::Mat1f odometrizeUsingDepth(const cv::Mat1f& gray_image, const cv::Mat1f& depth_image, const cv::Mat1f& sigma_image)
     {
-        std::shared_ptr<Frame> frame = std::make_shared<Frame>(gray_image, depth_image, sigma_image, m_config.track_config.intrinsic, 0);
-        cv::Mat1f relative_xi = m_tracker->track(m_ref_frame, frame);
+        std::shared_ptr<Frame> frame = std::make_shared<Frame>(gray_image, depth_image, sigma_image, m_config.track_config.intrinsic, 4, 2);
+        if (m_ref_frame == nullptr) {
+            m_ref_frame = frame;
+            return math::se3::T();
+        }
 
-        frame->update_xi(relative_xi, m_ref_frame);
+        cv::Mat1f relative_xi = m_tracker->track(m_ref_frame, frame);
+        frame->updateXi(relative_xi, m_ref_frame);
         m_ref_frame = frame;
         return math::se3::exp(relative_xi);
     }

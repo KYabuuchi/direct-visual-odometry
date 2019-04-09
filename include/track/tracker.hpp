@@ -19,6 +19,7 @@ struct Config {
 class Tracker
 {
 public:
+    using pScene = std::shared_ptr<System::Scene>;
     Tracker(const Config& config) : m_config(config), m_initialized(false) {}
 
     cv::Mat1f track(
@@ -27,9 +28,6 @@ public:
 
 private:
     Config m_config;
-
-    // cache
-    std::vector<std::shared_ptr<Scene>> m_pre_scenes;
 
     bool m_initialized;
 };

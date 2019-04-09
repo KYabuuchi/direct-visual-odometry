@@ -54,22 +54,22 @@ public:
     void initializeHistory(const cv::Mat1f& depth, cv::Mat1f& sigma);
     void initializeHistory(FrameHistory& frame_history, pFrame frame)
     {
-        initializeHistory(frame->m_depth, frame->m_sigma);
-        frame_history.setRefFrame(frame);
+        // initializeHistory(frame->m_depth, frame->m_sigma);
+        // frame_history.setRefFrame(frame);
     }
 
     // ====Propagate====
     // ref_frameをframeへ移す
     void propagate(FrameHistory& frame_history, pFrame frame)
     {
-        if (m_config.is_chatty)
-            std::cout << "propagate" << std::endl;
-        const pFrame& ref = frame->m_ref_frame;
-        propagate(
-            ref->m_depth, ref->m_sigma, ref->m_age,
-            frame->m_depth, frame->m_sigma, frame->m_age,
-            frame->m_relative_xi, frame->m_intrinsic);
-        frame_history.setRefFrame(frame);
+        // if (m_config.is_chatty)
+        //     std::cout << "propagate" << std::endl;
+        // const pFrame& ref = frame->m_ref_frame;
+        // propagate(
+        //     ref->m_depth, ref->m_sigma, ref->m_age,
+        //     frame->m_depth, frame->m_sigma, frame->m_age,
+        //     frame->m_relative_xi, frame->m_K);
+        // frame_history.setRefFrame(frame);
     }
     void propagate(
         const cv::Mat1f& ref_depth,
@@ -104,8 +104,8 @@ public:
     void regularize(cv::Mat1f& depth, const cv::Mat1f& sigma);
     void regularize(FrameHistory& frame_history)
     {
-        pFrame frame = frame_history.getRefFrame();
-        regularize(frame->m_depth, frame->m_sigma);
+        // pFrame frame = frame_history.getRefFrame();
+        // regularize(frame->m_depth, frame->m_sigma);
     }
 
 private:

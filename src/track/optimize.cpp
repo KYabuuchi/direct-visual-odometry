@@ -66,7 +66,7 @@ Outcome optimize(const Stuff& stuff)
             }
 
             // luminance
-            float I_1 = at(stuff.now_gray, x_i);
+            float I_1 = at(stuff.obj_gray, x_i);
             float I_2 = at(stuff.warped_gray, x_i);
             if (math::isInvalid(I_1) or math::isInvalid(I_2)) {
                 continue;

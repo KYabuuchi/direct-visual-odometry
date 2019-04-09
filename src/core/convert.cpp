@@ -39,6 +39,8 @@ cv::Mat1f cullImage(const cv::Mat1f& src_image, int times)
 
 cv::Mat1f cullIntrinsic(const cv::Mat1f& intrinsic, int times)
 {
+    if (times == 0)
+        return cv::Mat1f(intrinsic);
     cv::Mat1f K = cv::Mat1f(intrinsic / math::pow(2, times));
     K(2, 2) = 1;
     return K;

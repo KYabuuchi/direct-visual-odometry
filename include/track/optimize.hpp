@@ -23,7 +23,7 @@ public:
     // Copy
     Scene(const Scene& scene)
         : cols(scene.cols), rows(scene.rows), id(scene.id),
-          m_depth(scene.m_depth), m_gray(scene.m_gray),
+          m_depth(scene.m_depth), m_gray(scene.m_gray), m_sigma(scene.m_sigma),
           m_intrinsic(scene.m_intrinsic)
     {
         if (not scene.m_grad_x.empty())
@@ -61,6 +61,8 @@ public:
         for (int i = 0; i < level; i++) {
             scenes.push_back(downscaleScene(origin, level - i - 1));  // level-1 , ... , 1 , 0
         }
+        std::cout << scenes.at(level - 1)->m_depth.size()
+                  << scenes.at(level - 1)->m_sigma.size() << std::endl;
         return scenes;
     }
 

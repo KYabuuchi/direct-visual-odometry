@@ -2,6 +2,7 @@
 #include "core/loader.hpp"
 #include "core/math.hpp"
 #include "core/params.hpp"
+#include "core/timer.hpp"
 #include "matplotlibcpp.h"
 #include "track/optimize.hpp"
 
@@ -20,10 +21,11 @@ int main(int argc, char* argv[])
     Params::init("../camera-calibration/data/kinectv2_00/config.yaml");
     cv::Mat1f gray_image1, depth_image1, sigma_image1;
     cv::Mat1f gray_image2, depth_image2, sigma_image2;
-    loader.getMappedImages(num1, gray_image1, depth_image1, sigma_image1);
-    loader.getMappedImages(num2, gray_image2, depth_image2, sigma_image2);
-    std::vector<std::shared_ptr<Track::Scene>> pre_frames = Track::Scene::createScenePyramid(gray_image1, depth_image1, sigma_image1, Params::DEPTH().intrinsic, LEVEL);
-    std::vector<std::shared_ptr<Track::Scene>> cur_frames = Track::Scene::createScenePyramid(gray_image2, depth_image2, sigma_image2, Params::DEPTH().intrinsic, LEVEL);
+    cv::Mat1f K;
+    loader.getCulledMappedImages(num1, gray_image1, depth_image1, sigma_image1, K, 1);
+    loader.getCulledMappedImages(num2, gray_image2, depth_image2, sigma_image2, K, 1);
+    std::vector<std::shared_ptr<Track::Scene>> pre_scenes = Track::Scene::createScenePyramid(gray_image1, depth_image1, sigma_image1, K, LEVEL);
+    std::vector<std::shared_ptr<Track::Scene>> cur_scenes = Track::Scene::createScenePyramid(gray_image2, depth_image2, sigma_image2, K, LEVEL);
 
     // window
     const std::string window_name = "show";
@@ -34,9 +36,9 @@ int main(int argc, char* argv[])
     std::vector<std::vector<float>> vector_of_residuals;
 
     // iteration for pyramid
-    for (int level = 0; level < LEVEL - 1; level++) {
-        std::shared_ptr<Track::Scene> pre_scene = pre_frames.at(level);
-        std::shared_ptr<Track::Scene> cur_scene = cur_frames.at(level);
+    for (int level = 0; level < LEVEL; level++) {
+        std::shared_ptr<Track::Scene> pre_scene = pre_scenes.at(level);
+        std::shared_ptr<Track::Scene> cur_scene = cur_scenes.at(level);
         const int COLS = pre_scene->cols;
         const int ROWS = pre_scene->rows;
         std::vector<float> residuals;
@@ -47,6 +49,7 @@ int main(int argc, char* argv[])
 
         // iteration
         for (int iteration = 0; iteration < 15; iteration++) {
+            Timer timer;
             Track::Outcome outcome = Track::optimize(stuff);
 
             // update
@@ -57,20 +60,21 @@ int main(int argc, char* argv[])
             stuff.update(xi);
 
             // show
+            long count = timer.millSeconds();
             std::cout << "itr: " << iteration
                       << " r: " << outcome.residual
                       << " upd: " << cv::norm(outcome.xi_update)
                       << " rows : " << outcome.valid_pixels
-                      << " xi: " << xi.t() << std::endl;
+                      << " xi: " << xi.t()
+                      << " time: " << count << " ms" << std::endl;
 
             stuff.show(window_name);
-            cv::waitKey(10);
+            cv::waitKey(50);
 
-            if (cv::norm(outcome.xi_update) < 0.005 or outcome.residual < 0.005f)
+            if (cv::norm(outcome.xi_update) < 0.003 or outcome.residual < 0.003f)
                 break;
         }
-        cv::waitKey(100);
-
+        cv::waitKey(500);
         vector_of_residuals.push_back(residuals);
     }
 

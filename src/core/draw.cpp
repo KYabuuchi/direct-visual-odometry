@@ -87,7 +87,7 @@ cv::Mat visualizeAge(const cv::Mat1f& src_image)
 
 void showImage(const std::string& window_name,
     const cv::Mat& ref_gray, const cv::Mat& warped_gray, const cv::Mat& cur_gray,
-    const cv::Mat& ref_depth, const cv::Mat& ref_sigma, const cv::Mat& ref_grad)
+    const cv::Mat& ref_depth, const cv::Mat& ref_gradx, const cv::Mat& ref_grady)
 {
     cv::Mat upper_image, under_image;
     cv::Mat show_image;
@@ -99,8 +99,8 @@ void showImage(const std::string& window_name,
         upper_image);
     cv::hconcat(std::vector<cv::Mat>{
                     ref_depth,
-                    ref_sigma,
-                    ref_grad},
+                    ref_gradx,
+                    ref_grady},
         under_image);
     cv::vconcat(upper_image, under_image, show_image);
     cv::imshow(window_name, show_image);

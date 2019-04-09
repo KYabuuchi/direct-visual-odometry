@@ -1,5 +1,6 @@
 #pragma once
 #include "calibration/params_struct.hpp"
+#include "core/convert.hpp"
 #include "core/math.hpp"
 #include "core/params.hpp"
 #include "core/transform.hpp"
@@ -63,6 +64,19 @@ public:
             }
         }
         ifs.close();
+    }
+
+    // 間引変形除歪画像を取得 CV_32FC1,CV_32FC1
+    bool getCulledMappedImages(size_t num, cv::Mat1f& mapped_image, cv::Mat1f& depth_image, cv::Mat1f& sigma_image, cv::Mat1f& K, int times = 1)
+    {
+        if (not getMappedImages(num, mapped_image, depth_image, sigma_image))
+            return false;
+
+        mapped_image = Convert::cullImage(mapped_image, times);
+        depth_image = Convert::cullImage(depth_image, times);
+        sigma_image = Convert::cullImage(sigma_image, times);
+        K = Convert::cullIntrinsic(Params::DEPTH().intrinsic, times);
+        return true;
     }
 
     // 変形除歪画像を取得 CV_32FC1,CV_32FC1

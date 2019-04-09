@@ -23,21 +23,10 @@ int main()
 
     // load
     cv::Mat1f gray_image, depth_image, sigma_image;
-    cv::Mat1f distorted_gray_image, distorted_depth_image, distorted_sigma_image;
+    cv::Mat1f K;
     Loader loader("../data/KINECT_1DEG/info.txt");
     Params::init("../camera-calibration/data/kinectv2_00/config.yaml");
-    loader.getMappedImages(0, gray_image, depth_image, sigma_image);
-    loader.getMappedDistortedImages(0, distorted_gray_image, distorted_depth_image, distorted_sigma_image);
-    cv::Mat1f intrinsic = Params::DEPTH().intrinsic;
-
-    // cull to 1/2^(N+1)
-    const int N = 1;
-    depth_image = Convert::cullImage(depth_image, N);
-    gray_image = Convert::cullImage(gray_image, N);
-    distorted_depth_image = Convert::cullImage(distorted_depth_image, N);
-    distorted_gray_image = Convert::cullImage(distorted_gray_image, N);
-    intrinsic = intrinsic / math::pow(2, N);
-    intrinsic(2, 2) = 1;
+    loader.getCulledMappedImages(0, gray_image, depth_image, sigma_image, K, 1);
 
     while (1) {
         std::array<float, 6> params_f;
@@ -47,15 +36,13 @@ int main()
 
         cv::Mat1f xi = math::se3::xi(params_f);
         std::cout << math::se3::exp(xi) << std::endl;
-        cv::Mat warped_gray_image = Transform::warpImage(xi, gray_image, depth_image, intrinsic);
-        cv::Mat distorted_warped_gray_image = Transform::warpImage(xi, distorted_gray_image, distorted_depth_image, intrinsic);
+        cv::Mat warped_gray_image = Transform::warpImage(xi, gray_image, depth_image, K);
 
         // 画像描画
         cv::Mat show_image;
         cv::hconcat(std::vector<cv::Mat>{
                         Draw::visualizeGray(gray_image),
-                        Draw::visualizeGray(warped_gray_image),
-                        Draw::visualizeGray(distorted_warped_gray_image)},
+                        Draw::visualizeGray(warped_gray_image)},
             show_image);
         cv::imshow("warp", show_image);
 

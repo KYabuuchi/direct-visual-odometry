@@ -28,9 +28,10 @@ int main()
         cv::Mat1f grad_y_image = Convert::gradiate(gray_image, false);
 
         cv::Mat show_image;
-        cv::hconcat(
-            Draw::visualizeGray(gray_image),
-            Draw::visualizeGradient(grad_x_image, grad_y_image),
+        cv::hconcat(std::vector<cv::Mat>{
+                        Draw::visualizeGray(gray_image),
+                        Draw::visualizeGradient(grad_x_image),
+                        Draw::visualizeGradient(grad_y_image)},
             show_image);
         cv::imshow("grad", show_image);
 

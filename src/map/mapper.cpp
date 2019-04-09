@@ -126,6 +126,14 @@ void Mapper::update(FrameHistory& frame_history, pFrame frame)
             float new_depth = depthEstimate(
                 Convert::toMat1f(matched_x_i),
                 Convert::toMat1f(warped_x_i), K, xi);
+
+            // float new_sigma = sigmaEstimate(
+            //     frame->m_gradX,
+            //     frame->m_gradY,
+            //     warped_x_i,
+            //     es);
+
+            //  ガウス分布の掛け合わせ
         });
 }
 

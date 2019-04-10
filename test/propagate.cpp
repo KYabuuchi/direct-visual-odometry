@@ -48,7 +48,7 @@ int main(/*int argc, char* argv[]*/)
     cv::Mat1f depth_origin, gray_origin, sigma_origin, age_origin;
     loader.getMappedImages(0, gray_origin, depth_origin, sigma_origin);
     age_origin = cv::Mat1f::zeros(depth_origin.size());
-    mapper.initializeHistory(depth_origin, sigma_origin);
+    // mapper.initializeHistory(depth_origin, sigma_origin);
 
     cv::Mat1f depth_last(depth_origin), gray_last(gray_origin);
     cv::Mat1f sigma_last(sigma_origin), age_last(age_origin);
@@ -58,18 +58,11 @@ int main(/*int argc, char* argv[]*/)
               << std::endl;
 
     while (true) {
-        cv::Mat1f depth_image = cv::Mat1f::ones(depth_origin.size());
-        cv::Mat1f sigma_image = cv::Mat1f::ones(sigma_origin.size());
-        cv::Mat1f age_image = cv::Mat1f::zeros(age_origin.size());
-
         std::cout << "Propagate" << std::endl;
-        mapper.propagate(
+        auto [depth_image, sigma_image, age_image] = mapper.propagate(
             depth_last,
             sigma_last,
             age_last,
-            depth_image,
-            sigma_image,
-            age_image,
             xi,
             Params::DEPTH().intrinsic);
 
@@ -79,6 +72,7 @@ int main(/*int argc, char* argv[]*/)
 
         std::cout << "Regularized" << std::endl;
         mapper.regularize(depth_image, sigma_image);
+        // mapper.regularize(tmp_depth, sigma_image);
 
         show(depth_origin, sigma_origin, age_origin, depth_image, sigma_image, age_image);
         if (cv::waitKey(0) == 'q')

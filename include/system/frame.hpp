@@ -146,6 +146,14 @@ public:
         return m_history.at(0);
     }
 
+    const std::shared_ptr<Frame> getRefFrame() const
+    {
+        if (m_history.empty())
+            return nullptr;
+        return m_history.at(0);
+    }
+
+
     int size() { return static_cast<int>(m_history.size()); }
 
     std::shared_ptr<Frame> operator[](size_t i) { return m_history.at(i); }

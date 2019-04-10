@@ -8,16 +8,16 @@ namespace Map
 void Mapper::estimate(FrameHistory& frame_history, pFrame frame)
 {
     if (frame_history.size() == 0) {
-        initializeHistory(frame_history, frame);
+        frame_history.setRefFrame(frame);
     } else {
-
         if (needNewFrame(frame)) {
-            propagate(frame_history, frame);
+            pFrame new_frame = propagate(frame_history, frame);
+            frame_history.setRefFrame(new_frame);
         } else {
-            // update(frame_history, frame);
+            update(frame_history, frame);
         }
     }
-    regularize(frame_history);
+    regularize(frame_history, frame);
 }
 
 bool Mapper::needNewFrame(pFrame frame)
@@ -27,32 +27,45 @@ bool Mapper::needNewFrame(pFrame frame)
     return scalar > m_config.minimum_movement;
 }
 
-void Mapper::initializeHistory(const cv::Mat1f& depth, cv::Mat1f& sigma)
+// ====Propagate====
+pFrame Mapper::propagate(const FrameHistory& frame_history, const pFrame frame)
 {
     if (m_config.is_chatty)
-        std::cout << "init History" << std::endl;
-    sigma.forEach(
-        [&](float& s, const int p[2]) -> void {
-            if (depth(p[0], p[1]) > 0.01f) {
-                s = 0.1f;  // accuracy of kinect
-            } else {
-                s = m_config.initial_sigma;
-            }
-        });
+        std::cout << "propagate" << std::endl;
+    const pFrame& ref = frame->m_ref_frame;
+
+    auto [depth, sigma, age] = propagate(
+        ref->top()->depth(),
+        ref->top()->sigma(),
+        ref->m_age,
+        frame->m_relative_xi,
+        frame->top()->K());
+
+    pFrame new_frame = std::make_shared<Frame>(
+        depth,
+        sigma,
+        age,
+        frame->top()->K(),
+        frame->level,
+        frame->culls);
+
+    return frame;
 }
 
-void Mapper::propagate(
+std::tuple<cv::Mat1f, cv::Mat1f, cv::Mat1f> Mapper::propagate(
     const cv::Mat1f& ref_depth,
     const cv::Mat1f& ref_sigma,
     const cv::Mat1f& ref_age,
-    cv::Mat1f& depth,
-    cv::Mat1f& sigma,
-    cv::Mat1f& age,
     const cv::Mat1f& xi,
     const cv::Mat1f& intrinsic)
 {
     const float tz = xi(2);
-    std::function<bool(cv::Point2i)> inRange = math::generateInRange(age.size());
+    cv::Size size = ref_depth.size();
+    std::function<bool(cv::Point2i)> inRange = math::generateInRange(size);
+
+    cv::Mat1f depth(cv::Mat1f::ones(size));
+    cv::Mat1f sigma(cv::Mat1f::ones(size));
+    cv::Mat1f age(cv::Mat1f::zeros(size));
 
     ref_depth.forEach(
         [&](float& rd, const int pt[2]) -> void {
@@ -77,33 +90,14 @@ void Mapper::propagate(
                 age(warped_x_i) = ref_age(x_i) + 1;
             }
         });
+
+    return {depth, sigma, age};
 }
 
-void Mapper::regularize(cv::Mat1f& depth, const cv::Mat1f& sigma)
+// ====Update====
+void Mapper::update(const FrameHistory& frame_history, pFrame frame)
 {
-    cv::Mat1f origin_depth(depth);
-
-    std::vector<std::pair<int, int>> offsets = {{0, -1}, {0, 1}, {1, 0}, {-1, 0}};
-    std::function<bool(cv::Point2i)> inRange = math::generateInRange(depth.size());
-
-    depth.forEach(
-        [&](float& d, const int p[2]) -> void {
-            Gaussian gauss{d, sigma(p[0], p[1])};
-
-            for (const std::pair<int, int> offset : offsets) {
-                cv::Point2i pt(p[1] + offset.second, p[0] + offset.first);
-                if (not inRange(pt))
-                    continue;
-
-                gauss(origin_depth.at<float>(pt), sigma.at<float>(pt));
-            }
-            d = gauss.depth;
-        });
-}
-
-void Mapper::update(FrameHistory& frame_history, pFrame frame)
-{
-    pScene ref = frame_history.getRefFrame()->top();
+    const pScene ref = frame_history.getRefFrame()->top();
     const cv::Mat1f xi = frame->m_xi;
 
     auto inRange = math::generateInRange(ref->depth().size());
@@ -136,7 +130,6 @@ void Mapper::update(FrameHistory& frame_history, pFrame frame)
             //  ガウス分布の掛け合わせ
         });
 }
-
 
 float Mapper::depthEstimate(
     const cv::Mat1f& ref_x_i,
@@ -211,8 +204,42 @@ cv::Point2f Mapper::doMatching(const cv::Mat1f& ref_gray, const float gray, cons
             min_ssd = ssd;
         }
     }
-
     return best_pt;
 }
+
+// ====Regularize====
+void Mapper::regularize(const FrameHistory& frame_history, pFrame frame)
+{
+    if (m_config.is_chatty)
+        std::cout << "regularize" << std::endl;
+
+    // TODO: ピラミッドの下のほうが更新されない
+    regularize(frame->top()->depth(), frame->top()->sigma());
+    // NOTE: ↓これとかを使う
+    // frame->updateDepthSigma();
+}
+
+void Mapper::regularize(cv::Mat1f& depth, const cv::Mat1f& sigma)
+{
+    cv::Mat1f origin_depth(depth);
+
+    std::vector<std::pair<int, int>> offsets = {{0, -1}, {0, 1}, {1, 0}, {-1, 0}};
+    std::function<bool(cv::Point2i)> inRange = math::generateInRange(depth.size());
+
+    depth.forEach(
+        [&](float& d, const int p[2]) -> void {
+            Gaussian gauss{d, sigma(p[0], p[1])};
+
+            for (const std::pair<int, int> offset : offsets) {
+                cv::Point2i pt(p[1] + offset.second, p[0] + offset.first);
+                if (not inRange(pt))
+                    continue;
+
+                gauss(origin_depth.at<float>(pt), sigma.at<float>(pt));
+            }
+            d = gauss.depth;
+        });
+}
+
 
 }  // namespace Map

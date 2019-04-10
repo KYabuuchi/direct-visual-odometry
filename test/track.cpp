@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
     std::vector<std::vector<float>> vector_of_residuals;
 
     // iteration for pyramid
-    for (int level = 0; level < pre_frame.m_scenes.size(); level++) {
+    for (int level = 0; level < static_cast<int>(pre_frame.m_scenes.size()); level++) {
         std::shared_ptr<System::Scene> pre_scene = pre_frame.at(level);
         std::shared_ptr<System::Scene> cur_scene = cur_frame.at(level);
         const int COLS = pre_scene->cols;

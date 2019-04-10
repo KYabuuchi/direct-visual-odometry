@@ -34,12 +34,13 @@ public:
     const int cols;
     const int rows;
 
-    cv::Mat1f gray() const { return m_gray; }
-    cv::Mat1f K() const { return m_K; }
-    cv::Mat1f depth() const { return m_depth; }
+    cv::Mat1f& gray() { return m_gray; }
     cv::Mat1f& depth() { return m_depth; }
-    cv::Mat1f sigma() const { return m_sigma; }
     cv::Mat1f& sigma() { return m_sigma; }
+    const cv::Mat1f& gray() const { return m_gray; }
+    const cv::Mat1f& depth() const { return m_depth; }
+    const cv::Mat1f& sigma() const { return m_sigma; }
+    const cv::Mat1f& K() const { return m_K; }
 
     cv::Mat1f gradX()
     {
@@ -70,7 +71,7 @@ public:
     const int cols;
     const int rows;
     const int level;  // 保有する画像ピラミッドのサイズ
-    const int culls;  // 最大でも 1/2^ のサイズまでしか扱わない
+    const int culls;  // 最大でも 1/2^{culls}までしか扱わない
 
     cv::Mat1f m_age;
     std::vector<std::shared_ptr<Scene>> m_scenes;
@@ -80,7 +81,11 @@ public:
     cv::Mat1f m_relative_xi;
     std::shared_ptr<Frame> m_ref_frame;
 
-    Frame(const cv::Mat1f& gray_image, const cv::Mat1f& depth_image, const cv::Mat1f& sigma_image, const cv::Mat1f& K, int level, int culls)
+    Frame(
+        const cv::Mat1f& gray_image,
+        const cv::Mat1f& depth_image,
+        const cv::Mat1f& sigma_image,
+        const cv::Mat1f& K, int level, int culls)
         : id(++latest_id), cols(gray_image.cols), rows(gray_image.rows), level(level), culls(culls),
           m_age(cv::Mat::zeros(gray_image.size(), CV_32FC1)),
           m_xi(math::se3::xi()), m_relative_xi(math::se3::xi()), m_ref_frame(nullptr)
@@ -93,7 +98,7 @@ public:
         m_scenes = createScenePyramid(base);
     }
 
-    Frame(const cv::Mat1f& gray_image, const cv::Mat1f& K, int level, int cull)
+    Frame(const cv::Mat1f& gray_image, const cv::Mat1f& K, int level, int culls)
         : id(++latest_id), cols(gray_image.cols), rows(gray_image.rows), level(level), culls(culls),
           m_age(cv::Mat::zeros(gray_image.size(), CV_32FC1)),
           m_xi(math::se3::xi()), m_relative_xi(math::se3::xi()), m_ref_frame(nullptr)
@@ -106,13 +111,18 @@ public:
 
     // copy constructor
     Frame(const Frame& frame)
-        : id(frame.id), cols(frame.cols), rows(frame.rows), level(level), culls(culls),
+        : id(frame.id), cols(frame.cols), rows(frame.rows), level(frame.level), culls(frame.culls),
           m_age(frame.m_age), m_scenes(frame.m_scenes),
           m_xi(frame.m_xi), m_relative_xi(frame.m_relative_xi), m_ref_frame(frame.m_ref_frame) {}
 
     std::shared_ptr<Scene> at(int level) const { return m_scenes.at(level); }
-
     std::shared_ptr<Scene> top() { return m_scenes.at(level - 1); }
+
+    const cv::Mat1f& gray() const { return m_scenes.at(level - 1)->gray(); }
+    const cv::Mat1f& depth() const { return m_scenes.at(level - 1)->depth(); }
+    const cv::Mat1f& sigma() const { return m_scenes.at(level - 1)->sigma(); }
+    const cv::Mat1f& K() const { return m_scenes.at(level - 1)->K(); }
+    const cv::Mat1f& age() const { return m_age; }
 
     // VisualOdometry::estimateで呼ばれる
     void updateXi(const cv::Mat1f& relative_xi, std::shared_ptr<Frame> ref_frame);

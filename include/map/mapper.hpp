@@ -44,7 +44,7 @@ struct EpipolarSegment {
         : min(min), max(max),
           start(Transform::warp(xi, x_i, max, K)),
           end(Transform::warp(xi, x_i, min, K)),
-          length(cv::norm(start - end)) {}
+          length(static_cast<float>(cv::norm(start - end))) {}
 
     // copy constractor
     EpipolarSegment(const EpipolarSegment& es)
@@ -75,13 +75,12 @@ struct Config {
     const bool is_chatty;
     const float minimum_movement = 0.10f;  // [m]
     const float predict_sigma = 0.10f;     // [m]
-    const float initial_sigma = 0.50f;     // [m]
-    const float luminance_sigma = 1.00f;   // [pixel]
-    const float epipolar_sigma = 2.00f;    // [pixel]
-
     const float predict_variance;
+    const float initial_sigma = 0.50f;  // [m]
     const float initial_variance;
+    const float luminance_sigma = 1.00f;  // [pixel]
     const float luminance_variance;
+    const float epipolar_sigma = 2.00f;  // [pixel]
     const float epipolar_variance;
 };
 

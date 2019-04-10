@@ -28,24 +28,24 @@ bool Mapper::needNewFrame(pFrame frame)
 }
 
 // ====Propagate====
-pFrame Mapper::propagate(const FrameHistory& frame_history, const pFrame frame)
+pFrame Mapper::propagate(const FrameHistory& /*frame_history*/, const pFrame frame)
 {
     if (m_config.is_chatty)
         std::cout << "propagate" << std::endl;
     const pFrame& ref = frame->m_ref_frame;
 
     auto [depth, sigma, age] = propagate(
-        ref->top()->depth(),
-        ref->top()->sigma(),
-        ref->m_age,
+        ref->depth(),
+        ref->sigma(),
+        ref->age(),
         frame->m_relative_xi,
-        frame->top()->K());
+        frame->K());
 
     pFrame new_frame = std::make_shared<Frame>(
         depth,
         sigma,
         age,
-        frame->top()->K(),
+        frame->K(),
         frame->level,
         frame->culls);
 
@@ -60,7 +60,7 @@ std::tuple<cv::Mat1f, cv::Mat1f, cv::Mat1f> Mapper::propagate(
     const cv::Mat1f& intrinsic)
 {
     const float tz = xi(2);
-    cv::Size size = ref_depth.size();
+    const cv::Size size = ref_depth.size();
     std::function<bool(cv::Point2i)> inRange = math::generateInRange(size);
 
     cv::Mat1f depth(cv::Mat1f::ones(size));
@@ -73,6 +73,10 @@ std::tuple<cv::Mat1f, cv::Mat1f, cv::Mat1f> Mapper::propagate(
             if (math::isEpsilon(rd))
                 return;
 
+            cv::Point2f warped_x_i = Transform::warp(xi, x_i, rd, intrinsic);
+            if (not inRange(warped_x_i))
+                return;
+
             float s = ref_sigma(x_i);
             float d0 = rd;
             float d1 = d0 - tz;
@@ -82,13 +86,9 @@ std::tuple<cv::Mat1f, cv::Mat1f, cv::Mat1f> Mapper::propagate(
                 s = std::sqrt(math::pow(d1 / d0, 4) * math::square(s)
                               + m_config.predict_variance);
 
-            cv::Point2f warped_x_i = Transform::warp(xi, x_i, rd, intrinsic);
-
-            if (inRange(warped_x_i)) {
-                depth(warped_x_i) = std::max(d1, 0.0f);
-                sigma(warped_x_i) = s;
-                age(warped_x_i) = ref_age(x_i) + 1;
-            }
+            depth(warped_x_i) = std::max(d1, 0.0f);
+            sigma(warped_x_i) = s;
+            age(warped_x_i) = ref_age(x_i) + 1;
         });
 
     return {depth, sigma, age};
@@ -97,14 +97,14 @@ std::tuple<cv::Mat1f, cv::Mat1f, cv::Mat1f> Mapper::propagate(
 // ====Update====
 void Mapper::update(const FrameHistory& frame_history, pFrame frame)
 {
-    const pScene ref = frame_history.getRefFrame()->top();
+    const pFrame ref = frame->m_ref_frame;
     const cv::Mat1f xi = frame->m_xi;
 
     auto inRange = math::generateInRange(ref->depth().size());
     const cv::Mat1f K = frame->top()->K();
 
     ref->depth().forEach(
-        [=](float d, const int pt[2]) -> void {
+        [=](const float d, const int pt[2]) -> void {
             cv::Point2i x_i(pt[1], pt[0]);
             cv::Point2i warped_x_i = Transform::warp(xi, x_i, d, K);
             if (not inRange(warped_x_i))
@@ -145,10 +145,10 @@ float Mapper::depthEstimate(
     const cv::Mat1f R = math::se3::exp(xi).colRange(0, 3).rowRange(0, 3);
     const cv::Mat1f r3 = R.row(2);
 
-    const cv::Mat1f a = r3.dot(x_q) * x_i - K * R * x_q;
-    const cv::Mat1f b = t(2) * x_i - K * t;
+    const cv::Mat1f a(r3.dot(x_q) * x_i - K * R * x_q);
+    const cv::Mat1f b(t(2) * x_i - K * t);
 
-    return a.dot(b) / a.dot(a);
+    return static_cast<float>(a.dot(b) / a.dot(a));
 }
 
 float Mapper::sigmaEstimate(
@@ -208,7 +208,7 @@ cv::Point2f Mapper::doMatching(const cv::Mat1f& ref_gray, const float gray, cons
 }
 
 // ====Regularize====
-void Mapper::regularize(const FrameHistory& frame_history, pFrame frame)
+void Mapper::regularize(const FrameHistory& /*frame_history*/, pFrame frame)
 {
     if (m_config.is_chatty)
         std::cout << "regularize" << std::endl;

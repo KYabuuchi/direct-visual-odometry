@@ -39,9 +39,9 @@ struct EpipolarSegment {
         const cv::Mat1f& xi,
         const cv::Point2i& x_i,
         const cv::Mat1f& K,
-        const float min,
-        const float max)
-        : min(min), max(max),
+        const float depth,
+        const float sigma)
+        : min(depth - sigma), max(depth + sigma),
           start(Transform::warp(xi, x_i, max, K)),
           end(Transform::warp(xi, x_i, min, K)),
           length(static_cast<float>(cv::norm(start - end))) {}
@@ -109,6 +109,18 @@ public:
     // ====Update====
     // 深度・分散を更新
     void update(const FrameHistory& frame_history, pFrame frame);
+    std::tuple<float, float> update(
+        const cv::Mat1f& obj_gray,
+        const cv::Mat1f& ref_gray,
+        const cv::Mat1f& ref_gradx,
+        const cv::Mat1f& ref_grady,
+        const cv::Mat1f& relative_xi,
+        const cv::Mat1f& K,
+        const cv::Point2i& x_i,
+        float depth,
+        float sigma);
+
+
     // 該当する画素を探索する
     cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float gray, const EpipolarSegment& es);
     // 深度を推定

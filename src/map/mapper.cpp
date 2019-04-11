@@ -95,13 +95,13 @@ std::tuple<cv::Mat1f, cv::Mat1f, cv::Mat1f> Mapper::propagate(
 }
 
 // ====Update====
-void Mapper::update(const FrameHistory& frame_history, pFrame frame)
+void Mapper::update(const FrameHistory& frame_history, pFrame obj)
 {
-    const pFrame ref = frame->m_ref_frame;
-    const cv::Mat1f xi = frame->m_xi;
+    const pFrame ref = obj->m_ref_frame;
+    const cv::Mat1f xi = obj->m_xi;
 
     auto inRange = math::generateInRange(ref->depth().size());
-    const cv::Mat1f K = frame->top()->K();
+    const cv::Mat1f K = obj->K();
 
     ref->depth().forEach(
         [=](const float d, const int pt[2]) -> void {
@@ -110,25 +110,55 @@ void Mapper::update(const FrameHistory& frame_history, pFrame frame)
             if (not inRange(warped_x_i))
                 return;
 
-            int age = static_cast<int>(frame->m_age(x_i));
-            pScene key = frame_history.m_history.at(age)->top();
+            // 生まれた
+            int age = static_cast<int>(obj->m_age(x_i));
+            pFrame born = frame_history[age];
 
+            // 事前分布
+            float depth = d - obj->m_relative_xi(2);
             float sigma = ref->sigma()(x_i);
-            EpipolarSegment es(xi, warped_x_i, K, d + sigma, d - sigma);
-            cv::Point2f matched_x_i = doMatching(key->gray(), ref->gray()(warped_x_i), es);
 
-            float new_depth = depthEstimate(
-                Convert::toMat1f(matched_x_i),
-                Convert::toMat1f(warped_x_i), K, xi);
+            // 観測
+            auto [new_deptgh, new_sigma] = update(
+                obj->gray(),
+                born->gray(),
+                born->gradX(),
+                born->gradY(),
+                math::se3::concatenate(obj->m_xi, -born->m_xi),
+                obj->K(),
+                warped_x_i,
+                depth,
+                sigma);
 
-            // float new_sigma = sigmaEstimate(
-            //     frame->m_gradX,
-            //     frame->m_gradY,
-            //     warped_x_i,
-            //     es);
-
-            //  ガウス分布の掛け合わせ
+            // TODO: 事後分布
         });
+}
+
+std::tuple<float, float> Mapper::update(
+    const cv::Mat1f& obj_gray,
+    const cv::Mat1f& ref_gray,
+    const cv::Mat1f& ref_gradx,
+    const cv::Mat1f& ref_grady,
+    const cv::Mat1f& relative_xi,
+    const cv::Mat1f& K,
+    const cv::Point2i& x_i,
+    float depth,
+    float sigma)
+{
+    EpipolarSegment es(relative_xi, x_i, K, depth, sigma);
+    cv::Point2f matched_x_i = doMatching(ref_gray, obj_gray(x_i), es);
+
+    float new_depth = depthEstimate(
+        Convert::toMat1f(matched_x_i),
+        Convert::toMat1f(x_i), K, relative_xi);
+
+    float new_sigma = sigmaEstimate(
+        ref_gradx,
+        ref_grady,
+        matched_x_i,
+        es);
+
+    return {new_depth, new_sigma};
 }
 
 float Mapper::depthEstimate(

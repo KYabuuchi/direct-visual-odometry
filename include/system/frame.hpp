@@ -42,13 +42,13 @@ public:
     const cv::Mat1f& sigma() const { return m_sigma; }
     const cv::Mat1f& K() const { return m_K; }
 
-    cv::Mat1f gradX()
+    cv::Mat1f& gradX()
     {
         if (m_grad_x.empty())
             m_grad_x = Convert::gradiate(m_gray, true);
         return m_grad_x;
     }
-    cv::Mat1f gradY()
+    cv::Mat1f& gradY()
     {
         if (m_grad_y.empty())
             m_grad_y = Convert::gradiate(m_gray, false);
@@ -121,6 +121,8 @@ public:
     const cv::Mat1f& gray() const { return m_scenes.at(level - 1)->gray(); }
     const cv::Mat1f& depth() const { return m_scenes.at(level - 1)->depth(); }
     const cv::Mat1f& sigma() const { return m_scenes.at(level - 1)->sigma(); }
+    const cv::Mat1f& gradX() const { return m_scenes.at(level - 1)->gradX(); }
+    const cv::Mat1f& gradY() const { return m_scenes.at(level - 1)->gradY(); }
     const cv::Mat1f& K() const { return m_scenes.at(level - 1)->K(); }
     const cv::Mat1f& age() const { return m_age; }
 
@@ -166,7 +168,7 @@ public:
 
     int size() { return static_cast<int>(m_history.size()); }
 
-    std::shared_ptr<Frame> operator[](size_t i) { return m_history.at(i); }
+    const std::shared_ptr<Frame> operator[](size_t i) const { return m_history.at(i); }
 
     std::vector<std::shared_ptr<Frame>> m_history;
 };

@@ -83,5 +83,8 @@ target_link_libraries(test-seq ${OpenCV_LIBS} vo-core)
 #
 add_executable(test-propagate test/propagate.cpp)
 target_link_libraries(test-propagate ${OpenCV_LIBS} vo-core)
+#
+add_executable(test-update test/update.cpp)
+target_link_libraries(test-update ${OpenCV_LIBS} vo-core)
 # =============================
 # cmake-format: on

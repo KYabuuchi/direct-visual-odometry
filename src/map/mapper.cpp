@@ -146,12 +146,13 @@ std::tuple<float, float> Mapper::update(
     float sigma)
 {
     EpipolarSegment es(relative_xi, x_i, K, depth, sigma);
+
     cv::Point2f matched_x_i = doMatching(ref_gray, obj_gray(x_i), es);
+    if (matched_x_i.x < 0)
+        return {-1, -1};
 
-    float new_depth = depthEstimate(
-        Convert::toMat1f(matched_x_i),
-        Convert::toMat1f(x_i), K, relative_xi);
-
+    float new_depth = depthEstimate(matched_x_i, x_i, K, relative_xi);
+    std::cout << new_depth << std::endl;
     float new_sigma = sigmaEstimate(
         ref_gradx,
         ref_grady,
@@ -162,23 +163,23 @@ std::tuple<float, float> Mapper::update(
 }
 
 float Mapper::depthEstimate(
-    const cv::Mat1f& ref_x_i,
-    const cv::Mat1f& obj_x_i,
+    const cv::Point2f& ref_x_i,
+    const cv::Point2f& obj_x_i,
     const cv::Mat1f& K,
     const cv::Mat1f& xi)
 {
-    if (m_config.is_chatty)
-        std::cout << "depthEstimate" << std::endl;
-    const cv::Mat1f& x_i = ref_x_i;
-    const cv::Mat1f x_q = Transform::backProject(K, obj_x_i, 1);
+    // if (m_config.is_chatty)
+    //     std::cout << "depthEstimate" << std::endl;
+    const cv::Mat1f x_q = Transform::backProject(K, cv::Mat1f(obj_x_i), 1);
     const cv::Mat1f t = xi.rowRange(0, 3);
     const cv::Mat1f R = math::se3::exp(xi).colRange(0, 3).rowRange(0, 3);
     const cv::Mat1f r3 = R.row(2);
 
-    const cv::Mat1f a(r3.dot(x_q) * x_i - K * R * x_q);
+    cv::Mat1f x_i = Convert::toMat1f(ref_x_i.x, ref_x_i.y, 1.0f);
+    const cv::Mat1f a(r3.dot(x_q.t()) * x_i - K * R * x_q);
     const cv::Mat1f b(t(2) * x_i - K * t);
 
-    return static_cast<float>(a.dot(b) / a.dot(a));
+    return -static_cast<float>(a.dot(b) / a.dot(a));
 }
 
 float Mapper::sigmaEstimate(
@@ -203,13 +204,13 @@ float Mapper::sigmaEstimate(
     float epipolar = m_config.epipolar_variance / gl2;
     float luminance = 2 * m_config.luminance_variance / g2;
 
-    return math::square(alpha) * (epipolar + luminance);
+    return alpha * std::sqrt(epipolar + luminance);
 }
 
 cv::Point2f Mapper::doMatching(const cv::Mat1f& ref_gray, const float gray, const EpipolarSegment& es)
 {
     cv::Point2f pt = es.start;
-    cv::Point2f dir = (es.start - es.end) / es.length;
+    cv::Point2f dir = (es.end - es.start) / es.length;
 
     cv::Point2f best_pt = pt;
     const int N = 3;
@@ -223,7 +224,8 @@ cv::Point2f Mapper::doMatching(const cv::Mat1f& ref_gray, const float gray, cons
         for (int i = 0; i < N; i++) {
             float subpixel_gray = Convert::getSubpixel(ref_gray, pt + (i - N / 2) * dir);
             if (math::isInvalid(subpixel_gray)) {
-                std::cout << "invalid in doMatching" << std::endl;
+                ssd = N;
+                break;
             }
             float diff = subpixel_gray - gray;
             ssd += math::square(diff);
@@ -234,6 +236,10 @@ cv::Point2f Mapper::doMatching(const cv::Mat1f& ref_gray, const float gray, cons
             min_ssd = ssd;
         }
     }
+    if (min_ssd == N) {
+        return cv::Point2f(-1, -1);
+    }
+    std::cout << "best match " << best_pt << " " << min_ssd << std::endl;
     return best_pt;
 }
 

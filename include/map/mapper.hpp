@@ -66,21 +66,21 @@ struct Config {
           predict_variance(math::square(predict_sigma)),
           initial_sigma(0.50f),
           initial_variance(math::square(initial_sigma)),
-          luminance_sigma(1.00f),
+          luminance_sigma(0.00f),
           luminance_variance(math::square(luminance_sigma)),
-          epipolar_sigma(2.00f),
+          epipolar_sigma(0.50f),
           epipolar_variance(math::square(epipolar_sigma)) {}
 
     // NOTE: 宣言の順番に注意(安易に入れ替えてはいけない)
     const bool is_chatty;
-    const float minimum_movement = 0.10f;  // [m]
-    const float predict_sigma = 0.10f;     // [m]
+    const float minimum_movement;  // [m]
+    const float predict_sigma;     // [m]
     const float predict_variance;
-    const float initial_sigma = 0.50f;  // [m]
+    const float initial_sigma;  // [m]
     const float initial_variance;
-    const float luminance_sigma = 1.00f;  // [pixel]
+    const float luminance_sigma;  // [pixel]
     const float luminance_variance;
-    const float epipolar_sigma = 2.00f;  // [pixel]
+    const float epipolar_sigma;  // [pixel]
     const float epipolar_variance;
 };
 
@@ -125,8 +125,8 @@ public:
     cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float gray, const EpipolarSegment& es);
     // 深度を推定
     float depthEstimate(
-        const cv::Mat1f& ref_x_i,
-        const cv::Mat1f& obj_x_i,
+        const cv::Point2f& ref_x_i,
+        const cv::Point2f& obj_x_i,
         const cv::Mat1f& K,
         const cv::Mat1f& xi);
     // 分散を推定

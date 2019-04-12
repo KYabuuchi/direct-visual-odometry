@@ -65,11 +65,11 @@ add_library(vo-core STATIC ${SOURCES})
 # add_executable(test-se3 test/se3.cpp)
 # target_link_libraries(test-se3 ${OpenCV_LIBS} vo-core)
 #
-add_executable(test-warp test/warp.cpp)
-target_link_libraries(test-warp ${OpenCV_LIBS} vo-core)
+# add_executable(test-warp test/warp.cpp)
+# target_link_libraries(test-warp ${OpenCV_LIBS} vo-core)
 #
-add_executable(test-load test/load.cpp )
-target_link_libraries(test-load ${OpenCV_LIBS} vo-core)
+# add_executable(test-load test/load.cpp )
+# target_link_libraries(test-load ${OpenCV_LIBS} vo-core)
 #
 # add_executable(test-gradient test/gradient.cpp)
 # target_link_libraries(test-gradient ${OpenCV_LIBS} vo-core)

@@ -1,6 +1,6 @@
 #include "core/draw.hpp"
 #include "core/convert.hpp"
-#include "core/math.hpp"
+#include "math/math.hpp"
 
 namespace Draw
 {

@@ -1,6 +1,6 @@
 #pragma once
 #include "core/convert.hpp"
-#include "core/math.hpp"
+#include "math/math.hpp"
 #include <memory>
 
 namespace System

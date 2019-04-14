@@ -1,7 +1,7 @@
 #include "core/transform.hpp"
 #include "core/convert.hpp"
-#include "core/math.hpp"
 #include "core/params.hpp"
+#include "math/math.hpp"
 
 namespace Transform
 {

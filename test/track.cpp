@@ -1,8 +1,8 @@
 // Track::optimize()のテスト
 #include "core/loader.hpp"
-#include "core/math.hpp"
 #include "core/params.hpp"
 #include "core/timer.hpp"
+#include "math/math.hpp"
 #include "matplotlibcpp.h"
 #include "system/frame.hpp"
 #include "track/optimize.hpp"

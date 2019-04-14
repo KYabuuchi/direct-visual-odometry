@@ -1,6 +1,6 @@
 #include "track/tracker.hpp"
 #include "core/convert.hpp"
-#include "core/math.hpp"
+#include "math/math.hpp"
 #include "core/timer.hpp"
 #include "core/transform.hpp"
 #include "track/optimize.hpp"

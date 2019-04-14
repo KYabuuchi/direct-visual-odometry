@@ -1,12 +1,8 @@
 #pragma once
-#include <cassert>
-#include <opencv2/opencv.hpp>
+#include "math/constexpr.hpp"
 
 namespace math
 {
-constexpr float EPSILON = 1e-6f;
-constexpr float INVALID = -2.0f;
-
 inline bool isValid(float num) { return INVALID < num; }
 inline bool isInvalid(float num) { return num <= INVALID; }
 
@@ -75,46 +71,26 @@ inline bool inRange(T num, T min, T max)
 }
 
 
-// 3x1 => 3x3
-cv::Mat1f hat(const cv::Mat1f& vec);
+// Gauss分布
+struct Gaussian {
+    Gaussian(float depth, float sigma) : depth(depth), sigma(sigma) {}
+    float depth;
+    float sigma;
 
-namespace so3
-{
+    void operator()(float d, float s)
+    {
+        float v1 = math::square(sigma);
+        float v2 = math::square(s);
+        float v = v1 + v2;
 
-// 3x1 => 3x3
-cv::Mat1f exp(const cv::Mat1f& twist);
+        // 期待値が離れすぎていたら反映しない
+        float diff = std::abs(d - depth);
+        if (diff > std::max(sigma, s))
+            return;
 
-// 3x3 => 3x1
-cv::Mat1f log(const cv::Mat1f& R);
-
-// 3x3
-cv::Mat1f R(const std::array<float, 3> data);
-cv::Mat1f R();
-
-// 3x1
-cv::Mat1f omega(const std::array<float, 3> data);
-cv::Mat1f omega();
-}  // namespace so3
-
-namespace se3
-{
-// 6x1 => 4x4
-cv::Mat1f exp(const cv::Mat1f& twist);
-
-// 4x4 => 6x1
-cv::Mat1f log(const cv::Mat1f& T);
-
-// {6x1,6x1} => 6x1
-cv::Mat1f concatenate(const cv::Mat1f& xi0, const cv::Mat1f& xi1);
-
-// 4x4
-cv::Mat1f T(const std::array<float, 6>& data);
-cv::Mat1f T();
-
-// 6x1
-cv::Mat xi(const std::array<float, 6>& data);
-cv::Mat xi();
-
-}  // namespace se3
+        depth = (v2 * depth + v1 * d) / v;
+        sigma = std::sqrt((v1 * v2) / v);
+    }
+};
 
 }  // namespace math

@@ -1,5 +1,5 @@
 // math::se3のテスト
-#include "core/math.hpp"
+#include "math/math.hpp"
 #include <opencv2/opencv.hpp>
 #include <opencv2/viz.hpp>
 

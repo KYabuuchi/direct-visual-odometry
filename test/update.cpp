@@ -1,8 +1,8 @@
 #include "core/draw.hpp"
 #include "core/loader.hpp"
-#include "core/math.hpp"
 #include "core/params.hpp"
-#include "map/mapper.hpp"
+#include "map/updater.hpp"
+#include "math/math.hpp"
 
 void show(
     const cv::Mat1f& ref_gray,
@@ -18,8 +18,8 @@ void show(
     cv::hconcat(
         std::vector<cv::Mat>{
             Draw::visualizeGray(ref_gray),
-            Draw::visualizeDepth(origin_depth ),
-            Draw::visualizeDepth(noise_depth )},
+            Draw::visualizeDepth(origin_depth),
+            Draw::visualizeDepth(noise_depth)},
         show_image1);
     cv::hconcat(
         std::vector<cv::Mat>{
@@ -43,8 +43,6 @@ int main(/*int argc, char* argv[]*/)
     cv::namedWindow(window_name, cv::WINDOW_NORMAL);
     cv::resizeWindow(window_name, 1280, 720);
 
-    Map::Mapper mapper{Map::Config()};
-
     // initialize
     cv::Mat1f K;
     cv::Mat1f ref_gray, ref_depth, ref_sigma;
@@ -61,8 +59,8 @@ int main(/*int argc, char* argv[]*/)
 
     cv::Mat1f origin_depth = obj_depth.clone();
     cv::Mat1f noise(obj_depth.size());
-    cv::randn(noise, 0, 0.3);
-    obj_depth = obj_depth + noise;
+    cv::randn(noise, 1.5, 0.6);
+    obj_depth = noise;
     cv::Mat1f noise_depth = obj_depth.clone();
     obj_sigma = 0.5f * cv::Mat1f::ones(obj_depth.size());
 
@@ -86,7 +84,7 @@ int main(/*int argc, char* argv[]*/)
 
 
                 auto [new_depth, new_sigma]
-                    = mapper.update(
+                    = Map::Update::update(
                         obj_gray,
                         ref_gray,
                         ref_gradx,
@@ -97,14 +95,12 @@ int main(/*int argc, char* argv[]*/)
                         depth,
                         sigma);
                 if (new_depth > 0) {
-                    // std::cout << "(" << col << "," << row << ") " << depth << " " << new_depth << "\t" << sigma << " " << new_sigma;
-                    Map::Gaussian g(depth, sigma);
+                    math::Gaussian g(depth, sigma);
                     g(new_depth, new_sigma);
-                    // std::cout << " " << g.depth << " " << g.sigma << std::endl;
                     obj_depth(x_i) = g.depth;
                     obj_sigma(x_i) = g.sigma;
                 } else {
-                    // std::cout << "(" << col << "," << row << ") not found" << std::endl;
+                    // std::cout << "(" << col << "," << row << ") is not updated" << std::endl;
                 }
             }
         }

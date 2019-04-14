@@ -1,8 +1,8 @@
 #include "core/convert.hpp"
 #include "core/draw.hpp"
 #include "core/loader.hpp"
-#include "core/math.hpp"
 #include "core/transform.hpp"
+#include "math/math.hpp"
 #include <opencv2/viz.hpp>
 
 int main()

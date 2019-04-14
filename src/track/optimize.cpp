@@ -1,5 +1,5 @@
 #include "track/optimize.hpp"
-#include "core/math.hpp"
+#include "math/math.hpp"
 
 namespace Track
 {

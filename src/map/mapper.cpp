@@ -1,9 +1,18 @@
 #include "map/mapper.hpp"
 #include "core/transform.hpp"
+#include "map/updater.hpp"
 #include <cmath>
 
 namespace Map
 {
+
+namespace
+{
+constexpr float minimum_movement = 0.10f;  // [m]
+constexpr float predict_sigma = 0.10f;     // [m]
+constexpr float predict_variance = predict_sigma * predict_sigma;
+
+}  // namespace
 
 void Mapper::estimate(FrameHistory& frame_history, pFrame frame)
 {
@@ -119,7 +128,7 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
             float sigma = ref->sigma()(x_i);
 
             // 観測
-            auto [new_deptgh, new_sigma] = update(
+            auto [new_deptgh, new_sigma] = Update::update(
                 obj->gray(),
                 born->gray(),
                 born->gradX(),
@@ -132,115 +141,6 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
 
             // TODO: 事後分布
         });
-}
-
-std::tuple<float, float> Mapper::update(
-    const cv::Mat1f& obj_gray,
-    const cv::Mat1f& ref_gray,
-    const cv::Mat1f& ref_gradx,
-    const cv::Mat1f& ref_grady,
-    const cv::Mat1f& relative_xi,
-    const cv::Mat1f& K,
-    const cv::Point2i& x_i,
-    float depth,
-    float sigma)
-{
-    EpipolarSegment es(relative_xi, x_i, K, depth, sigma);
-
-    cv::Point2f matched_x_i = doMatching(ref_gray, obj_gray(x_i), es);
-    if (matched_x_i.x < 0)
-        return {-1, -1};
-
-    float new_depth = depthEstimate(matched_x_i, x_i, K, relative_xi);
-    std::cout << new_depth << std::endl;
-    float new_sigma = sigmaEstimate(
-        ref_gradx,
-        ref_grady,
-        matched_x_i,
-        es);
-
-    return {new_depth, new_sigma};
-}
-
-float Mapper::depthEstimate(
-    const cv::Point2f& ref_x_i,
-    const cv::Point2f& obj_x_i,
-    const cv::Mat1f& K,
-    const cv::Mat1f& xi)
-{
-    // if (m_config.is_chatty)
-    //     std::cout << "depthEstimate" << std::endl;
-    const cv::Mat1f x_q = Transform::backProject(K, cv::Mat1f(obj_x_i), 1);
-    const cv::Mat1f t = xi.rowRange(0, 3);
-    const cv::Mat1f R = math::se3::exp(xi).colRange(0, 3).rowRange(0, 3);
-    const cv::Mat1f r3 = R.row(2);
-
-    cv::Mat1f x_i = Convert::toMat1f(ref_x_i.x, ref_x_i.y, 1.0f);
-    const cv::Mat1f a(r3.dot(x_q.t()) * x_i - K * R * x_q);
-    const cv::Mat1f b(t(2) * x_i - K * t);
-
-    return -static_cast<float>(a.dot(b) / a.dot(a));
-}
-
-float Mapper::sigmaEstimate(
-    const cv::Mat1f& ref_grad_x,
-    const cv::Mat1f& ref_grad_y,
-    const cv::Point2f& ref_x_i,
-    const EpipolarSegment& es)
-{
-    if (m_config.is_chatty)
-        std::cout << "sigmaEstimate" << std::endl;
-
-    const float alpha = (es.max - es.min) / es.length;
-
-    float gx = ref_grad_x(ref_x_i), gy = ref_grad_y(ref_x_i);
-    float lx = (es.start - es.end).x, ly = (es.start - es.end).y;
-
-    // ( \vec{g} \cdot \vec{l} ) ^2
-    float gl2 = math::square(gx * lx + gy * ly);
-    // ( \vec{g} \cdot \vec{l} ) ^2 /  |\vec{l}|^2
-    float g2 = gl2 / math::square(lx * lx + ly * ly);
-
-    float epipolar = m_config.epipolar_variance / gl2;
-    float luminance = 2 * m_config.luminance_variance / g2;
-
-    return alpha * std::sqrt(epipolar + luminance);
-}
-
-cv::Point2f Mapper::doMatching(const cv::Mat1f& ref_gray, const float gray, const EpipolarSegment& es)
-{
-    cv::Point2f pt = es.start;
-    cv::Point2f dir = (es.end - es.start) / es.length;
-
-    cv::Point2f best_pt = pt;
-    const int N = 3;
-    float min_ssd = N;  // たかだかN
-
-    while (cv::norm(pt - es.start) < es.length) {
-        float ssd = 0;
-        pt += dir;
-
-        // TODO: 1/Nにできるはず
-        for (int i = 0; i < N; i++) {
-            float subpixel_gray = Convert::getSubpixel(ref_gray, pt + (i - N / 2) * dir);
-            if (math::isInvalid(subpixel_gray)) {
-                ssd = N;
-                break;
-            }
-            float diff = subpixel_gray - gray;
-            ssd += math::square(diff);
-        }
-
-        if (ssd < min_ssd) {
-            best_pt = pt;
-            min_ssd = ssd;
-        }
-    }
-    if (min_ssd == N) {
-        return cv::Point2f(-1, -1);
-    }
-    std::cout << "best match " << best_pt << " " << min_ssd << std::endl;
-    return best_pt;
 }
 
 // ====Regularize====
@@ -264,7 +164,7 @@ void Mapper::regularize(cv::Mat1f& depth, const cv::Mat1f& sigma)
 
     depth.forEach(
         [&](float& d, const int p[2]) -> void {
-            Gaussian gauss{d, sigma(p[0], p[1])};
+            math::Gaussian gauss{d, sigma(p[0], p[1])};
 
             for (const std::pair<int, int> offset : offsets) {
                 cv::Point2i pt(p[1] + offset.second, p[0] + offset.first);
@@ -276,6 +176,5 @@ void Mapper::regularize(cv::Mat1f& depth, const cv::Mat1f& sigma)
             d = gauss.depth;
         });
 }
-
 
 }  // namespace Map

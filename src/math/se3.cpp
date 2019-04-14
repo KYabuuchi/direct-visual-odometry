@@ -1,4 +1,5 @@
-#include "core/math.hpp"
+#include "math/math.hpp"
+#include <cassert>
 
 namespace math
 {

@@ -25,11 +25,11 @@ struct Gaussian {
 
         // 期待値が離れすぎていたら反映しない
         float diff = std::abs(d - depth);
-        if (diff > std::max(sigma, s))
-            return;
+        // if (diff > std::max(sigma, s))
+        //     return;
 
         depth = (v2 * depth + v1 * d) / v;
-        sigma = (v1 * v2) / v;
+        sigma = std::sqrt((v1 * v2) / v);
     }
 };
 
@@ -66,9 +66,9 @@ struct Config {
           predict_variance(math::square(predict_sigma)),
           initial_sigma(0.50f),
           initial_variance(math::square(initial_sigma)),
-          luminance_sigma(0.00f),
+          luminance_sigma(0.01f),
           luminance_variance(math::square(luminance_sigma)),
-          epipolar_sigma(0.50f),
+          epipolar_sigma(0.5f),
           epipolar_variance(math::square(epipolar_sigma)) {}
 
     // NOTE: 宣言の順番に注意(安易に入れ替えてはいけない)

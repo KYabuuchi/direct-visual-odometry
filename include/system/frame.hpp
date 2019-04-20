@@ -12,7 +12,10 @@ public:
     Scene(const cv::Mat& gray_image, const cv::Mat1f& K)
         : cols(gray_image.cols), rows(gray_image.rows),
           m_gray(gray_image),
-          m_K(K) {}
+          m_K(K)
+    {
+        std::cout << "Scene " << cols << std::endl;
+    }
 
     Scene(const cv::Mat& gray_image, const cv::Mat& depth_image, const cv::Mat& sigma_image, const cv::Mat1f& K)
         : cols(gray_image.cols), rows(gray_image.rows),
@@ -70,8 +73,8 @@ public:
     const int id;
     const int cols;
     const int rows;
-    const int level;  // 保有する画像ピラミッドのサイズ
-    const int culls;  // 最大でも 1/2^{culls}までしか扱わない
+    const int levels;  // 保有する画像ピラミッドのサイズ
+    const int culls;   // 最大でも 1/2^{culls}までしか扱わない
 
     cv::Mat1f m_age;
     std::vector<std::shared_ptr<Scene>> m_scenes;
@@ -85,8 +88,8 @@ public:
         const cv::Mat1f& gray_image,
         const cv::Mat1f& depth_image,
         const cv::Mat1f& sigma_image,
-        const cv::Mat1f& K, int level, int culls)
-        : id(++latest_id), cols(gray_image.cols), rows(gray_image.rows), level(level), culls(culls),
+        const cv::Mat1f& K, int levels, int culls)
+        : id(++latest_id), cols(gray_image.cols), rows(gray_image.rows), levels(levels), culls(culls),
           m_age(cv::Mat::zeros(gray_image.size(), CV_32FC1)),
           m_xi(math::se3::xi()), m_relative_xi(math::se3::xi()), m_ref_frame(nullptr)
     {
@@ -98,8 +101,8 @@ public:
         m_scenes = createScenePyramid(base);
     }
 
-    Frame(const cv::Mat1f& gray_image, const cv::Mat1f& K, int level, int culls)
-        : id(++latest_id), cols(gray_image.cols), rows(gray_image.rows), level(level), culls(culls),
+    Frame(const cv::Mat1f& gray_image, const cv::Mat1f& K, int levels, int culls)
+        : id(++latest_id), cols(gray_image.cols), rows(gray_image.rows), levels(levels), culls(culls),
           m_age(cv::Mat::zeros(gray_image.size(), CV_32FC1)),
           m_xi(math::se3::xi()), m_relative_xi(math::se3::xi()), m_ref_frame(nullptr)
     {
@@ -111,26 +114,24 @@ public:
 
     // copy constructor
     Frame(const Frame& frame)
-        : id(frame.id), cols(frame.cols), rows(frame.rows), level(frame.level), culls(frame.culls),
+        : id(frame.id), cols(frame.cols), rows(frame.rows), levels(frame.levels), culls(frame.culls),
           m_age(frame.m_age), m_scenes(frame.m_scenes),
           m_xi(frame.m_xi), m_relative_xi(frame.m_relative_xi), m_ref_frame(frame.m_ref_frame) {}
 
     std::shared_ptr<Scene> at(int level) const { return m_scenes.at(level); }
-    std::shared_ptr<Scene> top() { return m_scenes.at(level - 1); }
+    std::shared_ptr<Scene> top() { return m_scenes.at(levels - 1); }
 
-    const cv::Mat1f& gray() const { return m_scenes.at(level - 1)->gray(); }
-    const cv::Mat1f& depth() const { return m_scenes.at(level - 1)->depth(); }
-    const cv::Mat1f& sigma() const { return m_scenes.at(level - 1)->sigma(); }
-    const cv::Mat1f& gradX() const { return m_scenes.at(level - 1)->gradX(); }
-    const cv::Mat1f& gradY() const { return m_scenes.at(level - 1)->gradY(); }
-    const cv::Mat1f& K() const { return m_scenes.at(level - 1)->K(); }
+    const cv::Mat1f& gray() const { return m_scenes.at(levels - 1)->gray(); }
+    const cv::Mat1f& depth() const { return m_scenes.at(levels - 1)->depth(); }
+    const cv::Mat1f& sigma() const { return m_scenes.at(levels - 1)->sigma(); }
+    const cv::Mat1f& gradX() const { return m_scenes.at(levels - 1)->gradX(); }
+    const cv::Mat1f& gradY() const { return m_scenes.at(levels - 1)->gradY(); }
+    const cv::Mat1f& K() const { return m_scenes.at(levels - 1)->K(); }
     const cv::Mat1f& age() const { return m_age; }
 
-    // VisualOdometry::estimateで呼ばれる
     void updateXi(const cv::Mat1f& relative_xi, std::shared_ptr<Frame> ref_frame);
-
-    // Mapper::updateで呼ばれる
-    void updateDepthSigma(const cv::Mat1f& depth_image, const cv::Mat1f& sigma_image);
+    void updateDepthSigmaAge(const cv::Mat1f& depth_image, const cv::Mat1f& sigma_image, const cv::Mat1f& age_image);
+    void updateDepth(const cv::Mat1f& depth_image);
 
 private:
     std::shared_ptr<Scene> downscaleScene(const Scene& scene, int times = 1);
@@ -142,15 +143,15 @@ class FrameHistory
 public:
     FrameHistory() {}
 
-    void reduceHistory(size_t remain)
+    void setRefFrame(std::shared_ptr<Frame> frame)
     {
-        if (remain < m_history.size())
-            m_history.erase(m_history.begin() + remain, m_history.end());
-        else
-            std::cout << " invalid remains" << std::endl;
+        double oldest = 0;
+        cv::minMaxIdx(frame->age(), nullptr, &oldest);
+        std::cout << "setRefFrame. oldest: " << oldest << std::endl;
+        m_history.push_back(frame);
     }
-    void setRefFrame(std::shared_ptr<Frame> frame) { m_history.push_back(frame); }
 
+    // 唯一のupdate方法
     std::shared_ptr<Frame> getRefFrame()
     {
         if (m_history.empty())
@@ -165,10 +166,18 @@ public:
         return m_history.at(0);
     }
 
-
     int size() { return static_cast<int>(m_history.size()); }
 
     const std::shared_ptr<Frame> operator[](size_t i) const { return m_history.at(i); }
+
+private:
+    void reduceHistory(size_t remain)
+    {
+        if (remain < m_history.size())
+            m_history.erase(m_history.begin() + remain, m_history.end());
+        else
+            std::cout << " invalid remains" << std::endl;
+    }
 
     std::vector<std::shared_ptr<Frame>> m_history;
 };

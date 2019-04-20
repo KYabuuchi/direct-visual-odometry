@@ -6,30 +6,18 @@
 
 namespace Track
 {
-
-struct Config {
-    const cv::Mat1f intrinsic;
-    const int level;
-    const bool is_chatty;
-    const float minimum_update;
-    const float minimum_residual;
-};
-
-
 class Tracker
 {
 public:
     using pScene = std::shared_ptr<System::Scene>;
-    Tracker(const Config& config) : m_config(config), m_initialized(false) {}
+    using pFrame = std::shared_ptr<System::Frame>;
+    Tracker() {}
 
     cv::Mat1f track(
-        const std::shared_ptr<System::Frame> ref_frame,
-        const std::shared_ptr<System::Frame> cur_frame);
+        const pFrame obj_frame,
+        const pFrame ref_frame);
 
 private:
-    Config m_config;
-
-    bool m_initialized;
 };
 
 

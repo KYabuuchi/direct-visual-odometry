@@ -25,7 +25,7 @@ std::tuple<cv::Mat1f, cv::Mat1f, cv::Mat1f> propagate(
     const cv::Mat1f& xi,
     const cv::Mat1f& K);
 
-void regularize(cv::Mat1f& depth, const cv::Mat1f& sigma);
+cv::Mat1f regularize(const cv::Mat1f& depth, const cv::Mat1f& sigma);
 
 }  // namespace Implement
 }  // namespace Map

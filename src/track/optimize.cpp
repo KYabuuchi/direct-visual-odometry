@@ -59,6 +59,7 @@ Outcome optimize(const Stuff& stuff)
         for (int row = 0; row < stuff.rows; row++) {
             cv::Point2i x_i = cv::Point2i(col, row);
 
+
             // depth
             float depth = at(stuff.ref_depth, x_i);
             if (depth < 0.50) {
@@ -73,7 +74,7 @@ Outcome optimize(const Stuff& stuff)
             }
 
             // gradient
-            cv::Point2i warped_x_i = Transform::warp(cv::Mat1f(-stuff.xi), cv::Point2f(x_i), depth, stuff.intrinsic);
+            cv::Point2i warped_x_i = Transform::warp(cv::Mat1f(-stuff.xi), cv::Point2f(x_i), depth, stuff.K);
             if (warped_x_i.x < 0 or stuff.cols <= warped_x_i.x
                 or warped_x_i.y < 0 or stuff.rows <= warped_x_i.y)
                 continue;
@@ -86,9 +87,9 @@ Outcome optimize(const Stuff& stuff)
             }
 
             // calc jacobian
-            cv::Point3f x_c = cv::Point3f(Transform::backProject(stuff.intrinsic, Convert::toMat1f(x_i.x, x_i.y), depth));
+            cv::Point3f x_c = cv::Point3f(Transform::backProject(stuff.K, Convert::toMat1f(x_i.x, x_i.y), depth));
             float x = x_c.x, y = x_c.y, z = x_c.z;
-            float fx = stuff.intrinsic(0, 0), fy = stuff.intrinsic(1, 1);
+            float fx = stuff.K(0, 0), fy = stuff.K(1, 1);
             float fgx = fx * gx, fgy = fy * gy;
             cv::Mat1f jacobi = cv::Mat1f(cv::Mat1f::zeros(1, 6));
             jacobi(0) = fgx / z;

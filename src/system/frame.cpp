@@ -30,19 +30,25 @@ std::shared_ptr<Scene> Frame::downscaleScene(const Scene& scene, int times)
 std::vector<std::shared_ptr<Scene>> Frame::createScenePyramid(const Scene& scene)
 {
     std::vector<std::shared_ptr<Scene>> scenes;
-    for (int i = 0; i < level; i++) {
-        scenes.push_back(downscaleScene(scene, level - 1 - i));  // level-1 , ... , 1 , 0
+    for (int i = 0; i < levels; i++) {
+        scenes.push_back(downscaleScene(scene, levels - 1 - i));  // level-1 , ... , 1 , 0
     }
     return scenes;
 }
-
-void Frame::updateDepthSigma(const cv::Mat1f& depth_image, const cv::Mat1f& sigma_image)
+void Frame::updateDepthSigmaAge(const cv::Mat1f& depth_image, const cv::Mat1f& sigma_image, const cv::Mat1f& age_image)
 {
-    for (int i = 0; i < level; i++) {
-        m_scenes.at(i)->depth() = Convert::cullImage(depth_image, level - 1 - i);
-        m_scenes.at(i)->sigma() = Convert::cullImage(sigma_image, level - 1 - i);
+    m_age = age_image;
+    for (int i = 0; i < levels; i++) {
+        m_scenes.at(i)->depth() = Convert::cullImage(depth_image, levels - 1 - i);
+        m_scenes.at(i)->sigma() = Convert::cullImage(sigma_image, levels - 1 - i);
     }
 }
 
+void Frame::updateDepth(const cv::Mat1f& depth_image)
+{
+    for (int i = 0; i < levels; i++) {
+        m_scenes.at(i)->depth() = Convert::cullImage(depth_image, levels - 1 - i);
+    }
+}
 
 }  // namespace System

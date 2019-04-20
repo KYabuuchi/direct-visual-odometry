@@ -4,8 +4,6 @@
 
 namespace Draw
 {
-// 無効画素は赤色へ
-
 cv::Mat visualizeGray(const cv::Mat1f& src_image)
 {
     cv::Mat dst_image;
@@ -22,19 +20,6 @@ cv::Mat visualizeGray(const cv::Mat1f& src_image)
 
 cv::Mat visualizeDepthRaw(const cv::Mat1f& src_image)
 {
-    // cv::Mat dst_image = cv::Mat(src_image.size(), CV_8UC1);
-    // dst_image.forEach<uchar>([&](uchar& d, const int p[2]) -> void {
-    //     float val = src_image(p[0], p[1]);
-    //     if (val > 2.5) {
-    //         std::cout << val << std::endl;
-    //         d = 250;
-    //     } else if (val < 0) {
-    //         std::cout << val << std::endl;
-    //         d = 0;
-    //     } else
-    //         d = static_cast<uchar>(val * 100);
-    // });
-
     cv::Mat dst_image = src_image.clone();
     dst_image = cv::min(dst_image, 2.5f);
     dst_image = cv::max(dst_image, 0.5f);

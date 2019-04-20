@@ -5,58 +5,50 @@
 
 namespace Map
 {
-
 namespace
 {
-constexpr float minimum_movement = 0.10f;  // [m]
+constexpr float MINIMUM_MOVEMENT = 0.10f;  // [m]
 }  // namespace
 
 void Mapper::estimate(FrameHistory& frame_history, pFrame frame)
 {
-    if (frame_history.size() == 0) {
+    if (needNewFrame(frame)) {
+        propagate(frame);
+        double oldest = 0;
+        cv::minMaxIdx(frame->age(), nullptr, &oldest);
+        std::cout << "oldest: " << oldest << std::endl;
+
         frame_history.setRefFrame(frame);
     } else {
-        if (needNewFrame(frame)) {
-            pFrame new_frame = propagate(frame_history, frame);
-            frame_history.setRefFrame(new_frame);
-        } else {
-            update(frame_history, frame);
-        }
+        update(frame_history, frame);
     }
-    regularize(frame_history, frame);
+    regularize(frame);
 }
 
-bool Mapper::needNewFrame(pFrame frame)
+bool Mapper::needNewFrame(const pFrame frame)
 {
     cv::Mat1f& xi = frame->m_relative_xi;
     double scalar = cv::norm(xi.rowRange(0, 3));
-    return scalar > minimum_movement;
+    return scalar > MINIMUM_MOVEMENT;
 }
 
-pFrame Mapper::propagate(const FrameHistory& /*frame_history*/, const pFrame frame)
+void Mapper::propagate(pFrame frame)
 {
-    const pFrame& ref = frame->m_ref_frame;
+    std::cout << "Mapper::propagate" << std::endl;
 
+    const pFrame& ref = frame->m_ref_frame;
     auto [depth, sigma, age] = Implement::propagate(
         ref->depth(),
         ref->sigma(),
         ref->age(),
         frame->m_relative_xi,
         frame->K());
-
-    pFrame new_frame = std::make_shared<Frame>(
-        depth,
-        sigma,
-        age,
-        frame->K(),
-        frame->level,
-        frame->culls);
-
-    return frame;
+    frame->updateDepthSigmaAge(depth, sigma, age);
 }
 
 void Mapper::update(const FrameHistory& frame_history, pFrame obj)
 {
+    std::cout << "Mapper::update" << std::endl;
     const pFrame ref = obj->m_ref_frame;
     const cv::Mat1f xi = obj->m_xi;
 
@@ -64,13 +56,13 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
     const cv::Mat1f K = obj->K();
 
     ref->depth().forEach(
-        [=](const float d, const int pt[2]) -> void {
+        [&](const float d, const int pt[2]) -> void {
             cv::Point2i x_i(pt[1], pt[0]);
             cv::Point2i warped_x_i = Transform::warp(xi, x_i, d, K);
             if (not inRange(warped_x_i))
                 return;
 
-            // 生まれた
+            // 生まれ年の
             int age = static_cast<int>(obj->m_age(x_i));
             pFrame born = frame_history[age];
 
@@ -79,7 +71,7 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
             float sigma = ref->sigma()(x_i);
 
             // 観測
-            auto [new_deptgh, new_sigma] = Implement::update(
+            auto [new_depth, new_sigma] = Implement::update(
                 obj->gray(),
                 born->gray(),
                 born->gradX(),
@@ -90,18 +82,21 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
                 depth,
                 sigma);
 
-            // TODO: 事後分布
+            // 更新
+            if (new_depth > 0 and new_depth < 4.0) {
+                math::Gaussian g(depth, sigma);
+                g(new_depth, new_sigma);
+                obj->top()->depth()(x_i) = g.depth;
+                obj->top()->sigma()(x_i) = g.sigma;
+            }
         });
 }
 
-void Mapper::regularize(const FrameHistory& /*frame_history*/, pFrame frame)
+void Mapper::regularize(pFrame frame)
 {
-    std::cout << "regularize" << std::endl;
-
-    // TODO: ピラミッドの下のほうが更新されない
-    Implement::regularize(frame->top()->depth(), frame->top()->sigma());
-    // NOTE: ↓これとかを使う
-    // frame->updateDepthSigma();
+    std::cout << "Mapper::regularize" << std::endl;
+    cv::Mat1f depth = Implement::regularize(frame->depth(), frame->sigma());
+    frame->updateDepth(depth);
 }
 
 }  // namespace Map

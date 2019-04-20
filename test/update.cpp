@@ -74,15 +74,12 @@ int main(/*int argc, char* argv[]*/)
             return 0;
 
         obj_depth.forEach([&](float& depth, const int p[2]) -> void {
-            // if (depth > 2.0)
-            //     std::cout << depth << std::endl;
-
             cv::Point2i x_i(p[1], p[0]);
             float sigma = obj_sigma(x_i);
 
             // 小さすぎると死ぬ
             if (depth < 0.1f)
-                depth = 0.1;
+                depth = 0.1f;
 
             auto [new_depth, new_sigma] = Map::Implement::update(
                 obj_gray,
@@ -110,7 +107,7 @@ int main(/*int argc, char* argv[]*/)
         if (cv::waitKey(0) == 'q')
             return 0;
 
-        Map::Implement::regularize(obj_depth, obj_sigma);
+        obj_depth = Map::Implement::regularize(obj_depth, obj_sigma);
         // obj_depth = cv::min(obj_depth, 2.0);
     }
 }

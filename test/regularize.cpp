@@ -35,6 +35,6 @@ int main(/*int argc, char* argv[]*/)
         show(depth, sigma);
         if (cv::waitKey(0) == 'q')
             return 0;
-        Map::Implement::regularize(depth, sigma);
+        depth = Map::Implement::regularize(depth, sigma);
     }
 }

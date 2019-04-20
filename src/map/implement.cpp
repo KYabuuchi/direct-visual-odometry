@@ -123,14 +123,14 @@ cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float gray, const Epipol
 
 }  // namespace
 
-void regularize(cv::Mat1f& depth, const cv::Mat1f& sigma)
+cv::Mat1f regularize(const cv::Mat1f& depth, const cv::Mat1f& sigma)
 {
-    const cv::Mat1f origin_depth = depth.clone();
+    cv::Mat1f new_depth = depth.clone();
 
     std::vector<std::pair<int, int>> offsets = {{0, -1}, {0, 1}, {1, 0}, {-1, 0}};
     std::function<bool(cv::Point2i)> inRange = math::generateInRange(depth.size());
 
-    depth.forEach(
+    new_depth.forEach(
         [=](float& d, const int p[2]) -> void {
             math::Gaussian g{d, sigma(p[0], p[1])};
 
@@ -139,7 +139,7 @@ void regularize(cv::Mat1f& depth, const cv::Mat1f& sigma)
                 if (not inRange(pt))
                     continue;
 
-                g(origin_depth.at<float>(pt), sigma.at<float>(pt));
+                g(depth.at<float>(pt), sigma.at<float>(pt));
             }
             d = g.depth;
 
@@ -150,7 +150,8 @@ void regularize(cv::Mat1f& depth, const cv::Mat1f& sigma)
         });
 
     // 遠いのは省く
-    depth = cv::min(depth, 3.0);
+    new_depth = cv::min(new_depth, 3.0);
+    return new_depth;
 }
 
 std::tuple<float, float> update(
@@ -183,6 +184,7 @@ std::tuple<float, float> update(
     return {new_depth, new_sigma};
 }
 
+// depth,sigma,age
 std::tuple<cv::Mat1f, cv::Mat1f, cv::Mat1f> propagate(
     const cv::Mat1f& ref_depth,
     const cv::Mat1f& ref_sigma,

@@ -11,6 +11,7 @@ cv::Mat visualizeGray(const cv::Mat1f& src_image);
 // 深度
 cv::Mat visualizeDepth(const cv::Mat1f& src_image);
 cv::Mat visualizeDepth(const cv::Mat1f& depth, const cv::Mat1f& sigma);
+cv::Mat visualizeDepthRaw(const cv::Mat1f& src_image);
 
 // 勾配
 cv::Mat visualizeGradient(const cv::Mat1f& src_image);

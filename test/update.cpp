@@ -1,7 +1,7 @@
 #include "core/draw.hpp"
 #include "core/loader.hpp"
 #include "core/params.hpp"
-#include "map/updater.hpp"
+#include "map/implement.hpp"
 #include "math/math.hpp"
 
 void show(
@@ -18,14 +18,14 @@ void show(
     cv::hconcat(
         std::vector<cv::Mat>{
             Draw::visualizeGray(ref_gray),
-            Draw::visualizeDepth(origin_depth),
-            Draw::visualizeDepth(noise_depth)},
+            Draw::visualizeDepth(noise_depth),
+            Draw::visualizeDepth(origin_depth)},
         show_image1);
     cv::hconcat(
         std::vector<cv::Mat>{
             Draw::visualizeGray(obj_gray),
-            Draw::visualizeDepth(obj_depth, obj_sigma),
-            Draw::visualizeSigma(obj_sigma)},
+            Draw::visualizeDepthRaw(obj_depth),
+            Draw::visualizeDepth(obj_depth, obj_sigma)},
         show_image2);
 
     cv::vconcat(show_image1, show_image2, show_image1);
@@ -58,51 +58,59 @@ int main(/*int argc, char* argv[]*/)
               << std::endl;
 
     cv::Mat1f origin_depth = obj_depth.clone();
+
     cv::Mat1f noise(obj_depth.size());
-    cv::randn(noise, 1.5, 0.6);
+    cv::randn(noise, 1.5, 0.5);
+    noise = cv::max(noise, 0.1);
+    noise = cv::min(noise, 2.0);
     obj_depth = noise;
+
     cv::Mat1f noise_depth = obj_depth.clone();
     obj_sigma = 0.5f * cv::Mat1f::ones(obj_depth.size());
 
-    cv::Size size = obj_gray.size();
-
     while (true) {
-        show(
-            ref_gray, origin_depth, noise_depth,
-            obj_gray, obj_depth, obj_sigma);
+        show(ref_gray, origin_depth, noise_depth, obj_gray, obj_depth, obj_sigma);
         if (cv::waitKey(0) == 'q')
             return 0;
-        for (int col = 0; col < size.width - 0; col++) {
-            for (int row = 0; row < size.height - 0; row++) {
 
-                cv::Point2i x_i(col, row);
-                float depth = obj_depth(x_i);
-                float sigma = obj_sigma(x_i);
+        obj_depth.forEach([&](float& depth, const int p[2]) -> void {
+            // if (depth > 2.0)
+            //     std::cout << depth << std::endl;
 
-                if (depth < 0.5f)
-                    continue;
+            cv::Point2i x_i(p[1], p[0]);
+            float sigma = obj_sigma(x_i);
 
+            // 小さすぎると死ぬ
+            if (depth < 0.1f)
+                depth = 0.1;
 
-                auto [new_depth, new_sigma]
-                    = Map::Update::update(
-                        obj_gray,
-                        ref_gray,
-                        ref_gradx,
-                        ref_grady,
-                        xi,
-                        K,
-                        x_i,
-                        depth,
-                        sigma);
-                if (new_depth > 0) {
-                    math::Gaussian g(depth, sigma);
-                    g(new_depth, new_sigma);
-                    obj_depth(x_i) = g.depth;
-                    obj_sigma(x_i) = g.sigma;
-                } else {
-                    // std::cout << "(" << col << "," << row << ") is not updated" << std::endl;
+            auto [new_depth, new_sigma] = Map::Implement::update(
+                obj_gray,
+                ref_gray,
+                ref_gradx,
+                ref_grady,
+                xi,
+                K,
+                x_i,
+                depth,
+                sigma);
+
+            if (new_depth > 0 and new_depth < 2.0) {
+                math::Gaussian g(depth, sigma);
+                g(new_depth, new_sigma);
+                obj_depth(x_i) = g.depth;
+                obj_sigma(x_i) = g.sigma;
+                if (g.depth > 2.0) {
+                    std::cout << g.depth << std::endl;
                 }
             }
-        }
+        });
+
+        show(ref_gray, origin_depth, noise_depth, obj_gray, obj_depth, obj_sigma);
+        if (cv::waitKey(0) == 'q')
+            return 0;
+
+        Map::Implement::regularize(obj_depth, obj_sigma);
+        // obj_depth = cv::min(obj_depth, 2.0);
     }
 }

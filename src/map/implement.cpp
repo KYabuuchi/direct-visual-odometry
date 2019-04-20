@@ -1,10 +1,10 @@
-#include "map/updater.hpp"
+#include "map/implement.hpp"
 #include "core/convert.hpp"
 #include "math/math.hpp"
 
 namespace Map
 {
-namespace Update
+namespace Implement
 {
 namespace
 {
@@ -16,6 +16,9 @@ constexpr float luminance_variance = luminance_sigma * luminance_sigma;
 
 constexpr float epipolar_sigma = 0.5f;  // [pixel]
 constexpr float epipolar_variance = epipolar_sigma * epipolar_sigma;
+
+constexpr float predict_sigma = 0.10f;  // [m]
+constexpr float predict_variance = predict_sigma * predict_sigma;
 
 // Eipolar線分
 struct EpipolarSegment {
@@ -65,7 +68,6 @@ float sigmaEstimate(
     const cv::Point2f& ref_x_i,
     const EpipolarSegment& es)
 {
-    std::cout << "sigmaEstimate" << std::endl;
 
     const float alpha = (es.max - es.min) / es.length;
 
@@ -116,14 +118,41 @@ cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float gray, const Epipol
     if (min_ssd == N) {
         return cv::Point2f(-1, -1);
     }
-    std::cout << "best match " << best_pt << " " << min_ssd << std::endl;
     return best_pt;
 }
 
 }  // namespace
 
+void regularize(cv::Mat1f& depth, const cv::Mat1f& sigma)
+{
+    const cv::Mat1f origin_depth = depth.clone();
 
-// 本体
+    std::vector<std::pair<int, int>> offsets = {{0, -1}, {0, 1}, {1, 0}, {-1, 0}};
+    std::function<bool(cv::Point2i)> inRange = math::generateInRange(depth.size());
+
+    depth.forEach(
+        [=](float& d, const int p[2]) -> void {
+            math::Gaussian g{d, sigma(p[0], p[1])};
+
+            for (const std::pair<int, int> offset : offsets) {
+                cv::Point2i pt(p[1] + offset.second, p[0] + offset.first);
+                if (not inRange(pt))
+                    continue;
+
+                g(origin_depth.at<float>(pt), sigma.at<float>(pt));
+            }
+            d = g.depth;
+
+            // if (d > 2.0f or d < 0) {
+            //     std::cout << d << std::endl;
+            //     d = 2.0f;
+            // }
+        });
+
+    // 遠いのは省く
+    depth = cv::min(depth, 3.0);
+}
+
 std::tuple<float, float> update(
     const cv::Mat1f& obj_gray,
     const cv::Mat1f& ref_gray,
@@ -142,7 +171,9 @@ std::tuple<float, float> update(
         return {-1, -1};
 
     float new_depth = depthEstimate(matched_x_i, x_i, K, relative_xi);
-    std::cout << new_depth << std::endl;
+    if (!std::isfinite(new_depth))
+        std::cout << new_depth << std::endl;
+
     float new_sigma = sigmaEstimate(
         ref_gradx,
         ref_grady,
@@ -152,5 +183,47 @@ std::tuple<float, float> update(
     return {new_depth, new_sigma};
 }
 
-}  // namespace Update
+std::tuple<cv::Mat1f, cv::Mat1f, cv::Mat1f> propagate(
+    const cv::Mat1f& ref_depth,
+    const cv::Mat1f& ref_sigma,
+    const cv::Mat1f& ref_age,
+    const cv::Mat1f& xi,
+    const cv::Mat1f& K)
+{
+    const float tz = xi(2);
+    const cv::Size size = ref_depth.size();
+    std::function<bool(cv::Point2i)> inRange = math::generateInRange(size);
+
+    cv::Mat1f depth(cv::Mat1f::ones(size));
+    cv::Mat1f sigma(cv::Mat1f::ones(size));
+    cv::Mat1f age(cv::Mat1f::zeros(size));
+
+    ref_depth.forEach(
+        [&](float& rd, const int pt[2]) -> void {
+            cv::Point2i x_i(pt[1], pt[0]);
+            if (math::isEpsilon(rd))
+                return;
+
+            cv::Point2f warped_x_i = Transform::warp(xi, x_i, rd, K);
+            if (not inRange(warped_x_i))
+                return;
+
+            float s = ref_sigma(x_i);
+            float d0 = rd;
+            float d1 = d0 - tz;
+            if (d0 < 0.05)
+                s = 0.5;
+            else
+                s = std::sqrt(math::pow(d1 / d0, 4) * math::square(s)
+                              + predict_variance);
+
+            depth(warped_x_i) = std::max(d1, 0.0f);
+            sigma(warped_x_i) = s;
+            age(warped_x_i) = ref_age(x_i) + 1;
+        });
+
+    return {depth, sigma, age};
+}
+
+}  // namespace Implement
 }  // namespace Map

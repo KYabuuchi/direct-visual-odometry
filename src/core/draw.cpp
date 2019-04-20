@@ -20,15 +20,41 @@ cv::Mat visualizeGray(const cv::Mat1f& src_image)
     return dst_image;
 }
 
+cv::Mat visualizeDepthRaw(const cv::Mat1f& src_image)
+{
+    // cv::Mat dst_image = cv::Mat(src_image.size(), CV_8UC1);
+    // dst_image.forEach<uchar>([&](uchar& d, const int p[2]) -> void {
+    //     float val = src_image(p[0], p[1]);
+    //     if (val > 2.5) {
+    //         std::cout << val << std::endl;
+    //         d = 250;
+    //     } else if (val < 0) {
+    //         std::cout << val << std::endl;
+    //         d = 0;
+    //     } else
+    //         d = static_cast<uchar>(val * 100);
+    // });
+
+    cv::Mat dst_image = src_image.clone();
+    dst_image = cv::min(dst_image, 2.5f);
+    dst_image = cv::max(dst_image, 0.5f);
+    dst_image.convertTo(dst_image, CV_8UC1, 100);
+    cv::cvtColor(dst_image, dst_image, cv::COLOR_GRAY2BGR);
+    return dst_image;
+}
+
 cv::Mat visualizeDepth(const cv::Mat1f& src_image)
 {
     cv::Mat dst_image;
-    src_image.convertTo(dst_image, CV_8UC1, 100);
+    dst_image = cv::min(src_image, 2.5);
+    dst_image = cv::max(dst_image, 0.0);
+    dst_image.convertTo(dst_image, CV_8UC1, 100);
     cv::cvtColor(dst_image, dst_image, cv::COLOR_GRAY2BGR);
     cv::cvtColor(dst_image, dst_image, cv::COLOR_BGR2HSV);
     dst_image.forEach<cv::Vec3b>(
         [&](cv::Vec3b& p, const int*) -> void {
-            p[0] = static_cast<unsigned char>(p[2] * 90.0 / 255);  // H in [0,179]
+            double tmp = std::clamp(p[2] * 90.0 / 255, 0.0, 180.0);
+            p[0] = static_cast<unsigned char>(tmp);  // H in [0,179]
             p[1] = 255;
             p[2] = 255;
         });
@@ -39,7 +65,9 @@ cv::Mat visualizeDepth(const cv::Mat1f& src_image)
 cv::Mat visualizeDepth(const cv::Mat1f& src_image, const cv::Mat1f& sigma)
 {
     cv::Mat dst_image;
-    src_image.convertTo(dst_image, CV_8UC1, 100);
+    dst_image = cv::min(src_image, 2.5);
+    dst_image = cv::max(dst_image, 0.0);
+    dst_image.convertTo(dst_image, CV_8UC1, 100);
     cv::cvtColor(dst_image, dst_image, cv::COLOR_GRAY2BGR);
     cv::cvtColor(dst_image, dst_image, cv::COLOR_BGR2HSV);
     dst_image.forEach<cv::Vec3b>(

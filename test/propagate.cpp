@@ -1,7 +1,7 @@
 #include "core/draw.hpp"
 #include "core/loader.hpp"
 #include "core/params.hpp"
-#include "map/mapper.hpp"
+#include "map/implement.hpp"
 
 void show(
     const cv::Mat1f& depth_origin,
@@ -42,13 +42,10 @@ int main(/*int argc, char* argv[]*/)
     cv::namedWindow(window_name, cv::WINDOW_NORMAL);
     cv::resizeWindow(window_name, 1280, 720);
 
-    Map::Mapper mapper{Map::Config()};
-
     // initialize
-    cv::Mat1f depth_origin, gray_origin, sigma_origin, age_origin;
+    cv::Mat1f depth_origin, gray_origin, sigma_origin;
     loader.getMappedImages(0, gray_origin, depth_origin, sigma_origin);
-    age_origin = cv::Mat1f::zeros(depth_origin.size());
-    // mapper.initializeHistory(depth_origin, sigma_origin);
+    cv::Mat1f age_origin = cv::Mat1f::zeros(depth_origin.size());
 
     cv::Mat1f depth_last(depth_origin), gray_last(gray_origin);
     cv::Mat1f sigma_last(sigma_origin), age_last(age_origin);
@@ -59,7 +56,7 @@ int main(/*int argc, char* argv[]*/)
 
     while (true) {
         std::cout << "Propagate" << std::endl;
-        auto [depth_image, sigma_image, age_image] = mapper.propagate(
+        auto [depth_image, sigma_image, age_image] = Map::Implement::propagate(
             depth_last,
             sigma_last,
             age_last,
@@ -71,8 +68,7 @@ int main(/*int argc, char* argv[]*/)
             break;
 
         std::cout << "Regularized" << std::endl;
-        mapper.regularize(depth_image, sigma_image);
-        // mapper.regularize(tmp_depth, sigma_image);
+        Map::Implement::regularize(depth_image, sigma_image);
 
         show(depth_origin, sigma_origin, age_origin, depth_image, sigma_image, age_image);
         if (cv::waitKey(0) == 'q')

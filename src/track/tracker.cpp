@@ -54,7 +54,7 @@ cv::Mat1f Tracker::track(
                           << " rows : " << outcome.valid_pixels
                           << " time: " << count << " ms" << std::endl;
 
-            stuff.show("show");
+            stuff.show(window_name);
             cv::waitKey(10);
 
             if (cv::norm(outcome.xi_update) < MINIMUM_UPDATE

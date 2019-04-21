@@ -15,7 +15,11 @@ using pScene = std::shared_ptr<System::Scene>;
 class Mapper
 {
 public:
-    Mapper() {}
+    Mapper() : window_name("Mapping")
+    {
+        cv::namedWindow(window_name, cv::WINDOW_NORMAL);
+        cv::resizeWindow(window_name, 960, 720);
+    }
 
     // 本体
     void estimate(FrameHistory& frame_history, pFrame frame);
@@ -33,5 +37,7 @@ public:
     void regularize(pFrame frame);
 
 private:
+    const std::string window_name;
+    void show(const pFrame frame);
 };
 }  // namespace Map

@@ -30,14 +30,13 @@ struct Stuff {
 
     void show(const std::string& window_name) const
     {
-        // cv::imshow(window_name, Draw::visualizeGray(obj_gray));
-        // Draw::showImage(window_name,
-        //     Draw::visualizeGray(obj_gray), Draw::visualizeDepth(ref_depth), Draw::visualizeGray(ref_gray),
-        //     Draw::visualizeGray(obj_gray), Draw::visualizeDepth(ref_depth), Draw::visualizeGray(ref_gray));
-
         Draw::showImage(window_name,
-            Draw::visualizeGray(obj_gray), Draw::visualizeGray(warped_gray), Draw::visualizeGray(ref_gray),
-            Draw::visualizeDepth(ref_depth, ref_sigma), Draw::visualizeGradient(grad_x), Draw::visualizeGradient(grad_y));
+            Draw::visualizeGray(obj_gray),
+            Draw::visualizeDepth(ref_depth, ref_sigma),
+            Draw::visualizeGray(warped_gray),
+            Draw::visualizeGradient(grad_x),
+            Draw::visualizeGray(ref_gray),
+            Draw::visualizeGradient(grad_y));
     }
 
     const cv::Mat1f obj_gray;

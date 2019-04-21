@@ -89,34 +89,13 @@ cv::Mat visualizeGradient(const cv::Mat1f& src_image)
     return dst_image;
 }
 
+
 cv::Mat visualizeAge(const cv::Mat1f& src_image)
 {
     cv::Mat dst_image;
     src_image.convertTo(dst_image, CV_8UC1, 20);
     cv::cvtColor(dst_image, dst_image, cv::COLOR_GRAY2BGR);
     return dst_image;
-}
-
-
-void showImage(const std::string& window_name,
-    const cv::Mat& ref_gray, const cv::Mat& warped_gray, const cv::Mat& cur_gray,
-    const cv::Mat& ref_depth, const cv::Mat& ref_gradx, const cv::Mat& ref_grady)
-{
-    cv::Mat upper_image, under_image;
-    cv::Mat show_image;
-
-    cv::hconcat(std::vector<cv::Mat>{
-                    ref_gray,
-                    warped_gray,
-                    cur_gray},
-        upper_image);
-    cv::hconcat(std::vector<cv::Mat>{
-                    ref_depth,
-                    ref_gradx,
-                    ref_grady},
-        under_image);
-    cv::vconcat(upper_image, under_image, show_image);
-    cv::imshow(window_name, show_image);
 }
 
 }  // namespace Draw

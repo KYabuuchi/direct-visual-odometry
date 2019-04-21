@@ -8,11 +8,6 @@ int main(/*int argc, char* argv[]*/)
     Loader loader("../data/KINECT_50MM/info.txt");
     Params::init("../camera-calibration/data/kinectv2_00/config.yaml");
 
-    // window
-    const std::string window_name = "show";
-    cv::namedWindow(window_name, cv::WINDOW_NORMAL);
-    cv::resizeWindow(window_name, 1280, 720);
-
     // data
     int num = 0;
     cv::Mat1f gray_image, depth_image, sigma_image;

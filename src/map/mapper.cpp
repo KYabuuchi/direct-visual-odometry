@@ -1,4 +1,5 @@
 #include "map/mapper.hpp"
+#include "core/draw.hpp"
 #include "core/transform.hpp"
 #include "map/implement.hpp"
 #include <cmath>
@@ -14,15 +15,22 @@ void Mapper::estimate(FrameHistory& frame_history, pFrame frame)
 {
     if (needNewFrame(frame)) {
         propagate(frame);
-        double oldest = 0;
-        cv::minMaxIdx(frame->age(), nullptr, &oldest);
-        std::cout << "oldest: " << oldest << std::endl;
-
         frame_history.setRefFrame(frame);
     } else {
         update(frame_history, frame);
     }
     regularize(frame);
+    show(frame);
+}
+
+void Mapper::show(const pFrame frame)
+{
+    Draw::showImage(
+        window_name,
+        Draw::visualizeGray(frame->gray()),
+        Draw::visualizeDepth(frame->depth()),
+        Draw::visualizeSigma(frame->sigma()),
+        Draw::visualizeAge(frame->age()));
 }
 
 bool Mapper::needNewFrame(const pFrame frame)

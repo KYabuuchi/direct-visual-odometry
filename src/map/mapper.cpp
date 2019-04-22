@@ -19,16 +19,19 @@ void Mapper::estimate(FrameHistory& frame_history, pFrame frame)
     } else {
         update(frame_history, frame);
     }
-    regularize(frame);
-    show(frame);
+
+    pFrame ref_frame = frame_history.getRefFrame();
+    regularize(ref_frame);
+    show(ref_frame);
 }
 
 void Mapper::show(const pFrame frame)
 {
+    std::cout << "Mapper::show" << std::endl;
     Draw::showImage(
         window_name,
         Draw::visualizeGray(frame->gray()),
-        Draw::visualizeDepth(frame->depth()),
+        Draw::visualizeDepth(frame->depth(), frame->sigma()),
         Draw::visualizeSigma(frame->sigma()),
         Draw::visualizeAge(frame->age()));
 }
@@ -57,7 +60,7 @@ void Mapper::propagate(pFrame frame)
 void Mapper::update(const FrameHistory& frame_history, pFrame obj)
 {
     std::cout << "Mapper::update" << std::endl;
-    const pFrame ref = obj->m_ref_frame;
+    pFrame ref = obj->m_ref_frame;
     const cv::Mat1f xi = obj->m_xi;
 
     auto inRange = math::generateInRange(ref->depth().size());
@@ -65,6 +68,9 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
 
     ref->depth().forEach(
         [&](const float d, const int pt[2]) -> void {
+            if (pt[0] < 20 or pt[0] > 90 or pt[1] < 20 or pt[1] > 90)
+                return;
+
             cv::Point2i x_i(pt[1], pt[0]);
             cv::Point2i warped_x_i = Transform::warp(xi, x_i, d, K);
             if (not inRange(warped_x_i))
@@ -89,13 +95,20 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
                 warped_x_i,
                 depth,
                 sigma);
+            if (new_sigma > 0 and new_sigma < 10)
+                std::cout << new_depth << " " << new_sigma << std::endl;
+            else
+                std::cout << "invalid update" << std::endl;
+
 
             // 更新
             if (new_depth > 0 and new_depth < 4.0) {
                 math::Gaussian g(depth, sigma);
                 g(new_depth, new_sigma);
-                obj->top()->depth()(x_i) = g.depth;
-                obj->top()->sigma()(x_i) = g.sigma;
+                ref->top()->depth()(x_i) = g.depth;
+                ref->top()->sigma()(x_i) = g.sigma;
+            } else {
+                // std::cout << new_depth << std::endl;
             }
         });
 }

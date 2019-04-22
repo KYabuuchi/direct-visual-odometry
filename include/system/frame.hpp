@@ -90,7 +90,6 @@ public:
         const cv::Mat1f& sigma_image,
         const cv::Mat1f& K, int levels, int culls)
         : id(++latest_id), cols(gray_image.cols), rows(gray_image.rows), levels(levels), culls(culls),
-          m_age(cv::Mat::zeros(gray_image.size(), CV_32FC1)),
           m_xi(math::se3::xi()), m_relative_xi(math::se3::xi()), m_ref_frame(nullptr)
     {
         Scene base = {
@@ -99,17 +98,18 @@ public:
             Convert::cullImage(sigma_image, culls),
             Convert::cullIntrinsic(K, culls)};
         m_scenes = createScenePyramid(base);
+        m_age = cv::Mat::zeros(base.gray().size(), CV_32FC1);
     }
 
     Frame(const cv::Mat1f& gray_image, const cv::Mat1f& K, int levels, int culls)
         : id(++latest_id), cols(gray_image.cols), rows(gray_image.rows), levels(levels), culls(culls),
-          m_age(cv::Mat::zeros(gray_image.size(), CV_32FC1)),
           m_xi(math::se3::xi()), m_relative_xi(math::se3::xi()), m_ref_frame(nullptr)
     {
         Scene base = {
             Convert::cullImage(gray_image, culls),
             Convert::cullIntrinsic(K, culls)};
         m_scenes = createScenePyramid(base);
+        m_age = cv::Mat::zeros(base.gray().size(), CV_32FC1);
     }
 
     // copy constructor

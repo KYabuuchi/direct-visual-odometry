@@ -5,7 +5,7 @@
 int main(/*int argc, char* argv[]*/)
 {
     // loading
-    Loader loader("../data/KINECT_50MM/info.txt");
+    Loader loader("../data/kinectv2_01/info.txt");
     Params::init("../camera-calibration/data/kinectv2_00/config.yaml");
 
     // data

@@ -86,6 +86,8 @@ add_library(vo-core STATIC ${SOURCES})
 # add_executable(test-regular test/regularize.cpp)
 # target_link_libraries(test-regular ${OpenCV_LIBS} vo-core)
 #
+add_executable(test-record test/record.cpp)
+target_link_libraries(test-record ${OpenCV_LIBS} stdc++fs)
 add_executable(main main.cpp)
 target_link_libraries(main ${OpenCV_LIBS} vo-core)
 # =============================

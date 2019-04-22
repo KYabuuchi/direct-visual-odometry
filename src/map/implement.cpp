@@ -90,6 +90,8 @@ cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float gray, const Epipol
     cv::Point2f pt = es.start;
     cv::Point2f dir = (es.end - es.start) / es.length;
 
+    std::cout << es.start << " " << es.end << std::endl;
+
     cv::Point2f best_pt = pt;
     const int N = 3;
     // TODO:たかだかN
@@ -101,9 +103,11 @@ cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float gray, const Epipol
 
         // TODO: 1/Nにできるはず
         for (int i = 0; i < N; i++) {
-            float subpixel_gray = Convert::getSubpixel(ref_gray, pt + (i - N / 2) * dir);
+            cv::Point2f target = pt + (i - N / 2) * dir;
+            float subpixel_gray = Convert::getSubpixel(ref_gray, target);
             if (math::isInvalid(subpixel_gray)) {
                 ssd = N;
+                std::cout << "hit " << target << std::endl;
                 break;
             }
             float diff = subpixel_gray - gray;

@@ -93,7 +93,7 @@ cv::Mat visualizeGradient(const cv::Mat1f& src_image)
 cv::Mat visualizeAge(const cv::Mat1f& src_image)
 {
     cv::Mat dst_image;
-    src_image.convertTo(dst_image, CV_8UC1, 20);
+    src_image.convertTo(dst_image, CV_8UC1, 10);
     cv::cvtColor(dst_image, dst_image, cv::COLOR_GRAY2BGR);
     return dst_image;
 }

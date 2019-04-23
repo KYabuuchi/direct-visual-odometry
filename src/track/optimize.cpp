@@ -6,12 +6,6 @@ namespace Track
 
 namespace
 {
-// NOTE: cv::Mat.atは遅い
-inline float at(const cv::Mat& mat, const cv::Point2i& p)
-{
-    return reinterpret_cast<float*>(mat.data)[p.y * mat.step1() + p.x];
-}
-
 constexpr double e = std::numeric_limits<double>::epsilon();
 template <typename T = float>
 constexpr T sqrt(T s)
@@ -60,14 +54,14 @@ Outcome optimize(const Stuff& stuff)
             cv::Point2i x_i = cv::Point2i(col, row);
 
             // depth
-            float depth = at(stuff.ref_depth, x_i);
+            float depth = stuff.ref_depth(x_i);
             if (depth < 0.50) {
                 continue;
             }
 
             // luminance
-            float I_1 = at(stuff.obj_gray, x_i);
-            float I_2 = at(stuff.warped_gray, x_i);
+            float I_1 = stuff.obj_gray(x_i);
+            float I_2 = stuff.warped_gray(x_i);
             if (math::isInvalid(I_1) or math::isInvalid(I_2)) {
                 continue;
             }
@@ -86,7 +80,7 @@ Outcome optimize(const Stuff& stuff)
             }
 
             // calc jacobian
-            cv::Point3f x_c = cv::Point3f(Transform::backProject(stuff.K, Convert::toMat1f(x_i.x, x_i.y), depth));
+            cv::Point3f x_c = Transform::backProject(stuff.K, x_i, depth);
             float x = x_c.x, y = x_c.y, z = x_c.z;
             float fx = stuff.K(0, 0), fy = stuff.K(1, 1);
             float fgx = fx * gx, fgy = fy * gy;

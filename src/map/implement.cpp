@@ -50,7 +50,7 @@ float depthEstimate(
     const cv::Mat1f& K,
     const cv::Mat1f& xi)
 {
-    const cv::Mat1f x_q = Transform::backProject(K, cv::Mat1f(obj_x_i), 1);
+    const cv::Mat1f x_q = cv::Mat1f(Transform::backProject(K, obj_x_i, 1));
     const cv::Mat1f t = xi.rowRange(0, 3);
     const cv::Mat1f R = math::se3::exp(xi).colRange(0, 3).rowRange(0, 3);
     const cv::Mat1f r3 = R.row(2);
@@ -107,7 +107,6 @@ cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float gray, const Epipol
             float subpixel_gray = Convert::getSubpixel(ref_gray, target);
             if (math::isInvalid(subpixel_gray)) {
                 ssd = N;
-                std::cout << "hit " << target << std::endl;
                 break;
             }
             float diff = subpixel_gray - gray;
@@ -176,8 +175,8 @@ std::tuple<float, float> update(
         return {-1, -1};
 
     float new_depth = depthEstimate(matched_x_i, x_i, K, relative_xi);
-    if (0.1 < new_depth and new_depth < 5)
-        std::cout << new_depth << " " << matched_x_i << " "<< x_i << std::endl;
+    // if (0.1 < new_depth and new_depth < 5)
+    //     std::cout << new_depth << " " << matched_x_i << " " << x_i << std::endl;
 
     float new_sigma = sigmaEstimate(
         ref_gradx,

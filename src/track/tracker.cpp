@@ -55,7 +55,7 @@ cv::Mat1f Tracker::track(
                           << " time: " << count << " ms" << std::endl;
 
             stuff.show(window_name);
-            cv::waitKey(10);
+            cv::waitKey(1);
 
             if (cv::norm(outcome.xi_update) < MINIMUM_UPDATE
                 or outcome.residual < MINIMUM_RESIDUAL

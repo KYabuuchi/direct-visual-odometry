@@ -58,8 +58,6 @@ void show(const std::vector<cv::Mat1f>& trajectory)
         const cv::Mat1f& T1 = trajectory.at(i);
         cv::Point center0(320 + gain * T0(0, 3), 240 + gain * T0(2, 3));
         cv::Point center1(320 + gain * T1(0, 3), 240 + gain * T1(2, 3));
-
-        // cv::circle(show_image, center, 2, CV_RGB(255, 255, 0), -1); cv::circle(show_image, center, 2, CV_RGB(255, 255, 0), -1);
         cv::line(show_image, center0, center1, CV_RGB(255, 255, 0), 3);
     }
     cv::imshow(window_name, show_image);

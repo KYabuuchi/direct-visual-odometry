@@ -28,30 +28,6 @@ cv::Point3f backProject(const cv::Mat1f& K, const cv::Point2f& point, float dept
     return cv::Point3f(depth * (point.x - K(0, 2)) / K(0, 0), depth * (point.y - K(1, 2)) / K(1, 1), depth);
 }
 
-std::pair<cv::Mat1f, cv::Mat1f> mapDepthtoGray(const cv::Mat1f& depth_image, const cv::Mat1f& gray_image)
-{
-    cv::Mat1f mapped_image(depth_image.size(), math::INVALID);   // math::INVALID
-    cv::Mat1f sigma_image(cv::Mat1f::ones(depth_image.size()));  // 1[m]
-
-    mapped_image.forEach(
-        [&](float& p, const int pt[2]) -> void {
-            float depth = depth_image(pt[0], pt[1]);
-            if (math::isEpsilon(depth))
-                return;
-
-            cv::Point3f x_c = backProject(Params::DEPTH().intrinsic, {pt[1], pt[0]}, depth);
-            x_c = transform(Params::EXT().invT(), x_c);
-            cv::Point2f x_i = project(Params::RGB().intrinsic, x_c);
-
-            float gray = Convert::getSubpixel(gray_image, x_i);
-            sigma_image(pt[0], pt[1]) = 0.1f;
-
-            p = gray;
-        });
-
-    return {mapped_image, sigma_image};
-}
-
 // warp先の座標を返す
 cv::Point2f warp(const cv::Mat1f& xi, const cv::Point2f& x_i, const float depth, const cv::Mat1f& K)
 {
@@ -84,5 +60,31 @@ cv::Mat warpImage(const cv::Mat1f& xi, const cv::Mat1f& gray_image, const cv::Ma
     }
     return warped_image;
 }
+
+std::pair<cv::Mat1f, cv::Mat1f> mapDepthtoGray(const cv::Mat1f& depth_image, const cv::Mat1f& gray_image)
+{
+    cv::Mat1f mapped_image(depth_image.size(), math::INVALID);   // math::INVALID
+    cv::Mat1f sigma_image(cv::Mat1f::ones(depth_image.size()));  // 1[m]
+
+    mapped_image.forEach(
+        [&](float& p, const int pt[2]) -> void {
+            float depth = depth_image(pt[0], pt[1]);
+            if (math::isEpsilon(depth))
+                return;
+
+            cv::Point3f x_c = backProject(Params::DEPTH().intrinsic, {pt[1], pt[0]}, depth);
+            x_c = transform(Params::EXT().invT(), x_c);
+            cv::Point2f x_i = project(Params::RGB().intrinsic, x_c);
+
+            float gray = Convert::getSubpixel(gray_image, x_i);
+            sigma_image(pt[0], pt[1]) = 0.1f;
+
+            p = gray;
+        });
+
+    return {mapped_image, sigma_image};
+}
+
+
 
 }  // namespace Transform

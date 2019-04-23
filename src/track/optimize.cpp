@@ -1,9 +1,9 @@
 #include "track/optimize.hpp"
+#include "core/timer.hpp"
 #include "math/math.hpp"
 
 namespace Track
 {
-
 namespace
 {
 constexpr double e = std::numeric_limits<double>::epsilon();
@@ -45,10 +45,11 @@ inline float huber(float n)
 Outcome optimize(const Stuff& stuff)
 {
     float residual = 0;
+    int max_size = stuff.cols * stuff.rows;
+    cv::Mat1f A(cv::Mat1f::zeros(max_size, 6));
+    cv::Mat1f B(cv::Mat1f::zeros(max_size, 1));
 
-    cv::Mat1f A(cv::Mat1f::zeros(0, 6));
-    cv::Mat1f B(cv::Mat1f::zeros(0, 1));
-
+    int valid_pixels = 0;
     for (int col = 0; col < stuff.cols; col++) {
         for (int row = 0; row < stuff.rows; row++) {
             cv::Point2i x_i = cv::Point2i(col, row);
@@ -67,7 +68,7 @@ Outcome optimize(const Stuff& stuff)
             }
 
             // gradient
-            cv::Point2f warped_x_i = Transform::warp(cv::Mat1f(-stuff.xi), cv::Point2f(x_i), depth, stuff.K);
+            cv::Point2f warped_x_i = Transform::warp(cv::Mat1f(-stuff.xi), x_i, depth, stuff.K);
             if (warped_x_i.x < 0 or stuff.cols <= warped_x_i.x
                 or warped_x_i.y < 0 or stuff.rows <= warped_x_i.y)
                 continue;
@@ -92,15 +93,19 @@ Outcome optimize(const Stuff& stuff)
             jacobi(4) = fgx * (1.0f + x / z * x / z) + fgy * x / z * y / z;
             jacobi(5) = (-fgx * y + fgy * x) / z;
 
-
-            // stack
+            // accumulate residual
             float r = huber(I_2 - I_1);
             residual += r * r;
-            cv::vconcat(A, jacobi, A);
-            cv::vconcat(B, cv::Mat1f(cv::Mat1f(1, 1) << r), B);
+
+            // stack
+            int id = col + row * stuff.cols;
+            jacobi.copyTo(A.row(id));
+            B(id, 0) = r;
+
+            valid_pixels++;
         }
     }
-    if (B.rows == 0)
+    if (valid_pixels == 0)
         return Outcome{math::se3::xi(), -1, B.rows};
 
     // solve equation (A xi + B = 0)

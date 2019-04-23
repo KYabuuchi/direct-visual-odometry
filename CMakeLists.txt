@@ -38,6 +38,11 @@ foreach(FLAG IN LISTS CXX_WARNING_FLAGS)
 endforeach()
 message("Build type:\n\t${CMAKE_BUILD_TYPE}")
 
+# OpenMP
+find_package(OpenMP REQUIRED)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+message("OpenMP found:\n\t${OpenMP_FOUND}")
+
 # OpenCV
 find_package(OpenCV 3.0 REQUIRED)
 message("OpenCV version:\n\t${OpenCV_VERSION}")
@@ -90,5 +95,8 @@ add_executable(test-record test/record.cpp)
 target_link_libraries(test-record ${OpenCV_LIBS} stdc++fs)
 add_executable(main main.cpp)
 target_link_libraries(main ${OpenCV_LIBS} vo-core)
+
+add_executable(test-omp test/omp.cpp)
+target_link_libraries(test-omp ${OpenCV_LIBS} )
 # =============================
 # cmake-format: on

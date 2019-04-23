@@ -156,7 +156,7 @@ public:
     {
         if (m_history.empty())
             return nullptr;
-        return m_history.at(0);
+        return m_history.back();
     }
 
     const std::shared_ptr<Frame> getRefFrame() const

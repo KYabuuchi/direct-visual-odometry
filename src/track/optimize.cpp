@@ -59,7 +59,6 @@ Outcome optimize(const Stuff& stuff)
         for (int row = 0; row < stuff.rows; row++) {
             cv::Point2i x_i = cv::Point2i(col, row);
 
-
             // depth
             float depth = at(stuff.ref_depth, x_i);
             if (depth < 0.50) {
@@ -74,13 +73,13 @@ Outcome optimize(const Stuff& stuff)
             }
 
             // gradient
-            cv::Point2i warped_x_i = Transform::warp(cv::Mat1f(-stuff.xi), cv::Point2f(x_i), depth, stuff.K);
+            cv::Point2f warped_x_i = Transform::warp(cv::Mat1f(-stuff.xi), cv::Point2f(x_i), depth, stuff.K);
             if (warped_x_i.x < 0 or stuff.cols <= warped_x_i.x
                 or warped_x_i.y < 0 or stuff.rows <= warped_x_i.y)
                 continue;
 
-            float gx = at(stuff.grad_x, warped_x_i);
-            float gy = at(stuff.grad_y, warped_x_i);
+            float gx = Convert::getSubpixel(stuff.grad_x, warped_x_i);
+            float gy = Convert::getSubpixel(stuff.grad_y, warped_x_i);
 
             if (math::isInvalid(gx) or math::isInvalid(gy)) {
                 continue;

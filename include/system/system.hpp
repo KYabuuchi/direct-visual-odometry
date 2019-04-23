@@ -12,6 +12,7 @@ class VisualOdometry
 public:
     VisualOdometry(const cv::Mat1f& K) : K(K) {}
 
+    // 初期深度・分散を設定するとき
     VisualOdometry(
         const cv::Mat1f& gray,
         const cv::Mat1f& depth,
@@ -35,13 +36,13 @@ public:
         // Tracking
         cv::Mat1f relative_xi = m_tracker.track(frame, ref_frame);
         frame->updateXi(relative_xi, ref_frame);
-        std::cout << "T_w:\n"
-                  << math::se3::exp(frame->m_xi) << std::endl;
+        // std::cout << "T_w:\n"
+        //           << math::se3::exp(frame->m_xi) << std::endl;
 
         // Mapping
         m_mapper.estimate(m_history, frame);
 
-        return math::se3::exp(relative_xi);
+        return math::se3::exp(frame->m_xi);
     }
 
     // NOTE:Only use tracking-mode

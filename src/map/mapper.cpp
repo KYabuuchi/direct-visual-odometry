@@ -21,6 +21,7 @@ void Mapper::estimate(FrameHistory& frame_history, pFrame frame)
     }
 
     pFrame ref_frame = frame_history.getRefFrame();
+    std::cout << "mapper::show id: " << ref_frame->id << std::endl;
     regularize(ref_frame);
     show(ref_frame);
 }
@@ -95,11 +96,8 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
                 warped_x_i,
                 depth,
                 sigma);
-            if (new_sigma > 0 and new_sigma < 10)
-                std::cout << new_depth << " " << new_sigma << std::endl;
-            else
-                std::cout << "invalid update" << std::endl;
-
+            if (new_sigma > 0 and new_sigma < 1)
+                std::cout << "valid update " << new_depth << " " << new_sigma << " " << x_i << std::endl;
 
             // 更新
             if (new_depth > 0 and new_depth < 4.0) {

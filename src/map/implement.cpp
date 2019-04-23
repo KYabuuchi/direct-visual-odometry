@@ -90,7 +90,7 @@ cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float gray, const Epipol
     cv::Point2f pt = es.start;
     cv::Point2f dir = (es.end - es.start) / es.length;
 
-    std::cout << es.start << " " << es.end << std::endl;
+    // std::cout << es.start << " " << es.end << std::endl;
 
     cv::Point2f best_pt = pt;
     const int N = 3;
@@ -176,8 +176,8 @@ std::tuple<float, float> update(
         return {-1, -1};
 
     float new_depth = depthEstimate(matched_x_i, x_i, K, relative_xi);
-    if (!std::isfinite(new_depth))
-        std::cout << new_depth << std::endl;
+    if (0.1 < new_depth and new_depth < 5)
+        std::cout << new_depth << " " << matched_x_i << " "<< x_i << std::endl;
 
     float new_sigma = sigmaEstimate(
         ref_gradx,

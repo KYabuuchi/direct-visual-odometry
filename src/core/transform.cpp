@@ -36,50 +36,41 @@ cv::Point2f warp(const cv::Mat1f& xi, const cv::Point2f& x_i, const float depth,
 cv::Mat warpImage(const cv::Mat1f& xi, const cv::Mat1f& gray_image, const cv::Mat1f& depth_image, const cv::Mat1f& K)
 {
     cv::Mat1f warped_image(gray_image.size(), math::INVALID);
-    const int COL = depth_image.cols;
-    const int ROW = depth_image.rows;
 
-    for (int x = 0; x < COL; x++) {
-        for (int y = 0; y < ROW; y++) {
-            cv::Point2i x_i(x, y);
+    warped_image.forEach(
+        [&](float& p, const int pt[2]) -> void {
+            cv::Point2i x_i(pt[1], pt[0]);
             float depth = depth_image(x_i);
             if (math::isEpsilon(depth))
-                continue;
+                return;
 
-            cv::Point2f warped_x_i = warp(xi, x_i, depth, K);
-            if (not math::inRange(warped_x_i, depth_image.size()))
-                continue;
+            cv::Point2f warped_x_i = warp(-xi, x_i, depth, K);
 
-            float gray = Convert::getSubpixel(gray_image, x_i);
-            warped_image(warped_x_i) = gray;
-        }
-    }
+            p = Convert::getSubpixel(gray_image, warped_x_i);
+        });
     return warped_image;
 }
 
 std::pair<cv::Mat1f, cv::Mat1f> mapDepthtoGray(const cv::Mat1f& depth_image, const cv::Mat1f& gray_image)
 {
-    cv::Mat1f mapped_image(depth_image.size(), math::INVALID);   // math::INVALID
+    cv::Mat1f mapped_image(depth_image.size(), math::INVALID);
     cv::Mat1f sigma_image(cv::Mat1f::ones(depth_image.size()));  // 1[m]
 
     mapped_image.forEach(
         [&](float& p, const int pt[2]) -> void {
-            float depth = depth_image(pt[0], pt[1]);
+            cv::Point2i x_i(pt[1], pt[0]);
+            float depth = depth_image(x_i);
             if (math::isEpsilon(depth))
                 return;
 
-            cv::Point3f x_c = backProject(Params::DEPTH().intrinsic, {pt[1], pt[0]}, depth);
+            cv::Point3f x_c = backProject(Params::DEPTH().intrinsic, x_i, depth);
             x_c = transform(Params::EXT().invT(), x_c);
-            cv::Point2f x_i = project(Params::RGB().intrinsic, x_c);
+            cv::Point2f warped_x_i = project(Params::RGB().intrinsic, x_c);
 
-            float gray = Convert::getSubpixel(gray_image, x_i);
-            sigma_image(pt[0], pt[1]) = 0.1f;
-
-            p = gray;
+            p = Convert::getSubpixel(gray_image, warped_x_i);
+            sigma_image(x_i) = 0.1f;
         });
-
     return {mapped_image, sigma_image};
 }
-
 
 }  // namespace Transform

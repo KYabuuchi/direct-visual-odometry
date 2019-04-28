@@ -5,22 +5,6 @@
 
 namespace Convert
 {
-cv::Mat depthNormalize(const cv::Mat& depth_image)
-{
-    cv::Mat tmp_image;
-    depth_image.convertTo(tmp_image, CV_32FC1, 1.0 / 5000.0);  // [mm]
-    return tmp_image;
-}
-
-cv::Mat colorNormalize(const cv::Mat& color_image)
-{
-    cv::Mat tmp_image;
-    cv::cvtColor(color_image, tmp_image, cv::COLOR_BGR2GRAY);
-    tmp_image.convertTo(tmp_image, CV_32FC1, 1.0 / 255.0);  // 0~1
-
-    return tmp_image;
-}
-
 cv::Mat1f cullImage(const cv::Mat1f& src_image, int times)
 {
     if (times == 0)
@@ -91,6 +75,37 @@ cv::Mat1f gradiate(const cv::Mat1f& gray_image, bool x)
     }
     return gradiate_image;
 }
+
+float getSubpixelFromDense(const cv::Mat1f& img, cv::Point2f pt)
+{
+    using namespace math;
+    auto inRange = generateInRange(img.size());
+
+    int x0 = (int)pt.x;
+    int y0 = (int)pt.y;
+
+    if (not inRange({x0, y0}))
+        return INVALID;
+
+    int x1 = x0 + 1;
+    int y1 = y0 + 1;
+    float h = pt.x - (float)x0;
+    float v = pt.y - (float)y0;
+
+    std::array<float, 4> g;
+    g[0] = g[1] = g[2] = g[3] = img(y0, x0);
+
+    if (inRange({x1, y0}))
+        g[1] = img(y0, x1);
+    if (inRange({x0, y1}))
+        g[2] = img(y1, x0);
+    if (inRange({x1, y1}))
+        g[3] = img(y1, x1);
+
+    return (g[0] * (1.f - h) + g[1] * h) * (1.f - v)
+           + (g[2] * (1.f - h) + g[3] * h) * v;
+}
+
 
 float getSubpixel(const cv::Mat1f& img, cv::Point2f pt)
 {

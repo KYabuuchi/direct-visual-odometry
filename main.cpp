@@ -14,6 +14,8 @@ int main(/*int argc, char* argv[]*/)
 
 
     // main system
+    std::cout << loader.Rgb().K() << std::endl;
+
     System::VisualOdometry vo(loader.Rgb().K());
     std::vector<cv::Mat1f> trajectory;
 
@@ -21,10 +23,11 @@ int main(/*int argc, char* argv[]*/)
     int num = 0;
     while (true) {
         cv::Mat1f gray_image;
-        if (loader.getUndistortedImages(num++, gray_image))
+        if (not loader.getUndistortedImages(num++, gray_image))
             break;
 
         // odometrize
+        std::cout << "GE" << std::endl;
         cv::Mat1f T = vo.odometrize(gray_image);
         std::cout << "\n"
                   << T << "\n"

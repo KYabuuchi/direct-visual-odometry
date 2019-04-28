@@ -48,7 +48,7 @@ public:
         ifs.close();
 
         Calibration::Loader config(config_file);
-        RGB = config.rgb();
+        RGB = config.monocular();
     }
 
     const Calibration::IntrinsicParams& Rgb() const { return RGB; }

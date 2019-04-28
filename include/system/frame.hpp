@@ -12,10 +12,7 @@ public:
     Scene(const cv::Mat& gray_image, const cv::Mat1f& K)
         : cols(gray_image.cols), rows(gray_image.rows),
           m_gray(gray_image),
-          m_K(K)
-    {
-        std::cout << "Scene " << cols << std::endl;
-    }
+          m_K(K) {}
 
     Scene(const cv::Mat& gray_image, const cv::Mat& depth_image, const cv::Mat& sigma_image, const cv::Mat1f& K)
         : cols(gray_image.cols), rows(gray_image.rows),

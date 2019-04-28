@@ -26,6 +26,7 @@ public:
     cv::Mat1f odometrize(const cv::Mat1f& gray_image)
     {
         // create Frame pair
+        std::cout << "OGE" << std::endl;
         std::shared_ptr<Frame> frame = std::make_shared<Frame>(gray_image, K, 4, 2);
         std::shared_ptr<Frame> ref_frame = m_history.getRefFrame();
         if (ref_frame == nullptr) {

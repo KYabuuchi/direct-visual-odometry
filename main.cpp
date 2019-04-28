@@ -8,7 +8,7 @@ const std::string window_name = "trajectry";
 int main(/*int argc, char* argv[]*/)
 {
     // loading
-    Loader loader("../data/kinectv2_01/info.txt");
+    Core::KinectLoader loader("../data/kinectv2_01/info.txt");
     Params::init("../camera-calibration/data/kinectv2_00/config.yaml");
     cv::namedWindow(window_name, cv::WINDOW_NORMAL);
     cv::Mat show_image = cv::Mat::zeros(480, 640, CV_8UC3);

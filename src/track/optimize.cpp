@@ -52,9 +52,6 @@ Outcome optimize(const Stuff& stuff)
 
     int valid_pixels = 0;
 
-    // for (int col = 0; col < stuff.cols; col++) {
-    //     for (int row = 0; row < stuff.rows; row++) {
-
     stuff.ref_depth.forEach(
         [&](float& depth, const int pt[2]) -> void {
             cv::Point2i x_i = cv::Point2i(pt[1], pt[0]);
@@ -110,15 +107,13 @@ Outcome optimize(const Stuff& stuff)
             float weight = 0.1f / sigma;
 
             // stack
-            // int id = col + row * stuff.cols;
             int id = pt[1] + pt[0] * stuff.cols;
             jacobi.copyTo(A.row(id));
             B(id, 0) = r * weight;
 
             valid_pixels++;
         });
-    // }
-    // }
+
     if (valid_pixels == 0)
         return Outcome{math::se3::xi(), -1, B.rows};
 
@@ -128,6 +123,5 @@ Outcome optimize(const Stuff& stuff)
 
     return Outcome{cv::Mat1f(-xi_update), residual / static_cast<float>(B.rows), B.rows};
 }
-
 
 }  // namespace Track

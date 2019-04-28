@@ -10,7 +10,7 @@ int main()
     cv::namedWindow("grad", CV_WINDOW_NORMAL);
     cv::resizeWindow("grad", 960, 720);
 
-    Loader image_loader("../data/KINECT_1DEG/info.txt");
+    Core::KinectLoader image_loader("../data/KINECT_1DEG/info.txt");
     Params::init("../camera-calibration/data/kinectv2_00/config.yaml");
 
     std::cout << "'q': quit, 'other': load next image\n"

@@ -65,38 +65,28 @@ add_library(vo-core STATIC ${SOURCES})
 # =============================
 # add_executable(test-se3 test/se3.cpp)
 # target_link_libraries(test-se3 ${OpenCV_LIBS} vo-core)
-# #
 # add_executable(test-warp test/warp.cpp)
 # target_link_libraries(test-warp ${OpenCV_LIBS} vo-core)
-# #
-# add_executable(test-load test/load.cpp )
-# target_link_libraries(test-load ${OpenCV_LIBS} vo-core)
-# #
+add_executable(test-load test/load.cpp )
+target_link_libraries(test-load ${OpenCV_LIBS} vo-core)
 # add_executable(test-gradient test/gradient.cpp)
 # target_link_libraries(test-gradient ${OpenCV_LIBS} vo-core)
-# #
 # add_executable(test-track test/track.cpp)
 # target_link_libraries(test-track ${OpenCV_LIBS} ${PYTHON_LIBRARIES} vo-core)
 # target_include_directories(test-track SYSTEM PRIVATE external/matplotlib-cpp ${PYTHON_INCLUDE_DIRS})
-# #
 # add_executable(test-seq test/sequence.cpp)
 # target_link_libraries(test-seq ${OpenCV_LIBS} vo-core)
-# #
 # add_executable(test-propagate test/propagate.cpp)
 # target_link_libraries(test-propagate ${OpenCV_LIBS} vo-core)
-# #
 # add_executable(test-update test/update.cpp)
 # target_link_libraries(test-update ${OpenCV_LIBS} vo-core)
-# #
 # add_executable(test-regular test/regularize.cpp)
 # target_link_libraries(test-regular ${OpenCV_LIBS} vo-core)
-#
-add_executable(test-record test/record.cpp)
-target_link_libraries(test-record ${OpenCV_LIBS} stdc++fs)
+# add_executable(test-record test/record.cpp)
+# target_link_libraries(test-record ${OpenCV_LIBS} stdc++fs)
 add_executable(main main.cpp)
 target_link_libraries(main ${OpenCV_LIBS} vo-core)
-
-add_executable(test-omp test/omp.cpp)
-target_link_libraries(test-omp ${OpenCV_LIBS} )
+# add_executable(test-omp test/omp.cpp)
+# target_link_libraries(test-omp ${OpenCV_LIBS} )
 # =============================
 # cmake-format: on

@@ -17,7 +17,7 @@ int main(int argc, char* argv[])
     assert(0 <= num1 and num1 <= 20);
 
     // loading
-    Loader loader("../data/KINECT_50MM/info.txt");
+    Core::KinectLoader loader("../data/KINECT_50MM/info.txt");
     Params::init("../camera-calibration/data/kinectv2_00/config.yaml");
     cv::Mat1f gray_image1, depth_image1, sigma_image1;
     cv::Mat1f gray_image2, depth_image2, sigma_image2;

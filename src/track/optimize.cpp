@@ -51,34 +51,41 @@ Outcome optimize(const Stuff& stuff)
     const float fx = stuff.K(0, 0), fy = stuff.K(1, 1);
 
     int valid_pixels = 0;
-    for (int col = 0; col < stuff.cols; col++) {
-        for (int row = 0; row < stuff.rows; row++) {
-            cv::Point2i x_i = cv::Point2i(col, row);
+
+    // for (int col = 0; col < stuff.cols; col++) {
+    //     for (int row = 0; row < stuff.rows; row++) {
+
+    stuff.ref_depth.forEach(
+        [&](float& depth, const int pt[2]) -> void {
+            cv::Point2i x_i = cv::Point2i(pt[1], pt[0]);
 
             // depth
-            float depth = stuff.ref_depth(x_i);
             if (depth < 0.50) {
-                continue;
+                return;
+                // continue;
             }
 
             // luminance
             float I_1 = stuff.obj_gray(x_i);
             float I_2 = stuff.warped_gray(x_i);
             if (math::isInvalid(I_1) or math::isInvalid(I_2)) {
-                continue;
+                return;
+                // continue;
             }
 
             // gradient
             cv::Point2f warped_x_i = Transform::warp(cv::Mat1f(-stuff.xi), x_i, depth, stuff.K);
             if (warped_x_i.x < 0 or stuff.cols <= warped_x_i.x
                 or warped_x_i.y < 0 or stuff.rows <= warped_x_i.y)
-                continue;
+                return;
+            // continue;
 
             float gx = Convert::getSubpixel(stuff.grad_x, warped_x_i);
             float gy = Convert::getSubpixel(stuff.grad_y, warped_x_i);
 
             if (math::isInvalid(gx) or math::isInvalid(gy)) {
-                continue;
+                return;
+                // continue;
             }
 
             // calc jacobian
@@ -98,14 +105,20 @@ Outcome optimize(const Stuff& stuff)
             float r = huber(I_2 - I_1);
             residual += r * r;
 
+            // weight of reliability
+            float sigma = std::max(stuff.ref_sigma(x_i), 0.1f);  // [m]
+            float weight = 0.1f / sigma;
+
             // stack
-            int id = col + row * stuff.cols;
+            // int id = col + row * stuff.cols;
+            int id = pt[1] + pt[0] * stuff.cols;
             jacobi.copyTo(A.row(id));
-            B(id, 0) = r;
+            B(id, 0) = r * weight;
 
             valid_pixels++;
-        }
-    }
+        });
+    // }
+    // }
     if (valid_pixels == 0)
         return Outcome{math::se3::xi(), -1, B.rows};
 

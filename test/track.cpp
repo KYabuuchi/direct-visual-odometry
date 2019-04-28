@@ -1,6 +1,5 @@
 // Track::optimize()のテスト
 #include "core/loader.hpp"
-#include "core/params.hpp"
 #include "core/timer.hpp"
 #include "math/math.hpp"
 #include "matplotlibcpp.h"
@@ -17,14 +16,13 @@ int main(int argc, char* argv[])
     assert(0 <= num1 and num1 <= 20);
 
     // loading
-    Core::KinectLoader loader("../data/KINECT_50MM/info.txt");
-    Params::init("../camera-calibration/data/kinectv2_00/config.yaml");
+    Core::KinectLoader loader("../data/KINECT_50MM/info.txt", "../camera-calibration/data/kinectv2_00/config.yaml");
     cv::Mat1f gray_image1, depth_image1, sigma_image1;
     cv::Mat1f gray_image2, depth_image2, sigma_image2;
     loader.getMappedImages(num1, gray_image1, depth_image1, sigma_image1);
     loader.getMappedImages(num2, gray_image2, depth_image2, sigma_image2);
-    System::Frame pre_frame(gray_image1, depth_image1, sigma_image1, Params::DEPTH().intrinsic, 4, 1);
-    System::Frame cur_frame(gray_image2, depth_image2, sigma_image2, Params::DEPTH().intrinsic, 4, 1);
+    System::Frame pre_frame(gray_image1, depth_image1, sigma_image1, loader.Depth().K(), 4, 1);
+    System::Frame cur_frame(gray_image2, depth_image2, sigma_image2, loader.Depth().K(), 4, 1);
 
     // window
     const std::string window_name = "show";

@@ -1,15 +1,13 @@
 #include "core/loader.hpp"
-#include "core/params.hpp"
 #include "system/system.hpp"
 
 int main(/*int argc, char* argv[]*/)
 {
     // loading
-    Core::KinectLoader loader("../data/KINECT_50MM/info.txt");
-    Params::init("../camera-calibration/data/kinectv2_00/config.yaml");
+    Core::KinectLoader loader("../data/KINECT_50MM/info.txt", "../camera-calibration/data/kinectv2_00/config.yaml");
 
     // main system
-    System::VisualOdometry vo(Params::DEPTH().intrinsic);
+    System::VisualOdometry vo(loader.Depth().K());
 
     int num = 0;
     while (true) {

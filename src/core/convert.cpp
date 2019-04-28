@@ -1,5 +1,4 @@
 #include "core/convert.hpp"
-#include "core/params.hpp"
 #include "math/math.hpp"
 #include <cassert>
 

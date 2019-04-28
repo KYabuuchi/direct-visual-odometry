@@ -1,6 +1,5 @@
 #include "core/transform.hpp"
 #include "core/convert.hpp"
-#include "core/params.hpp"
 #include "math/math.hpp"
 
 namespace Transform
@@ -51,7 +50,12 @@ cv::Mat warpImage(const cv::Mat1f& xi, const cv::Mat1f& gray_image, const cv::Ma
     return warped_image;
 }
 
-std::pair<cv::Mat1f, cv::Mat1f> mapDepthtoGray(const cv::Mat1f& depth_image, const cv::Mat1f& gray_image)
+std::pair<cv::Mat1f, cv::Mat1f> mapDepthtoGray(
+    const cv::Mat1f& depth_image,
+    const cv::Mat1f& gray_image,
+    const cv::Mat1f& rgb_K,
+    const cv::Mat1f& depth_K,
+    const cv::Mat1f& invT)
 {
     cv::Mat1f mapped_image(depth_image.size(), math::INVALID);
     cv::Mat1f sigma_image(cv::Mat1f::ones(depth_image.size()));  // 1[m]
@@ -63,9 +67,9 @@ std::pair<cv::Mat1f, cv::Mat1f> mapDepthtoGray(const cv::Mat1f& depth_image, con
             if (math::isEpsilon(depth))
                 return;
 
-            cv::Point3f x_c = backProject(Params::DEPTH().intrinsic, x_i, depth);
-            x_c = transform(Params::EXT().invT(), x_c);
-            cv::Point2f warped_x_i = project(Params::RGB().intrinsic, x_c);
+            cv::Point3f x_c = backProject(depth_K, x_i, depth);
+            x_c = transform(invT, x_c);
+            cv::Point2f warped_x_i = project(rgb_K, x_c);
 
             p = Convert::getSubpixel(gray_image, warped_x_i);
             sigma_image(x_i) = 0.1f;

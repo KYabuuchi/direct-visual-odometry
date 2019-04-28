@@ -14,7 +14,12 @@ cv::Point2f project(const cv::Mat1f& K, const cv::Point3f& point);
 cv::Point3f backProject(const cv::Mat1f& K, const cv::Point2f& point, float depth);
 
 // <mapped,sigma>
-std::pair<cv::Mat1f, cv::Mat1f> mapDepthtoGray(const cv::Mat1f& depth_image, const cv::Mat1f& gray_image);
+std::pair<cv::Mat1f, cv::Mat1f> mapDepthtoGray(
+    const cv::Mat1f& depth_image,
+    const cv::Mat1f& gray_image,
+    const cv::Mat1f& rgb_K,
+    const cv::Mat1f& depth_K,
+    const cv::Mat1f& invT);
 
 // warp先の座標を返す
 cv::Point2f warp(const cv::Mat1f& xi, const cv::Point2f& x_i, const float depth, const cv::Mat1f& K);

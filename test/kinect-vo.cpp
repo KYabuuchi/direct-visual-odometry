@@ -2,26 +2,39 @@
 #include "core/loader.hpp"
 #include "system/system.hpp"
 
-const std::string window_name = "trajectry";
 void show(const std::vector<cv::Mat1f>& trajectory);
 
+const std::string window_name = "trajectry";
 int main(/*int argc, char* argv[]*/)
 {
     // loading
-    Core::Loader loader("../data/kinectv2_01/info.txt", "../camera-calibration/data/logicool_00/config.yaml");
+    Core::KinectLoader loader("../data/kinectv2_01/info.txt", "../camera-calibration/data/kinectv2_00/config.yaml");
+
     cv::namedWindow(window_name, cv::WINDOW_NORMAL);
     cv::Mat show_image = cv::Mat::zeros(480, 640, CV_8UC3);
 
-
-    // main system
-    System::VisualOdometry vo(loader.Rgb().K());
-    std::vector<cv::Mat1f> trajectory;
+    std::cout << "hoge" << std::endl;
 
     // data
     int num = 0;
+    cv::Mat1f gray_image, depth_image, sigma_image;
+    bool success = loader.getMappedImages(num++, gray_image, depth_image, sigma_image);
+    if (not success)
+        return -1;
+
+    std::cout << "hhogeoge" << std::endl;
+
+    // main system
+    System::VisualOdometry vo(
+        gray_image,
+        depth_image,
+        sigma_image, loader.Depth().K());
+
+    std::vector<cv::Mat1f> trajectory;
+
     while (true) {
-        cv::Mat1f gray_image;
-        if (loader.getUndistortedImages(num++, gray_image))
+        success = loader.getMappedImages(num++, gray_image, depth_image, sigma_image);
+        if (not success)
             break;
 
         // odometrize

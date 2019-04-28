@@ -1,5 +1,5 @@
 #pragma once
-#include "calibration/params_struct.hpp"
+#include "calibration/loader.hpp"
 #include "core/convert.hpp"
 #include "core/transform.hpp"
 #include "math/math.hpp"
@@ -22,8 +22,12 @@ protected:
 
     Loader() {}
 
+    Calibration::IntrinsicParams RGB;
+
 public:
-    Loader(const std::string& file_paths_file)
+    Loader(
+        const std::string& file_paths_file,
+        const std::string& config_file)
     {
         std::ifstream ifs(file_paths_file);
         if (not ifs.is_open()) {
@@ -42,7 +46,12 @@ public:
             }
         }
         ifs.close();
+
+        Calibration::Loader config(config_file);
+        RGB = config.rgb();
     }
+
+    const Calibration::IntrinsicParams& Rgb() const { return RGB; }
 
     // 正規除歪画像 CV_32FC1
     bool getNormalizedUndistortedImages(size_t num, cv::Mat1f& rgb_image);
@@ -61,8 +70,13 @@ protected:
     std::vector<std::string> m_depth_paths;
     void createUndistortMap() override;
 
+    Calibration::IntrinsicParams DEPTH;
+    Calibration::ExtrinsicParams EXT;
+
 public:
-    KinectLoader(const std::string& file_paths_file)
+    KinectLoader(
+        const std::string& file_paths_file,
+        const std::string& config_file)
     {
         std::ifstream ifs(file_paths_file);
         if (not ifs.is_open()) {
@@ -83,7 +97,15 @@ public:
             }
         }
         ifs.close();
+
+        Calibration::Loader config(config_file);
+        RGB = config.rgb();
+        DEPTH = config.depth();
+        EXT = config.extrinsic();
     }
+
+    const Calibration::IntrinsicParams& Depth() const { return DEPTH; }
+    const Calibration::ExtrinsicParams& Ext() const { return EXT; }
 
     // 変形除歪画像 CV_32FC1,CV_32FC1
     bool getMappedImages(size_t num, cv::Mat1f& mapped_image, cv::Mat1f& depth_image, cv::Mat1f& sigma_image);

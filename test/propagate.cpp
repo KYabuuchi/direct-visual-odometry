@@ -1,6 +1,5 @@
 #include "core/draw.hpp"
 #include "core/loader.hpp"
-#include "core/params.hpp"
 #include "map/implement.hpp"
 
 void show(
@@ -34,8 +33,7 @@ void show(
 int main(/*int argc, char* argv[]*/)
 {
     // loading
-    Core::KinectLoader loader("../data/KINECT_50MM/info.txt");
-    Params::init("../camera-calibration/data/kinectv2_00/config.yaml");
+    Core::KinectLoader loader("../data/KINECT_50MM/info.txt", "../camera-calibration/data/kinectv2_00/config.yaml");
 
     // window
     const std::string window_name = "show";
@@ -61,7 +59,7 @@ int main(/*int argc, char* argv[]*/)
             sigma_last,
             age_last,
             xi,
-            Params::DEPTH().intrinsic);
+            loader.Depth().K());
 
         show(depth_origin, sigma_origin, age_origin, depth_image, sigma_image, age_image);
         if (cv::waitKey(0) == 'q')

@@ -1,6 +1,5 @@
 #include "core/draw.hpp"
 #include "core/loader.hpp"
-#include "core/params.hpp"
 #include "map/implement.hpp"
 #include "math/math.hpp"
 
@@ -35,8 +34,7 @@ void show(
 int main(/*int argc, char* argv[]*/)
 {
     // loading
-    Core::KinectLoader loader("../data/KINECT_50MM/info.txt");
-    Params::init("../camera-calibration/data/kinectv2_00/config.yaml");
+    Core::KinectLoader loader("../data/KINECT_50MM/info.txt", "../camera-calibration/data/kinectv2_00/config.yaml");
 
     // window
     const std::string window_name = "show";
@@ -44,11 +42,12 @@ int main(/*int argc, char* argv[]*/)
     cv::resizeWindow(window_name, 1280, 720);
 
     // initialize
-    cv::Mat1f K;
+    const cv::Mat1f K = loader.Depth().K();
+
     cv::Mat1f ref_gray, ref_depth, ref_sigma;
     cv::Mat1f obj_gray, obj_depth, obj_sigma;
-    loader.getCulledMappedImages(0, ref_gray, ref_depth, ref_sigma, K);
-    loader.getCulledMappedImages(4, obj_gray, obj_depth, obj_sigma, K);
+    loader.getMappedImages(0, ref_gray, ref_depth, ref_sigma);
+    loader.getMappedImages(4, obj_gray, obj_depth, obj_sigma);
 
     cv::Mat1f ref_gradx = Convert::gradiate(ref_gray, true);
     cv::Mat1f ref_grady = Convert::gradiate(ref_gray, false);
@@ -78,8 +77,7 @@ int main(/*int argc, char* argv[]*/)
             float sigma = obj_sigma(x_i);
 
             // 小さすぎると死ぬ
-            if (depth < 0.1f)
-                depth = 0.1f;
+            depth = std::max(depth, 0.1f);
 
             auto [new_depth, new_sigma] = Map::Implement::update(
                 obj_gray,

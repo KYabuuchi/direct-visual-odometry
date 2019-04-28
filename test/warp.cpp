@@ -22,11 +22,14 @@ int main()
     }
 
     // load
-    cv::Mat1f gray_image, depth_image, sigma_image;
     cv::Mat1f K;
-    Loader loader("../data/KINECT_1DEG/info.txt");
-    Params::init("../camera-calibration/data/kinectv2_00/config.yaml");
-    loader.getCulledMappedImages(0, gray_image, depth_image, sigma_image, K, 1);
+    cv::Mat1f gray_image, depth_image, sigma_image;
+    Core::KinectLoader loader("../data/KINECT_1DEG/info.txt", "../camera-calibration/data/kinectv2_00/config.yaml");
+    loader.getMappedImages(0, gray_image, depth_image, sigma_image);
+
+    gray_image = Convert::cullImage(gray_image, 1);
+    depth_image = Convert::cullImage(depth_image, 1);
+    K = Convert::cullIntrinsic(loader.Depth().K(), 1);
 
     while (1) {
         std::array<float, 6> params_f;

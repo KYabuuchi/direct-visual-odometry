@@ -1,5 +1,4 @@
 #include "core/loader.hpp"
-#include "core/params.hpp"
 
 namespace Core
 {
@@ -78,12 +77,12 @@ bool Loader::getRawImages(size_t num, cv::Mat& rgb_image)
 void KinectLoader::createUndistortMap()
 {
     cv::initUndistortRectifyMap(
-        Params::DEPTH().intrinsic, Params::DEPTH().distortion, cv::Mat(),
-        Params::DEPTH().intrinsic, Params::DEPTH().resolution, CV_32FC1,
+        Depth().intrinsic, Depth().distortion, cv::Mat(),
+        Depth().intrinsic, Depth().resolution, CV_32FC1,
         m_depth_map.at(0), m_depth_map.at(1));
     cv::initUndistortRectifyMap(
-        Params::RGB().intrinsic, Params::RGB().distortion, cv::Mat(),
-        Params::RGB().intrinsic, Params::RGB().resolution, CV_32FC1,
+        Rgb().intrinsic, Rgb().distortion, cv::Mat(),
+        Rgb().intrinsic, Rgb().resolution, CV_32FC1,
         m_rgb_map.at(0), m_rgb_map.at(1));
     m_map_initialized = true;
 }
@@ -94,7 +93,8 @@ bool KinectLoader::getMappedImages(size_t num, cv::Mat1f& mapped_image, cv::Mat1
     if (not getNormalizedUndistortedImages(num, rgb_image, depth_image))
         return false;
 
-    std::pair<cv::Mat1f, cv::Mat1f> pair = Transform::mapDepthtoGray(depth_image, rgb_image);
+
+    std::pair<cv::Mat1f, cv::Mat1f> pair = Transform::mapDepthtoGray(depth_image, rgb_image, RGB.K(), DEPTH.K(), EXT.invT());
     mapped_image = pair.first;
     sigma_image = pair.second;
     return true;

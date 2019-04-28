@@ -33,7 +33,7 @@ cv::Mat1f Tracker::track(
 
         Stuff stuff = {obj_scene, ref_scene, xi};
 
-        for (int iteration = 0; iteration < 15; iteration++) {
+        for (int iteration = 0; iteration < 10; iteration++) {
             Timer timer;
 
             Outcome outcome = optimize(stuff);

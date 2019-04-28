@@ -28,15 +28,11 @@ cv::Point3f backProject(const cv::Mat1f& K, const cv::Point2f& point, float dept
     return cv::Point3f(depth * (point.x - K(0, 2)) / K(0, 0), depth * (point.y - K(1, 2)) / K(1, 1), depth);
 }
 
-// warp先の座標を返す
 cv::Point2f warp(const cv::Mat1f& xi, const cv::Point2f& x_i, const float depth, const cv::Mat1f& K)
 {
-    cv::Point3f x_c = backProject(K, x_i, depth);
-    cv::Point3f transformed_x_c = transform(xi, x_c);
-    return project(K, transformed_x_c);
+    return project(K, transform(xi, backProject(K, x_i, depth)));
 }
 
-// warpした画像を返す
 cv::Mat warpImage(const cv::Mat1f& xi, const cv::Mat1f& gray_image, const cv::Mat1f& depth_image, const cv::Mat1f& K)
 {
     cv::Mat1f warped_image(gray_image.size(), math::INVALID);
@@ -84,7 +80,6 @@ std::pair<cv::Mat1f, cv::Mat1f> mapDepthtoGray(const cv::Mat1f& depth_image, con
 
     return {mapped_image, sigma_image};
 }
-
 
 
 }  // namespace Transform

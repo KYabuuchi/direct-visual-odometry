@@ -20,16 +20,16 @@ constexpr T sqrt(T s)
     return x;
 }
 
+constexpr float d = 0.5f;
+constexpr float sqrt2d = sqrt(2.0f * d);
+constexpr float sqrtd2 = sqrt(d / 2.0f);
+constexpr float k0 = sqrtd2;
+constexpr float k1 = 0.5f / sqrtd2;
+constexpr float k2 = -1.0f / (sqrtd2 * d * 2.0f);
+
 // NOTE: huber関数の平方根
 inline float huber(float n)
 {
-    constexpr float d = 0.5f;
-    constexpr float sqrt2d = sqrt(2.0f * d);
-    constexpr float sqrtd2 = sqrt(d / 2.0f);
-    constexpr float k0 = sqrtd2;
-    constexpr float k1 = 0.5f / sqrtd2;
-    constexpr float k2 = -1.0f / (sqrtd2 * d * 2.0f);
-
     float a = std::abs(n);
     if (a < d)
         return n / sqrt2d;
@@ -48,6 +48,7 @@ Outcome optimize(const Stuff& stuff)
     int max_size = stuff.cols * stuff.rows;
     cv::Mat1f A(cv::Mat1f::zeros(max_size, 6));
     cv::Mat1f B(cv::Mat1f::zeros(max_size, 1));
+    const float fx = stuff.K(0, 0), fy = stuff.K(1, 1);
 
     int valid_pixels = 0;
     for (int col = 0; col < stuff.cols; col++) {
@@ -83,15 +84,15 @@ Outcome optimize(const Stuff& stuff)
             // calc jacobian
             cv::Point3f x_c = Transform::backProject(stuff.K, x_i, depth);
             float x = x_c.x, y = x_c.y, z = x_c.z;
-            float fx = stuff.K(0, 0), fy = stuff.K(1, 1);
             float fgx = fx * gx, fgy = fy * gy;
-            cv::Mat1f jacobi = cv::Mat1f(cv::Mat1f::zeros(1, 6));
+            float xz = x / z, yz = y / z;
+            cv::Mat1f jacobi(cv::Mat1f::zeros(1, 6));
             jacobi(0) = fgx / z;
             jacobi(1) = fgy / z;
             jacobi(2) = -(fgx * x + fgy * y) / z / z;
-            jacobi(3) = -fgx * x * y / z / z - fgy * (1.0f + y / z * y / z);
-            jacobi(4) = fgx * (1.0f + x / z * x / z) + fgy * x / z * y / z;
-            jacobi(5) = (-fgx * y + fgy * x) / z;
+            jacobi(3) = -fgx * xz * yz - fgy * (1.0f + yz * yz);
+            jacobi(4) = fgx * (1.0f + xz * xz) + fgy * xz * yz;
+            jacobi(5) = (-fgx * yz + fgy * xz);
 
             // accumulate residual
             float r = huber(I_2 - I_1);

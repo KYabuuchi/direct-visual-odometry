@@ -103,6 +103,7 @@ float getSubpixel(const cv::Mat1f& img, cv::Point2f pt)
     if (not inRange({x0, y0}))
         return INVALID;
 
+
     int x1 = x0 + 1;
     int y1 = y0 + 1;
     float h = pt.x - (float)x0;

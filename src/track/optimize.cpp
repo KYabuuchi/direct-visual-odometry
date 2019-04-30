@@ -128,7 +128,7 @@ Outcome optimize(const Stuff& stuff)
     cv::Mat1f xi_update;
     cv::solve(A, -B, xi_update, cv::DECOMP_SVD);
 
-    return Outcome{cv::Mat1f(-xi_update), residual / static_cast<float>(B.rows), valid_pixels};
+    return Outcome{cv::Mat1f(-xi_update), residual / valid_pixels, valid_pixels};
 }
 
 }  // namespace Track

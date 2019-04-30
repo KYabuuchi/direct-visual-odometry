@@ -14,10 +14,11 @@ public:
           m_gray(gray_image),
           m_K(K)
     {
-        // depth画像の初期化
+        // depth,sigmaの初期化
         m_depth = cv::Mat1f(rows, cols);
-        cv::randn(m_depth, 1.5, 0.5);
-        m_sigma = cv::Mat1f::ones(rows, cols);
+        cv::randn(m_depth, 1.0, 0.5);
+        m_depth = cv::max(m_depth, 0.5f);
+        m_sigma = 0.5f * cv::Mat1f::ones(rows, cols);
     }
 
     Scene(const cv::Mat1f& gray_image, const cv::Mat1f& depth_image, const cv::Mat1f& sigma_image, const cv::Mat1f& K)

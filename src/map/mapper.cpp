@@ -8,7 +8,8 @@ namespace Map
 {
 namespace
 {
-constexpr float MINIMUM_MOVEMENT = 0.10f;  // [m]
+constexpr float MINIMUM_MOVEMENT = 0.05f;  // [m]
+constexpr int MAXIMUM_FORWARD = 3;         // frame number
 }  // namespace
 
 void Mapper::estimate(FrameHistory& frame_history, pFrame frame)
@@ -41,7 +42,7 @@ bool Mapper::needNewFrame(const pFrame frame)
 {
     cv::Mat1f& xi = frame->m_relative_xi;
     double scalar = cv::norm(xi.rowRange(0, 3));
-    return scalar > MINIMUM_MOVEMENT;
+    return (scalar > MINIMUM_MOVEMENT or frame->id - frame->m_ref_frame->id >= MAXIMUM_FORWARD);
 }
 
 void Mapper::propagate(pFrame frame)

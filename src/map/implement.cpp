@@ -11,10 +11,10 @@ namespace
 constexpr float initial_sigma = 0.50f;  // [m]
 constexpr float initial_variance = initial_sigma * initial_sigma;
 
-constexpr float luminance_sigma = 0.01f;  // [pixel]
+constexpr float luminance_sigma = 0.10f;  // [pixel]
 constexpr float luminance_variance = luminance_sigma * luminance_sigma;
 
-constexpr float epipolar_sigma = 0.5f;  // [pixel]
+constexpr float epipolar_sigma = 2.0f;  // [pixel]
 constexpr float epipolar_variance = epipolar_sigma * epipolar_sigma;
 
 constexpr float predict_sigma = 0.10f;  // [m]
@@ -28,7 +28,7 @@ struct EpipolarSegment {
         const cv::Mat1f& K,
         const float depth,
         const float sigma)
-        : min(depth - sigma), max(depth + sigma),
+        : min(std::max(depth - sigma, 0.05f)), max(depth + sigma),
           start(Transform::warp(xi, x_i, max, K)),
           end(Transform::warp(xi, x_i, min, K)),
           length(static_cast<float>(cv::norm(start - end))) {}
@@ -90,7 +90,7 @@ cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float gray, const Epipol
     cv::Point2f pt = es.start;
     cv::Point2f dir = (es.end - es.start) / es.length;
 
-    // std::cout << es.start << " " << es.end << std::endl;
+    // std::cout << es.start << " " << es.end << " " << dir << " " << es.length << std::endl;
 
     cv::Point2f best_pt = pt;
     const int N = 3;
@@ -106,7 +106,7 @@ cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float gray, const Epipol
             cv::Point2f target = pt + (i - N / 2) * dir;
             float subpixel_gray = Convert::getSubpixel(ref_gray, target);
             if (math::isInvalid(subpixel_gray)) {
-                ssd = N;
+                ssd = 2 * N;
                 break;
             }
             float diff = subpixel_gray - gray;
@@ -118,7 +118,7 @@ cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float gray, const Epipol
             min_ssd = ssd;
         }
     }
-    if (min_ssd == N) {
+    if (min_ssd > N) {
         return cv::Point2f(-1, -1);
     }
     return best_pt;

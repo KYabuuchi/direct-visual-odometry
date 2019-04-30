@@ -28,6 +28,7 @@ int main(/*int argc, char* argv[]*/)
         if (not loader.getNormalizedUndistortedImages(num++, gray_image))
             break;
 
+
         // odometrize
         cv::Mat1f T = vo.odometrize(gray_image);
         std::cout << "\n"

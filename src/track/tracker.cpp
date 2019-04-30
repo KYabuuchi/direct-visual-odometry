@@ -11,8 +11,9 @@ namespace Track
 namespace
 {
 const bool CHATTY = true;
-const float MINIMUM_UPDATE = 0.003f;
-const float MINIMUM_RESIDUAL = 0.003f;
+const float MINIMUM_RESIDUAL = 0.01f;
+const float MINIMUM_UPDATE = 5e-4f;
+const int MAXIMUM_TIME_MS = 100;
 }  // namespace
 
 cv::Mat1f Tracker::track(
@@ -35,7 +36,6 @@ cv::Mat1f Tracker::track(
 
         for (int iteration = 0; iteration < 10; iteration++) {
             Timer timer;
-
             Outcome outcome = optimize(stuff);
 
             cv::Mat1f updated_xi = math::se3::concatenate(xi, outcome.xi_update);
@@ -46,20 +46,20 @@ cv::Mat1f Tracker::track(
             }
             stuff.update(xi);
 
-            long count = timer.millSeconds();
+            long mili_sec = timer.millSeconds();
             if (CHATTY)
                 std::cout << "itr: " << iteration
                           << " r: " << outcome.residual
                           << " upd: " << cv::norm(outcome.xi_update)
                           << " rows : " << outcome.valid_pixels
-                          << " time: " << count << " ms" << std::endl;
+                          << " time: " << mili_sec << " ms" << std::endl;
 
             stuff.show(window_name);
             cv::waitKey(1);
 
             if (cv::norm(outcome.xi_update) < MINIMUM_UPDATE
                 or outcome.residual < MINIMUM_RESIDUAL
-                or count > 1000)
+                or mili_sec > MAXIMUM_TIME_MS)
                 break;
         }
     }

@@ -9,12 +9,18 @@ namespace System
 class Scene
 {
 public:
-    Scene(const cv::Mat& gray_image, const cv::Mat1f& K)
+    Scene(const cv::Mat1f& gray_image, const cv::Mat1f& K)
         : cols(gray_image.cols), rows(gray_image.rows),
           m_gray(gray_image),
-          m_K(K) {}
+          m_K(K)
+    {
+        // depth画像の初期化
+        m_depth = cv::Mat1f(rows, cols);
+        cv::randn(m_depth, 1.5, 0.5);
+        m_sigma = cv::Mat1f::ones(rows, cols);
+    }
 
-    Scene(const cv::Mat& gray_image, const cv::Mat& depth_image, const cv::Mat& sigma_image, const cv::Mat1f& K)
+    Scene(const cv::Mat1f& gray_image, const cv::Mat1f& depth_image, const cv::Mat1f& sigma_image, const cv::Mat1f& K)
         : cols(gray_image.cols), rows(gray_image.rows),
           m_gray(gray_image), m_depth(depth_image), m_sigma(sigma_image),
           m_K(K) {}

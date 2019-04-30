@@ -84,10 +84,13 @@ Outcome optimize(const Stuff& stuff)
                 return;
                 // continue;
             }
+            valid_pixels++;
 
             // calc jacobian
             cv::Point3f x_c = Transform::backProject(stuff.K, x_i, depth);
             float x = x_c.x, y = x_c.y, z = x_c.z;
+
+
             float fgx = fx * gx, fgy = fy * gy;
             float xz = x / z, yz = y / z;
             cv::Mat1f jacobi(cv::Mat1f::zeros(1, 6));
@@ -102,26 +105,30 @@ Outcome optimize(const Stuff& stuff)
             float r = huber(I_2 - I_1);
             residual += r * r;
 
+
             // weight of reliability
             float sigma = std::max(stuff.ref_sigma(x_i), 0.1f);  // [m]
             float weight = 0.1f / sigma;
+            if (std::isnan(weight)) {
+                std::cout << "FUCK" << sigma << " " << stuff.ref_sigma(x_i) << std::endl;
+
+                return;
+            }
 
             // stack
             int id = pt[1] + pt[0] * stuff.cols;
             jacobi.copyTo(A.row(id));
             B(id, 0) = r * weight;
-
-            valid_pixels++;
         });
 
     if (valid_pixels == 0)
-        return Outcome{math::se3::xi(), -1, B.rows};
+        return Outcome{math::se3::xi(), -1, valid_pixels};
 
     // solve equation (A xi + B = 0)
     cv::Mat1f xi_update;
     cv::solve(A, -B, xi_update, cv::DECOMP_SVD);
 
-    return Outcome{cv::Mat1f(-xi_update), residual / static_cast<float>(B.rows), B.rows};
+    return Outcome{cv::Mat1f(-xi_update), residual / static_cast<float>(B.rows), valid_pixels};
 }
 
 }  // namespace Track

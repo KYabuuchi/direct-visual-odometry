@@ -32,7 +32,7 @@ void Mapper::show(const pFrame frame)
     Draw::showImage(
         window_name,
         Draw::visualizeGray(frame->gray()),
-        Draw::visualizeDepth(frame->depth(), frame->sigma()),
+        Draw::visualizeDepth(frame->depth()),
         Draw::visualizeSigma(frame->sigma()),
         Draw::visualizeAge(frame->age()));
 }
@@ -69,7 +69,8 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
 
     ref->depth().forEach(
         [&](const float d, const int pt[2]) -> void {
-            if (pt[0] < 20 or pt[0] > 90 or pt[1] < 20 or pt[1] > 90)
+            // 外側は無駄になりがち
+            if (pt[1] < 16 or pt[1] > 144 or pt[0] < 12 or pt[0] > 108)
                 return;
 
             cv::Point2i x_i(pt[1], pt[0]);
@@ -91,16 +92,19 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
                 born->gray(),
                 born->gradX(),
                 born->gradY(),
-                math::se3::concatenate(obj->m_xi, -born->m_xi),
+                math::se3::concatenate(obj->m_xi, cv::Mat1f(-born->m_xi)),
                 obj->K(),
                 warped_x_i,
                 depth,
                 sigma);
-            if (new_sigma > 0 and new_sigma < 1)
-                std::cout << "valid update " << new_depth << " " << new_sigma << " " << x_i << std::endl;
+
+            if (new_depth < 0)
+                return;
+            // if (new_sigma > 0 and new_sigma < 1)
+            //     std::cout << "valid update " << new_depth << " " << new_sigma << " " << x_i << std::endl;
 
             // 更新
-            if (new_depth > 0 and new_depth < 4.0) {
+            if (new_depth > 0 and new_depth < 4.0 and new_sigma > 0 and new_sigma < 1) {
                 math::Gaussian g(depth, sigma);
                 g(new_depth, new_sigma);
                 ref->top()->depth()(x_i) = g.depth;

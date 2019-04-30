@@ -9,8 +9,10 @@ int main(/*int argc, char* argv[]*/)
 {
     // loading
     Core::Loader loader("../data/kinectv2_01/info.txt", "../camera-calibration/data/logicool_00/config.yaml");
-    cv::namedWindow(window_name, cv::WINDOW_NORMAL);
-    cv::Mat show_image = cv::Mat::zeros(480, 640, CV_8UC3);
+
+    // trajectory
+    // cv::namedWindow(window_name, cv::WINDOW_NORMAL);
+    // cv::Mat show_image = cv::Mat::zeros(480, 640, CV_8UC3);
 
 
     // main system
@@ -23,18 +25,17 @@ int main(/*int argc, char* argv[]*/)
     int num = 0;
     while (true) {
         cv::Mat1f gray_image;
-        if (not loader.getUndistortedImages(num++, gray_image))
+        if (not loader.getNormalizedUndistortedImages(num++, gray_image))
             break;
 
         // odometrize
-        std::cout << "GE" << std::endl;
         cv::Mat1f T = vo.odometrize(gray_image);
         std::cout << "\n"
                   << T << "\n"
                   << std::endl;
 
-        trajectory.push_back(T);
-        show(trajectory);
+        // trajectory.push_back(T);
+        // show(trajectory);
 
         // wait
         if (cv::waitKey(0) == 'q')

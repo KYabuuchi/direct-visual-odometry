@@ -82,7 +82,7 @@ float sigmaEstimate(
     float epipolar = epipolar_variance / gl2;
     float luminance = 2 * luminance_variance / g2;
 
-    return alpha * std::sqrt(epipolar + luminance);
+    return alpha * std::sqrt(std::abs(epipolar + luminance));
 }
 
 cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float gray, const EpipolarSegment& es)
@@ -170,6 +170,7 @@ std::tuple<float, float> update(
 {
     EpipolarSegment es(relative_xi, x_i, K, depth, sigma);
 
+    // std::cout << x_i << " ";
     cv::Point2f matched_x_i = doMatching(ref_gray, obj_gray(x_i), es);
     if (matched_x_i.x < 0)
         return {-1, -1};

@@ -1,19 +1,18 @@
 #include "calibration/loader.hpp"
 #include "core/loader.hpp"
+#include "graphic/draw.hpp"
 #include "system/system.hpp"
+#include <Eigen/Dense>
 
 const std::string window_name = "trajectry";
 void show(const std::vector<cv::Mat1f>& trajectory);
 
 int main(/*int argc, char* argv[]*/)
 {
+    Graphic::initialize();
+
     // loading
-    Core::Loader loader("../data/kinectv2_01/info.txt", "../camera-calibration/data/logicool_00/config.yaml");
-
-    // trajectory
-    // cv::namedWindow(window_name, cv::WINDOW_NORMAL);
-    // cv::Mat show_image = cv::Mat::zeros(480, 640, CV_8UC3);
-
+    Core::Loader loader("../data/logicool0/info.txt", "../external/camera-calibration/data/logicool_00/config.yaml");
 
     // main system
     std::cout << loader.Rgb().K() << std::endl;
@@ -35,25 +34,30 @@ int main(/*int argc, char* argv[]*/)
                   << T << "\n"
                   << std::endl;
 
-        // trajectory.push_back(T);
-        // show(trajectory);
+        trajectory.push_back(T);
+        show(trajectory);
 
         // wait
         if (cv::waitKey(0) == 'q')
             break;
+
+        if (not Graphic::isRunning())
+            break;
     }
+
+    Graphic::finalize();
 }
 
 void show(const std::vector<cv::Mat1f>& trajectory)
 {
-    cv::Mat show_image = cv::Mat::zeros(480, 640, CV_8UC3);
-    double gain = 1000;
-    for (int i = 1; i < trajectory.size(); i++) {
-        const cv::Mat1f& T0 = trajectory.at(i - 1);
-        const cv::Mat1f& T1 = trajectory.at(i);
-        cv::Point center0(320 + gain * T0(0, 3), 240 + gain * T0(2, 3));
-        cv::Point center1(320 + gain * T1(0, 3), 240 + gain * T1(2, 3));
-        cv::line(show_image, center0, center1, CV_RGB(255, 255, 0), 3);
+    Graphic::clear();
+    std::vector<Eigen::Vector2d> tmp;
+    tmp.reserve(trajectory.size());
+    for (const cv::Mat1f& e : trajectory) {
+        Eigen::Vector2d v = 10 * Eigen::Vector2d(e(0, 3), e(2, 3));
+        std::cout << v.transpose() << std::endl;
+        tmp.push_back(v);
     }
-    cv::imshow(window_name, show_image);
+
+    Graphic::draw(tmp, Graphic::Form::CURVE, Graphic::Color::YELLOW);
 }

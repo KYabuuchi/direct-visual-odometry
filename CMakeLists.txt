@@ -47,12 +47,21 @@ message("OpenMP found:\n\t${OpenMP_FOUND}")
 find_package(OpenCV 3.0 REQUIRED)
 message("OpenCV version:\n\t${OpenCV_VERSION}")
 
+# Eigen
+find_package(Eigen3 REQUIRED)
+include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
+
 # matplotlib
 find_package(PythonLibs)
 
 # camera-calibration
-add_subdirectory(camera-calibration)
-include_directories(${CMAKE_CURRENT_LIST_DIR}/camera-calibration/include)
+add_subdirectory(external/camera-calibration)
+include_directories(
+    ${CMAKE_CURRENT_LIST_DIR}/external/camera-calibration/include)
+
+# camera-calibration
+add_subdirectory(external/glfw-drawer)
+include_directories(${CMAKE_CURRENT_LIST_DIR}/external/glfw-drawer/include)
 
 # header & source
 include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
@@ -83,7 +92,7 @@ add_library(vo-core STATIC ${SOURCES})
 # add_executable(test-record test/record.cpp)
 # target_link_libraries(test-record ${OpenCV_LIBS} stdc++fs)
 add_executable(main main.cpp)
-target_link_libraries(main ${OpenCV_LIBS} vo-core)
+target_link_libraries(main ${OpenCV_LIBS} vo-core glfw-drawer)
 # add_executable(test-kinect test/kinect-vo.cpp)
 # target_link_libraries(test-kinect ${OpenCV_LIBS} vo-core)
 # add_executable(test-omp test/omp.cpp)

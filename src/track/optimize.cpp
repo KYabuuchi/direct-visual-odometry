@@ -62,6 +62,10 @@ Outcome optimize(const Stuff& stuff)
                 // continue;
             }
 
+            if (depth > 3) {
+                std::cout << "TOO FAR" << depth << std::endl;
+            }
+
             // luminance
             float I_1 = stuff.obj_gray(x_i);
             float I_2 = stuff.warped_gray(x_i);
@@ -89,7 +93,6 @@ Outcome optimize(const Stuff& stuff)
             // calc jacobian
             cv::Point3f x_c = Transform::backProject(stuff.K, x_i, depth);
             float x = x_c.x, y = x_c.y, z = x_c.z;
-
 
             float fgx = fx * gx, fgy = fy * gy;
             float xz = x / z, yz = y / z;

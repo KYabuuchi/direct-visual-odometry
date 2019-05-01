@@ -31,6 +31,7 @@ cv::Mat1f inversePose(const cv::Mat1f& T);
 cv::Mat1f gradiate(const cv::Mat1f& gray_image, bool x);
 
 // subpixelを取得(無効画素を含む場合と含まない場合で挙動が異なる)
+float getPixel(const cv::Mat1f& img, cv::Point2i pt);
 float getSubpixel(const cv::Mat1f& img, cv::Point2f pt);
 float getSubpixelFromDense(const cv::Mat1f& img, cv::Point2f pt);
 

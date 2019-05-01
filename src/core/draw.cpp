@@ -59,7 +59,7 @@ cv::Mat visualizeDepth(const cv::Mat1f& src_image, const cv::Mat1f& sigma)
         [&](cv::Vec3b& p, const int* pt) -> void {
             p[0] = static_cast<unsigned char>(p[2] * 90.0 / 255);  // H in [0,179]
             p[1] = 255;
-            p[2] = static_cast<unsigned char>(-500 * sigma(pt[0], pt[1]) + 255);
+            p[2] = static_cast<unsigned char>(-500 * std::min(sigma(pt[0], pt[1]), 0.5f) + 255);
         });
     cv::cvtColor(dst_image, dst_image, cv::COLOR_HSV2BGR);
     return dst_image;

@@ -170,14 +170,11 @@ std::tuple<float, float> update(
 {
     EpipolarSegment es(relative_xi, x_i, K, depth, sigma);
 
-    // std::cout << x_i << " ";
     cv::Point2f matched_x_i = doMatching(ref_gray, obj_gray(x_i), es);
     if (matched_x_i.x < 0)
         return {-1, -1};
 
     float new_depth = depthEstimate(matched_x_i, x_i, K, relative_xi);
-    // if (0.1 < new_depth and new_depth < 5)
-    //     std::cout << new_depth << " " << matched_x_i << " " << x_i << std::endl;
 
     float new_sigma = sigmaEstimate(
         ref_gradx,

@@ -10,10 +10,11 @@ namespace Track
 {
 namespace
 {
-const bool CHATTY = true;
-const float MINIMUM_RESIDUAL = 0.01f;
-const float MINIMUM_UPDATE = 5e-4f;
-const int MAXIMUM_TIME_MS = 100;
+constexpr bool CHATTY = true;
+constexpr float MINIMUM_RESIDUAL = 0.015f;
+constexpr float MINIMUM_UPDATE = 1e-4f;
+constexpr int MAXIMUM_TIME_MS = 50;
+constexpr int MAXIMUM_ITERATION = 15;
 }  // namespace
 
 cv::Mat1f Tracker::track(
@@ -34,7 +35,7 @@ cv::Mat1f Tracker::track(
 
         Stuff stuff = {obj_scene, ref_scene, xi};
 
-        for (int iteration = 0; iteration < 10; iteration++) {
+        for (int iteration = 0; iteration < MAXIMUM_ITERATION; iteration++) {
             Timer timer;
             Outcome outcome = optimize(stuff);
 

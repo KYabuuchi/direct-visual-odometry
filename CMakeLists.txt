@@ -38,6 +38,15 @@ foreach(FLAG IN LISTS CXX_WARNING_FLAGS)
 endforeach()
 message("Build type:\n\t${CMAKE_BUILD_TYPE}")
 
+# Optimize flag
+if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
+    set(OPTIMIZE_FLAGS "-mtune=native -march=native -mfpmath=both -Ofast")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OPTIMIZE_FLAGSS}")
+    message("Optimization flags:\n\t${OPTIMIZE_FLAGS}")
+else()
+    message("Not Optimized:\n\tBecause build type is ${CMAKE_BUILD_TYPE}")
+endif()
+
 # OpenMP
 find_package(OpenMP REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")

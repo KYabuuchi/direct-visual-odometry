@@ -1,8 +1,11 @@
 #pragma once
-#include "math/constexpr.hpp"
+#include <opencv2/opencv.hpp>
 
 namespace math
 {
+constexpr float EPSILON = 1e-6f;
+constexpr float INVALID = -2.0f;
+
 inline bool isValid(float num) { return INVALID < num; }
 inline bool isInvalid(float num) { return num <= INVALID; }
 
@@ -69,28 +72,5 @@ inline bool inRange(T num, T min, T max)
         return false;
     return true;
 }
-
-
-// Gauss分布
-struct Gaussian {
-    Gaussian(float depth, float sigma) : depth(depth), sigma(sigma) {}
-    float depth;
-    float sigma;
-
-    void operator()(float d, float s)
-    {
-        float v1 = math::square(sigma);
-        float v2 = math::square(s);
-        float v = v1 + v2;
-
-        // 期待値が離れすぎていたら反映しない
-        float diff = std::abs(d - depth);
-        if (diff > std::max(sigma, s))
-            return;
-
-        depth = (v2 * depth + v1 * d) / v;
-        sigma = std::sqrt((v1 * v2) / v);
-    }
-};
 
 }  // namespace math

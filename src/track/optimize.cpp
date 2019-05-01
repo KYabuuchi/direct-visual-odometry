@@ -51,7 +51,6 @@ Outcome optimize(const Stuff& stuff)
     const float fx = stuff.K(0, 0), fy = stuff.K(1, 1);
 
     int valid_pixels = 0;
-
     stuff.ref_depth.forEach(
         [&](float& depth, const int pt[2]) -> void {
             cv::Point2i x_i = cv::Point2i(pt[1], pt[0]);
@@ -59,11 +58,6 @@ Outcome optimize(const Stuff& stuff)
             // depth
             if (depth < 0.50) {
                 return;
-                // continue;
-            }
-
-            if (depth > 3) {
-                std::cout << "TOO FAR" << depth << std::endl;
             }
 
             // luminance
@@ -71,22 +65,18 @@ Outcome optimize(const Stuff& stuff)
             float I_2 = stuff.warped_gray(x_i);
             if (math::isInvalid(I_1) or math::isInvalid(I_2)) {
                 return;
-                // continue;
             }
 
             // gradient
             cv::Point2f warped_x_i = Transform::warp(cv::Mat1f(-stuff.xi), x_i, depth, stuff.K);
-            if (warped_x_i.x < 0 or stuff.cols <= warped_x_i.x
-                or warped_x_i.y < 0 or stuff.rows <= warped_x_i.y)
+            if (warped_x_i.x < 0 or static_cast<float>(stuff.cols) <= warped_x_i.x or warped_x_i.y < 0 or static_cast<float>(stuff.rows) <= warped_x_i.y)
                 return;
-            // continue;
 
-            float gx = Convert::getSubpixel(stuff.grad_x, warped_x_i);
-            float gy = Convert::getSubpixel(stuff.grad_y, warped_x_i);
+            float gx = Convert::getSubpixelFromDense(stuff.grad_x, warped_x_i);
+            float gy = Convert::getSubpixelFromDense(stuff.grad_y, warped_x_i);
 
             if (math::isInvalid(gx) or math::isInvalid(gy)) {
                 return;
-                // continue;
             }
             valid_pixels++;
 
@@ -108,15 +98,9 @@ Outcome optimize(const Stuff& stuff)
             float r = huber(I_2 - I_1);
             residual += r * r;
 
-
             // weight of reliability
             float sigma = std::max(stuff.ref_sigma(x_i), 0.1f);  // [m]
             float weight = 0.1f / sigma;
-            if (std::isnan(weight)) {
-                std::cout << "FUCK" << sigma << " " << stuff.ref_sigma(x_i) << std::endl;
-
-                return;
-            }
 
             // stack
             int id = pt[1] + pt[0] * stuff.cols;
@@ -131,7 +115,7 @@ Outcome optimize(const Stuff& stuff)
     cv::Mat1f xi_update;
     cv::solve(A, -B, xi_update, cv::DECOMP_SVD);
 
-    return Outcome{cv::Mat1f(-xi_update), residual / valid_pixels, valid_pixels};
+    return Outcome{cv::Mat1f(-xi_update), residual / static_cast<float>(valid_pixels), valid_pixels};
 }
 
 }  // namespace Track

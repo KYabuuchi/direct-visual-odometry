@@ -43,7 +43,7 @@ cv::Mat warpImage(const cv::Mat1f& xi, const cv::Mat1f& gray_image, const cv::Ma
             if (math::isEpsilon(depth))
                 return;
 
-            cv::Point2f warped_x_i = warp(-xi, x_i, depth, K);
+            cv::Point2f warped_x_i = warp(cv::Mat1f(-xi), x_i, depth, K);
 
             p = Convert::getSubpixel(gray_image, warped_x_i);
         });

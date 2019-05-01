@@ -32,11 +32,11 @@ struct Stuff {
     {
         Draw::showImage(window_name,
             Draw::visualizeGray(obj_gray),
-            Draw::visualizeDepth(ref_depth, ref_sigma),
-            Draw::visualizeGray(warped_gray),
             Draw::visualizeGradient(grad_x),
+            Draw::visualizeGray(warped_gray),
+            Draw::visualizeGradient(grad_y),
             Draw::visualizeGray(ref_gray),
-            Draw::visualizeGradient(grad_y));
+            Draw::visualizeDepth(ref_depth, ref_sigma));
     }
 
     const cv::Mat1f obj_gray;

@@ -13,8 +13,7 @@ cv::Mat1f cullImage(const cv::Mat1f& src_image, int times)
     cv::Mat1f culled_image(cv::Mat::zeros(src_image.size() / reduction, CV_32FC1));
     culled_image.forEach(
         [=](float& p, const int position[2]) -> void {
-            p = getSubpixel(src_image, {position[1] * reduction, position[0] * reduction});
-            // p = src_image.at<float>(position[0] * reduction, position[1] * reduction);
+            p = getPixel(src_image, {position[1] * reduction, position[0] * reduction});
         });
 
     return culled_image;
@@ -51,8 +50,8 @@ cv::Mat1f gradiate(const cv::Mat1f& gray_image, bool x)
                 if (pt[1] - 1 <= -1 or pt[1] + 1 >= size.width)
                     return;
 
-                float x0 = getSubpixel(gray_image, {pt[1] - 1, pt[0]});
-                float x1 = getSubpixel(gray_image, {pt[1] + 1, pt[0]});
+                float x0 = getPixel(gray_image, {pt[1] - 1, pt[0]});
+                float x1 = getPixel(gray_image, {pt[1] + 1, pt[0]});
                 if (isInvalid(x0) or isInvalid(x1)) {
                     return;
                 }
@@ -64,8 +63,8 @@ cv::Mat1f gradiate(const cv::Mat1f& gray_image, bool x)
                 if (pt[0] - 1 <= -1 or pt[0] + 1 >= size.height)
                     return;
 
-                float y0 = getSubpixel(gray_image, {pt[1], pt[0] - 1});
-                float y1 = getSubpixel(gray_image, {pt[1], pt[0] + 1});
+                float y0 = getPixel(gray_image, {pt[1], pt[0] - 1});
+                float y1 = getPixel(gray_image, {pt[1], pt[0] + 1});
                 if (isInvalid(y0) or isInvalid(y1)) {
                     return;
                 }
@@ -103,6 +102,26 @@ float getSubpixelFromDense(const cv::Mat1f& img, cv::Point2f pt)
 
     return (g[0] * (1.f - h) + g[1] * h) * (1.f - v)
            + (g[2] * (1.f - h) + g[3] * h) * v;
+}
+
+float getPixel(const cv::Mat1f& img, cv::Point2i pt)
+{
+    using namespace math;
+    auto inRange = generateInRange(img.size());
+
+    int x0 = pt.x;
+    int y0 = pt.y;
+
+    for (int x = x0; x < x0 + 1; x++) {
+        for (int y = y0; y < y0 + 1; y++) {
+            if (inRange({x, y})) {
+                float g = img(y, x);
+                if (isValid(g))
+                    return g;
+            }
+        }
+    }
+    return INVALID;
 }
 
 

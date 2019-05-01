@@ -55,7 +55,6 @@ void show(const std::vector<cv::Mat1f>& trajectory)
     tmp.reserve(trajectory.size());
     for (const cv::Mat1f& e : trajectory) {
         Eigen::Vector2d v = 10 * Eigen::Vector2d(e(0, 3), e(2, 3));
-        std::cout << v.transpose() << std::endl;
         tmp.push_back(v);
     }
 

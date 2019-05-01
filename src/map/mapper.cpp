@@ -107,7 +107,7 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
             // 更新
             if (new_depth > 0 and new_depth < 4.0 and new_sigma > 0 and new_sigma < 1) {
                 math::Gaussian g(depth, sigma);
-                g(new_depth, new_sigma);
+                g.update(new_depth, new_sigma);
                 ref->top()->depth()(x_i) = g.depth;
                 ref->top()->sigma()(x_i) = g.sigma;
             } else {

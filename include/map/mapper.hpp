@@ -18,7 +18,7 @@ public:
     Mapper() : window_name("Mapping")
     {
         cv::namedWindow(window_name, cv::WINDOW_NORMAL);
-        cv::resizeWindow(window_name, 960, 720);
+        cv::resizeWindow(window_name, 640, 480);
     }
 
     // 本体

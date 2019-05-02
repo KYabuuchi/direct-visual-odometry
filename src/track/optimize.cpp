@@ -42,15 +42,23 @@ inline float huber(float n)
 }
 }  // namespace
 
+// NOTE: ループ内部でメモリ確保すると遅い
+cv::Mat1f jacobi(cv::Mat1f::zeros(1, 6));
+
+// TODO: わざわざ構造体に詰めずとも構造束縛で返せばよい
 Outcome optimize(const Stuff& stuff)
 {
     float residual = 0;
-    int max_size = stuff.cols * stuff.rows;
-    cv::Mat1f A(cv::Mat1f::zeros(max_size, 6));
-    cv::Mat1f B(cv::Mat1f::zeros(max_size, 1));
     const float fx = stuff.K(0, 0), fy = stuff.K(1, 1);
 
+    // TODO: 画面の外側は計算しない(ただし総画素数が少ないうちは全部回す)
+    int max_size = stuff.cols * stuff.rows;
+    // TODO: この規模のメモリ確保は遅い，毎回使うなら予め確保しておく
+    cv::Mat1f A(cv::Mat1f::zeros(max_size, 6));
+    cv::Mat1f B(cv::Mat1f::zeros(max_size, 1));
+
     int valid_pixels = 0;
+
     stuff.ref_depth.forEach(
         [&](float& depth, const int pt[2]) -> void {
             cv::Point2i x_i = cv::Point2i(pt[1], pt[0]);
@@ -68,7 +76,7 @@ Outcome optimize(const Stuff& stuff)
             }
 
             // gradient
-            cv::Point2f warped_x_i = Transform::warp(cv::Mat1f(-stuff.xi), x_i, depth, stuff.K);
+            cv::Point2f warped_x_i = Transform::warp(static_cast<cv::Mat1f>(-stuff.xi), x_i, depth, stuff.K);
             if (warped_x_i.x < 0 or static_cast<float>(stuff.cols) <= warped_x_i.x or warped_x_i.y < 0 or static_cast<float>(stuff.rows) <= warped_x_i.y)
                 return;
 
@@ -83,10 +91,8 @@ Outcome optimize(const Stuff& stuff)
             // calc jacobian
             cv::Point3f x_c = Transform::backProject(stuff.K, x_i, depth);
             float x = x_c.x, y = x_c.y, z = x_c.z;
-
             float fgx = fx * gx, fgy = fy * gy;
             float xz = x / z, yz = y / z;
-            cv::Mat1f jacobi(cv::Mat1f::zeros(1, 6));
             jacobi(0) = fgx / z;
             jacobi(1) = fgy / z;
             jacobi(2) = -(fgx * x + fgy * y) / z / z;
@@ -94,6 +100,7 @@ Outcome optimize(const Stuff& stuff)
             jacobi(4) = fgx * (1.0f + xz * xz) + fgy * xz * yz;
             jacobi(5) = (-fgx * yz + fgy * xz);
 
+            // NOTE: residualは各threadにアクセスされる
             // accumulate residual
             float r = huber(I_2 - I_1);
             residual += r * r;
@@ -102,6 +109,7 @@ Outcome optimize(const Stuff& stuff)
             float sigma = std::max(stuff.ref_sigma(x_i), 0.1f);  // [m]
             float weight = 0.1f / sigma;
 
+            // NOTE: A,Bは各threadにアクセスされる
             // stack
             int id = pt[1] + pt[0] * stuff.cols;
             jacobi.copyTo(A.row(id));
@@ -114,7 +122,6 @@ Outcome optimize(const Stuff& stuff)
     // solve equation (A xi + B = 0)
     cv::Mat1f xi_update;
     cv::solve(A, -B, xi_update, cv::DECOMP_SVD);
-
     return Outcome{cv::Mat1f(-xi_update), residual / static_cast<float>(valid_pixels), valid_pixels};
 }
 

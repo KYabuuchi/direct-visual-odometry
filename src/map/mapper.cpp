@@ -22,14 +22,13 @@ void Mapper::estimate(FrameHistory& frame_history, pFrame frame)
     }
 
     pFrame ref_frame = frame_history.getRefFrame();
-    std::cout << "mapper::show id: " << ref_frame->id << std::endl;
     regularize(ref_frame);
     show(ref_frame);
 }
 
 void Mapper::show(const pFrame frame)
 {
-    std::cout << "Mapper::show" << std::endl;
+    std::cout << "Mapper::show " << frame->id << std::endl;
     Draw::showImage(
         window_name,
         Draw::visualizeGray(frame->gray()),
@@ -68,6 +67,8 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
     auto inRange = math::generateInRange(ref->depth().size());
     const cv::Mat1f K = obj->K();
 
+    int valid_update = 0;
+
     ref->depth().forEach(
         [&](const float d, const int pt[2]) -> void {
             // 外側は無駄になりがち
@@ -99,21 +100,29 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
                 depth,
                 sigma);
 
+            if (new_sigma > 2) {
+                std::cout << "tid " << new_sigma << std::endl;
+            }
+
+
             if (new_depth < 0)
                 return;
             // if (new_sigma > 0 and new_sigma < 1)
             //     std::cout << "valid update " << new_depth << " " << new_sigma << " " << x_i << std::endl;
 
+
             // 更新
-            if (new_depth > 0 and new_depth < 4.0 and new_sigma > 0 and new_sigma < 1) {
+            if (new_depth > 0 and new_depth < 6.0 and new_sigma > 0) {
                 math::Gaussian g(depth, sigma);
                 g.update(new_depth, new_sigma);
                 ref->top()->depth()(x_i) = g.depth;
                 ref->top()->sigma()(x_i) = g.sigma;
+                valid_update++;
             } else {
                 // std::cout << new_depth << std::endl;
             }
         });
+    std::cout << "\t valid update: " << valid_update << std::endl;
 }
 
 void Mapper::regularize(pFrame frame)

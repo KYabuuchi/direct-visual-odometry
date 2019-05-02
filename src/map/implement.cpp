@@ -8,16 +8,13 @@ namespace Implement
 {
 namespace
 {
-constexpr float initial_sigma = 0.50f;  // [m]
-constexpr float initial_variance = initial_sigma * initial_sigma;
-
-constexpr float luminance_sigma = 0.10f;  // [pixel]
+// update
+constexpr float luminance_sigma = 3.0f;
 constexpr float luminance_variance = luminance_sigma * luminance_sigma;
-
-constexpr float epipolar_sigma = 2.0f;  // [pixel]
+constexpr float epipolar_sigma = 5.0f;
 constexpr float epipolar_variance = epipolar_sigma * epipolar_sigma;
-
-constexpr float predict_sigma = 0.10f;  // [m]
+// propagate
+constexpr float predict_sigma = 0.30f;  // [m]
 constexpr float predict_variance = predict_sigma * predict_sigma;
 
 // Eipolar線分
@@ -28,10 +25,11 @@ struct EpipolarSegment {
         const cv::Mat1f& K,
         const float depth,
         const float sigma)
-        : min(std::max(depth - sigma, 0.05f)), max(depth + sigma),
-          start(Transform::warp(xi, x_i, max, K)),
-          end(Transform::warp(xi, x_i, min, K)),
-          length(static_cast<float>(cv::norm(start - end))) {}
+        : min(std::max(depth - sigma, 0.10f)), max(depth + sigma),
+          start(Transform::warp(static_cast<cv::Mat1f>(-xi), x_i, max, K)),
+          end(Transform::warp(static_cast<cv::Mat1f>(-xi), x_i, min, K)),
+          length(static_cast<float>(cv::norm(start - end))),
+          x_i(x_i) {}
 
     // copy constractor
     EpipolarSegment(const EpipolarSegment& es)
@@ -42,6 +40,7 @@ struct EpipolarSegment {
     const cv::Point2f start;
     const cv::Point2f end;
     const float length;
+    const cv::Point2f x_i;
 };
 
 float depthEstimate(
@@ -59,7 +58,10 @@ float depthEstimate(
     const cv::Mat1f a(r3.dot(x_q.t()) * x_i - K * R * x_q);
     const cv::Mat1f b(t(2) * x_i - K * t);
 
-    return -static_cast<float>(a.dot(b) / a.dot(a));
+    float depth = -static_cast<float>(a.dot(b) / a.dot(a));
+    // std::cout << ref_x_i << " " << obj_x_i << " " << depth << std::endl;
+
+    return depth;
 }
 
 float sigmaEstimate(
@@ -73,29 +75,36 @@ float sigmaEstimate(
 
     float gx = ref_grad_x(ref_x_i), gy = ref_grad_y(ref_x_i);
     float lx = (es.start - es.end).x, ly = (es.start - es.end).y;
+    float l = es.length;
 
+    float g_dot_l = std::abs(gx * lx + gy * ly);
     // ( \vec{g} \cdot \vec{l} ) ^2
-    float gl2 = math::square(gx * lx + gy * ly);
-    // ( \vec{g} \cdot \vec{l} ) ^2 /  |\vec{l}|^2
-    float g2 = gl2 / math::square(lx * lx + ly * ly);
+    float g_dot_l2 = math::square(g_dot_l);
+    // ( \vec{g} \cdot \vec{l} )  /  |\vec{l}|
+    float gp2 = g_dot_l / l;
 
-    float epipolar = epipolar_variance / gl2;
-    float luminance = 2 * luminance_variance / g2;
+    float epipolar = epipolar_variance / std::max(g_dot_l2, math::EPSILON);
+    float luminance = 2 * luminance_variance / std::max(gp2, math::EPSILON);
 
-    return alpha * std::sqrt(std::abs(epipolar + luminance));
+    float sigma = alpha * std::sqrt(epipolar + luminance);
+
+    if (ref_x_i.x < 40 and ref_x_i.x > 35 and ref_x_i.y < 35 and ref_x_i.y > 30)
+        std::cout << sigma << " " << ref_x_i << " " << gx << " " << gy << " " << es.start << " " << es.end << es.min << " " << es.max << std::endl;
+
+    return sigma;
 }
 
-cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float gray, const EpipolarSegment& es)
+cv::Point2f doMatching(const cv::Mat1f& obj_gray, const float ref_gray, const EpipolarSegment& es)
 {
     cv::Point2f pt = es.start;
     cv::Point2f dir = (es.end - es.start) / es.length;
 
-    // std::cout << es.start << " " << es.end << " " << dir << " " << es.length << std::endl;
+    // std::cout << es.start << " " << es.end << " " << es.x_i << " " << dir << std::endl;
 
     cv::Point2f best_pt = pt;
-    const int N = 3;
+    const int N = 5;
     // TODO:たかだかN
-    float min_ssd = N;
+    float min_ssd = 2 * N;
 
     while (cv::norm(pt - es.start) < es.length) {
         float ssd = 0;
@@ -104,12 +113,12 @@ cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float gray, const Epipol
         // TODO: 1/Nにできるはず
         for (int i = 0; i < N; i++) {
             cv::Point2f target = pt + (i - N / 2) * dir;
-            float subpixel_gray = Convert::getSubpixel(ref_gray, target);
+            float subpixel_gray = Convert::getSubpixel(obj_gray, target);
             if (math::isInvalid(subpixel_gray)) {
                 ssd = 2 * N;
                 break;
             }
-            float diff = subpixel_gray - gray;
+            float diff = subpixel_gray - ref_gray;
             ssd += math::square(diff);
         }
 
@@ -118,7 +127,7 @@ cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float gray, const Epipol
             min_ssd = ssd;
         }
     }
-    if (min_ssd > N) {
+    if (min_ssd > N / 2) {
         return cv::Point2f(-1, -1);
     }
     return best_pt;
@@ -153,11 +162,11 @@ cv::Mat1f regularize(const cv::Mat1f& depth, const cv::Mat1f& sigma)
         });
 
     // 遠いのは省く
-    new_depth = cv::min(new_depth, 3.0);
+    new_depth = cv::min(new_depth, 6.0);
     return new_depth;
 }
 
-std::tuple<float, float> update(
+std::pair<float, float> update(
     const cv::Mat1f& obj_gray,
     const cv::Mat1f& ref_gray,
     const cv::Mat1f& ref_gradx,
@@ -170,17 +179,20 @@ std::tuple<float, float> update(
 {
     EpipolarSegment es(relative_xi, x_i, K, depth, sigma);
 
-    cv::Point2f matched_x_i = doMatching(ref_gray, obj_gray(x_i), es);
+    cv::Point2f matched_x_i = doMatching(obj_gray, ref_gray(x_i), es);
     if (matched_x_i.x < 0)
         return {-1, -1};
 
-    float new_depth = depthEstimate(matched_x_i, x_i, K, relative_xi);
+    float new_depth = depthEstimate(x_i, matched_x_i, K, relative_xi);
 
     float new_sigma = sigmaEstimate(
         ref_gradx,
         ref_grady,
-        matched_x_i,
+        x_i,
         es);
+
+    // if (x_i.y < 40 and x_i.x < 40 and new_sigma > 0 and new_depth > 0)
+    //     std::cout << "L " << x_i << " " << new_depth << " " << new_sigma << std::endl;
 
     return {new_depth, new_sigma};
 }

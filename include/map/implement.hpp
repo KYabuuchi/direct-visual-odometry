@@ -7,7 +7,7 @@ namespace Implement
 {
 
 // return: depth,sigma (-1,-1) if failed
-std::tuple<float, float> update(
+std::pair<float, float> update(
     const cv::Mat1f& obj_gray,
     const cv::Mat1f& ref_gray,
     const cv::Mat1f& ref_gradx,

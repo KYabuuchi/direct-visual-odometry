@@ -12,7 +12,7 @@ namespace
 {
 constexpr bool CHATTY = true;
 constexpr float MINIMUM_RESIDUAL = 0.015f;
-constexpr float MINIMUM_UPDATE = 1e-4f;
+constexpr float MINIMUM_UPDATE = 1.e-4f;
 constexpr int MAXIMUM_TIME_MS = 50;
 constexpr int MAXIMUM_ITERATION = 15;
 }  // namespace
@@ -21,7 +21,7 @@ cv::Mat1f Tracker::track(
     const pFrame obj_frame,
     const pFrame ref_frame)
 {
-    std::cout << "track" << std::endl;
+    std::cout << "Tracker::track" << std::endl;
 
     cv::Mat1f xi = math::se3::xi();
     for (int level = 0; level < ref_frame->levels; level++) {
@@ -62,6 +62,7 @@ cv::Mat1f Tracker::track(
                 or outcome.residual < MINIMUM_RESIDUAL
                 or mili_sec > MAXIMUM_TIME_MS)
                 break;
+            // TODO: 十分にupdateとresidualが小さければreturnする
         }
     }
 

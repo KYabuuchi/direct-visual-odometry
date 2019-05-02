@@ -30,15 +30,15 @@ cv::Mat visualizeDepthRaw(const cv::Mat1f& src_image)
 
 cv::Mat visualizeDepth(const cv::Mat1f& src_image)
 {
-    cv::Mat dst_image;
-    dst_image = cv::min(src_image, 2.5);
-    dst_image = cv::max(dst_image, 0.0);
-    dst_image.convertTo(dst_image, CV_8UC1, 100);
-    cv::cvtColor(dst_image, dst_image, cv::COLOR_GRAY2BGR);
-    cv::cvtColor(dst_image, dst_image, cv::COLOR_BGR2HSV);
+    cv::Mat dst_image = cv::Mat(src_image.size(), CV_8UC3);
     dst_image.forEach<cv::Vec3b>(
-        [&](cv::Vec3b& p, const int*) -> void {
-            double tmp = std::clamp(p[2] * 90.0 / 255, 0.0, 180.0);
+        [&](cv::Vec3b& p, const int pt[2]) -> void {
+            float tmp = src_image(pt[0], pt[1]);
+            if (tmp < math::EPSILON) {
+                p[0] = p[1] = p[2] = 0;
+                return;
+            }
+            tmp = std::clamp(tmp * 26.0f, 0.0f, 180.0f);
             p[0] = static_cast<unsigned char>(tmp);  // H in [0,179]
             p[1] = 255;
             p[2] = 255;
@@ -49,15 +49,16 @@ cv::Mat visualizeDepth(const cv::Mat1f& src_image)
 
 cv::Mat visualizeDepth(const cv::Mat1f& src_image, const cv::Mat1f& sigma)
 {
-    cv::Mat dst_image;
-    dst_image = cv::min(src_image, 2.5);
-    dst_image = cv::max(dst_image, 0.0);
-    dst_image.convertTo(dst_image, CV_8UC1, 100);
-    cv::cvtColor(dst_image, dst_image, cv::COLOR_GRAY2BGR);
-    cv::cvtColor(dst_image, dst_image, cv::COLOR_BGR2HSV);
+    cv::Mat dst_image = cv::Mat(src_image.size(), CV_8UC3);
     dst_image.forEach<cv::Vec3b>(
         [&](cv::Vec3b& p, const int* pt) -> void {
-            p[0] = static_cast<unsigned char>(p[2] * 90.0 / 255);  // H in [0,179]
+            float tmp = src_image(pt[0], pt[1]);
+            if (tmp < math::EPSILON) {
+                p[0] = p[1] = p[2] = 0;
+                return;
+            }
+            tmp = std::clamp(tmp * 26.0f, 0.0f, 180.0f);
+            p[0] = static_cast<unsigned char>(tmp);  // H in [0,179]
             p[1] = 255;
             p[2] = static_cast<unsigned char>(-500 * std::min(sigma(pt[0], pt[1]), 0.5f) + 255);
         });

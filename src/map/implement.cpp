@@ -26,8 +26,8 @@ struct EpipolarSegment {
         const float depth,
         const float sigma)
         : min(std::max(depth - sigma, 0.10f)), max(depth + sigma),
-          start(Transform::warp(static_cast<cv::Mat1f>(-xi), x_i, max, K)),
-          end(Transform::warp(static_cast<cv::Mat1f>(-xi), x_i, min, K)),
+          start(Transform::warp(static_cast<cv::Mat1f>(xi), x_i, max, K)),
+          end(Transform::warp(static_cast<cv::Mat1f>(xi), x_i, min, K)),
           length(static_cast<float>(cv::norm(start - end))),
           x_i(x_i) {}
 
@@ -59,8 +59,9 @@ float depthEstimate(
     const cv::Mat1f b(t(2) * x_i - K * t);
 
     float depth = -static_cast<float>(a.dot(b) / a.dot(a));
-    // std::cout << ref_x_i << " " << obj_x_i << " " << depth << std::endl;
 
+    // if (ref_x_i.x < 130 and ref_x_i.x > 80 and ref_x_i.y < 280 and ref_x_i.y > 250)
+    //     std::cout << ref_x_i << " " << obj_x_i << " " << depth << std::endl;
     return depth;
 }
 
@@ -88,8 +89,8 @@ float sigmaEstimate(
 
     float sigma = alpha * std::sqrt(epipolar + luminance);
 
-    if (ref_x_i.x < 40 and ref_x_i.x > 35 and ref_x_i.y < 35 and ref_x_i.y > 30)
-        std::cout << sigma << " " << ref_x_i << " " << gx << " " << gy << " " << es.start << " " << es.end << es.min << " " << es.max << std::endl;
+    // if (ref_x_i.x < 40 and ref_x_i.x > 35 and ref_x_i.y < 35 and ref_x_i.y > 30)
+    //     std::cout << sigma << " " << ref_x_i << " " << gx << " " << gy << " " << es.start << " " << es.end << es.min << " " << es.max << std::endl;
 
     return sigma;
 }
@@ -99,7 +100,6 @@ cv::Point2f doMatching(const cv::Mat1f& obj_gray, const float ref_gray, const Ep
     cv::Point2f pt = es.start;
     cv::Point2f dir = (es.end - es.start) / es.length;
 
-    // std::cout << es.start << " " << es.end << " " << es.x_i << " " << dir << std::endl;
 
     cv::Point2f best_pt = pt;
     const int N = 5;
@@ -130,6 +130,9 @@ cv::Point2f doMatching(const cv::Mat1f& obj_gray, const float ref_gray, const Ep
     if (min_ssd > N / 2) {
         return cv::Point2f(-1, -1);
     }
+
+    // if (es.x_i.x < 130 and es.x_i.x > 80 and es.x_i.y < 280 and es.x_i.y > 250)
+    // std::cout << es.start << " " << es.end << " " << es.x_i << " " << best_pt << min_ssd << std::endl;
     return best_pt;
 }
 
@@ -183,7 +186,7 @@ std::pair<float, float> update(
     if (matched_x_i.x < 0)
         return {-1, -1};
 
-    float new_depth = depthEstimate(x_i, matched_x_i, K, relative_xi);
+    float new_depth = depthEstimate(matched_x_i, x_i, K, relative_xi);
 
     float new_sigma = sigmaEstimate(
         ref_gradx,

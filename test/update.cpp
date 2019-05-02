@@ -49,13 +49,13 @@ int main(/*int argc, char* argv[]*/)
     {
         cv::Mat1f obj_depth, obj_sigma;
         loader.getMappedImages(0, ref_gray, ref_depth, ref_sigma);
-        loader.getMappedImages(4, obj_gray, obj_depth, obj_sigma);
+        loader.getMappedImages(2, obj_gray, obj_depth, obj_sigma);
     }
 
     cv::Mat1f ref_gradx = Convert::gradiate(ref_gray, true);
     cv::Mat1f ref_grady = Convert::gradiate(ref_gray, false);
 
-    const cv::Mat1f xi = math::se3::xi({-0.2f, 0, 0, 0, 0, 0});
+    const cv::Mat1f xi = math::se3::xi({-0.1f, 0, 0, 0, 0, 0});
     std::cout << "\nxi:= " << xi.t() << "\n"
               << std::endl;
 

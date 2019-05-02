@@ -32,8 +32,8 @@ void Mapper::show(const pFrame frame)
     Draw::showImage(
         window_name,
         Draw::visualizeGray(frame->gray()),
+        Draw::visualizeDepth(frame->depth(), frame->sigma()),
         Draw::visualizeDepth(frame->depth()),
-        Draw::visualizeSigma(frame->sigma()),
         Draw::visualizeAge(frame->age()));
 }
 
@@ -99,11 +99,6 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
                 warped_x_i,
                 depth,
                 sigma);
-
-            if (new_sigma > 2) {
-                std::cout << "tid " << new_sigma << std::endl;
-            }
-
 
             if (new_depth < 0)
                 return;

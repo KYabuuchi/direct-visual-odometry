@@ -170,9 +170,9 @@ public:
         return m_history.at(0);
     }
 
-    int size() { return static_cast<int>(m_history.size()); }
+    int size() const { return static_cast<int>(m_history.size()); }
 
-    const std::shared_ptr<Frame> operator[](size_t i) const { return m_history.at(i); }
+    const std::shared_ptr<Frame> operator[](size_t i) const { return m_history.at(size() - i - 1); }
 
 private:
     void reduceHistory(size_t remain)

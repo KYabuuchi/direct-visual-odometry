@@ -62,7 +62,7 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
 {
     std::cout << "Mapper::update" << std::endl;
     pFrame ref = obj->m_ref_frame;
-    const cv::Mat1f xi = obj->m_xi;
+    const cv::Mat1f xi = obj->m_relative_xi;
 
     auto inRange = math::generateInRange(ref->depth().size());
     const cv::Mat1f K = obj->K();
@@ -76,12 +76,14 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
                 return;
 
             cv::Point2i x_i(pt[1], pt[0]);
+            // NOTE: 向き確認済
             cv::Point2i warped_x_i = Transform::warp(xi, x_i, d, K);
             if (not inRange(warped_x_i))
                 return;
 
+
             // 生まれ年の
-            int age = static_cast<int>(obj->m_age(x_i));
+            int age = static_cast<int>(ref->m_age(x_i));
             pFrame born = frame_history[age];
 
             // 事前分布
@@ -94,7 +96,7 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
                 born->gray(),
                 born->gradX(),
                 born->gradY(),
-                math::se3::concatenate(obj->m_xi, cv::Mat1f(-born->m_xi)),
+                math::se3::concatenate(static_cast<cv::Mat1f>(obj->m_xi), static_cast<cv::Mat1f>(-born->m_xi)),
                 obj->K(),
                 warped_x_i,
                 depth,

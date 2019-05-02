@@ -19,8 +19,8 @@ void Gaussian::update(float d, float s)
     float diff = std::abs(d - depth);
     if (diff > std::max(sigma, s)) {
         depth = dist(engine);
-        sigma = 1.0f;
-        std::cout << "reject&set " << depth << std::endl;
+        sigma = 0.5f;
+        // std::cout << "reject&set " << depth << std::endl;
         return;
     }
 

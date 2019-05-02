@@ -11,7 +11,7 @@ namespace Track
 namespace
 {
 constexpr bool CHATTY = true;
-constexpr float MINIMUM_RESIDUAL = 0.015f;
+constexpr float MINIMUM_RESIDUAL = 0.010f;
 constexpr float MINIMUM_UPDATE = 1.e-4f;
 constexpr int MAXIMUM_TIME_MS = 50;
 constexpr int MAXIMUM_ITERATION = 15;

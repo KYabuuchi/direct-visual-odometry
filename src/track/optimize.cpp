@@ -106,7 +106,7 @@ Outcome optimize(const Stuff& stuff)
             residual += r * r;
 
             // weight of reliability
-            float sigma = std::max(stuff.ref_sigma(x_i), 0.1f);  // [m]
+            float sigma = std::clamp(stuff.ref_sigma(x_i), 0.01f, 0.4f);  // [m]
             float weight = 0.1f / sigma;
 
             // NOTE: A,Bは各threadにアクセスされる

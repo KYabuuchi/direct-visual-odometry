@@ -9,9 +9,9 @@ namespace Implement
 namespace
 {
 // update
-constexpr float luminance_sigma = 3.0f;
+constexpr float luminance_sigma = 6.0f;
 constexpr float luminance_variance = luminance_sigma * luminance_sigma;
-constexpr float epipolar_sigma = 5.0f;
+constexpr float epipolar_sigma = 8.0f;
 constexpr float epipolar_variance = epipolar_sigma * epipolar_sigma;
 // propagate
 constexpr float predict_sigma = 0.30f;  // [m]
@@ -60,7 +60,7 @@ float depthEstimate(
 
     float depth = -static_cast<float>(a.dot(b) / a.dot(a));
 
-    // if (ref_x_i.x < 130 and ref_x_i.x > 80 and ref_x_i.y < 280 and ref_x_i.y > 250)
+    // if (ref_x_i.x < 50 and ref_x_i.x > 20 and ref_x_i.y < 50 and ref_x_i.y > 30)
     //     std::cout << ref_x_i << " " << obj_x_i << " " << depth << std::endl;
     return depth;
 }
@@ -102,7 +102,7 @@ cv::Point2f doMatching(const cv::Mat1f& obj_gray, const float ref_gray, const Ep
 
 
     cv::Point2f best_pt = pt;
-    const int N = 5;
+    const int N = 3;
     // TODO:たかだかN
     float min_ssd = 2 * N;
 

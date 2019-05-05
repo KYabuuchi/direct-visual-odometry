@@ -59,7 +59,7 @@ float depthEstimate(
     const cv::Mat1f a(r3.dot(x_q.t()) * x_i - K * R * x_q);
     const cv::Mat1f b(t(2) * x_i - K * t);
 
-    float depth = -static_cast<float>(a.dot(b) / a.dot(a));
+    float depth = static_cast<float>(a.dot(b) / a.dot(a));
 
     // if (depth > 0)  // and ref_x_i.x < 50 and ref_x_i.x > 20 and ref_x_i.y < 50 and ref_x_i.y > 30)
     //     std::cout << ref_x_i << " " << obj_x_i << " " << depth << " " << t.t() << std::endl;
@@ -106,7 +106,7 @@ cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float obj_gray, const Ep
 
 
     cv::Point2f best_pt = pt;
-    const int N = 5;
+    const int N = 3;
     const int center = (N + 1) / 2;
     // NOTE:たかだかN
     float min_ssd = 2.0f * N;
@@ -198,7 +198,8 @@ std::pair<float, float> update(
         matched_x_i,
         es);
 
-    if (new_sigma > 0 and new_sigma < 1 and new_depth > 0 and matched_x_i.x > 90)
+    // if (new_sigma > 0 and new_sigma < 1 and new_depth > 0 and matched_x_i.x > 90)
+    if (new_sigma > 0 and new_sigma < 1 and matched_x_i.x > 90)
         std::cout << "update " << x_i << " " << matched_x_i << " " << new_depth << " " << new_sigma  //<< " " << relative_xi.t()
                   << std::endl;
 

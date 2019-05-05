@@ -124,6 +124,9 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
             if (new_depth > 0 and new_depth < 6.0 and new_sigma > 0) {
                 math::Gaussian g(depth, sigma);
                 g.update(new_depth, new_sigma);
+                // if (not g.update(new_depth, new_sigma))
+                //     std::cout << "reject&reset:" << x_i << " " << new_depth << " " << new_sigma << std::endl;
+
                 ref->top()->depth()(x_i) = g.depth;
                 ref->top()->sigma()(x_i) = g.sigma;
                 valid_update++;

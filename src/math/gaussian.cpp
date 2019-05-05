@@ -9,7 +9,7 @@ std::mt19937 engine;
 std::uniform_real_distribution<float> dist(2.5, 0.5);
 }  // namespace
 
-void Gaussian::update(float d, float s)
+bool Gaussian::update(float d, float s)
 {
     float v1 = math::square(sigma);
     float v2 = math::square(s);
@@ -20,15 +20,16 @@ void Gaussian::update(float d, float s)
     if (diff > std::max(sigma, s)) {
         depth = dist(engine);
         sigma = 0.5f;
-        std::cout << "\treject&set " << depth << std::endl;
-        return;
+        return false;
     }
 
     depth = (v2 * depth + v1 * d) / v;
     sigma = std::sqrt((v1 * v2) / v);
+
+    return true;
 }
 
-void Gaussian::operator()(float d, float s)
+bool Gaussian::operator()(float d, float s)
 {
     float v1 = math::square(sigma);
     float v2 = math::square(s);
@@ -37,10 +38,12 @@ void Gaussian::operator()(float d, float s)
     // 期待値が離れすぎていたら反映しない
     float diff = std::abs(d - depth);
     if (diff > std::max(sigma, s))
-        return;
+        return false;
 
     depth = (v2 * depth + v1 * d) / v;
     sigma = std::sqrt((v1 * v2) / v);
+
+    return true;
 }
 
 }  // namespace math

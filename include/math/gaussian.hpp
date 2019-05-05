@@ -11,7 +11,7 @@ struct Gaussian {
     float depth;
     float sigma;
 
-    void update(float d, float s);
-    void operator()(float d, float s);
+    bool update(float d, float s);
+    bool operator()(float d, float s);
 };
 }  // namespace math

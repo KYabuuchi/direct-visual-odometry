@@ -30,9 +30,9 @@ int main(/*int argc, char* argv[]*/)
 
         // odometrize
         cv::Mat1f T = vo.odometrize(gray_image);
-        std::cout << "\n"
-                  << T << "\n"
-                  << std::endl;
+        // std::cout << "\n"
+        //           << T << "\n"
+        //           << std::endl;
 
         trajectory.push_back(T);
         show(trajectory);

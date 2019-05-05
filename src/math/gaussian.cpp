@@ -20,7 +20,7 @@ void Gaussian::update(float d, float s)
     if (diff > std::max(sigma, s)) {
         depth = dist(engine);
         sigma = 0.5f;
-        // std::cout << "reject&set " << depth << std::endl;
+        std::cout << "\treject&set " << depth << std::endl;
         return;
     }
 

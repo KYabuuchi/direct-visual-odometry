@@ -8,7 +8,7 @@ namespace Map
 {
 namespace
 {
-constexpr float MINIMUM_MOVEMENT = 0.05f;  // [m]
+constexpr float MINIMUM_MOVEMENT = 0.10f;  // [m]
 constexpr int MAXIMUM_FORWARD = 10;        // number of frame
 }  // namespace
 
@@ -41,7 +41,17 @@ bool Mapper::needNewFrame(const pFrame frame)
 {
     cv::Mat1f& xi = frame->m_relative_xi;
     double scalar = cv::norm(xi.rowRange(0, 3));
-    return (scalar > MINIMUM_MOVEMENT or frame->id - frame->m_ref_frame->id >= MAXIMUM_FORWARD);
+    if (scalar > MINIMUM_MOVEMENT) {
+        std::cout << "needNewFrame: enough movement" << std::endl;
+        return true;
+    }
+    if (frame->id - frame->m_ref_frame->id >= MAXIMUM_FORWARD) {
+        std::cout << "needNewFrame: much frame accumulated" << std::endl;
+        return true;
+    }
+    // TODO: 回転量におうじたしきい値
+
+    return false;
 }
 
 void Mapper::propagate(pFrame frame)
@@ -84,6 +94,8 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
 
             // 生まれ年の
             int age = static_cast<int>(ref->m_age(x_i));
+            // NOTE: 追従が不十分なのに昔のをみると推定移動量との乖離が激しくて低深度と勘違いされる
+            age = std::min(age, 1);
             pFrame born = frame_history[age];
 
             // 事前分布
@@ -115,6 +127,7 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
                 ref->top()->depth()(x_i) = g.depth;
                 ref->top()->sigma()(x_i) = g.sigma;
                 valid_update++;
+                // std::cout << "valid " << obj->id << " " << born->id << std::endl;
             } else {
                 // std::cout << new_depth << std::endl;
             }

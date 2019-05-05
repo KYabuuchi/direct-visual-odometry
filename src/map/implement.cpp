@@ -9,12 +9,13 @@ namespace Implement
 namespace
 {
 // update
-constexpr float luminance_sigma = 6.0f;
+// NOTE: もっと下げた
+constexpr float luminance_sigma = 1.0f;
 constexpr float luminance_variance = luminance_sigma * luminance_sigma;
-constexpr float epipolar_sigma = 8.0f;
+constexpr float epipolar_sigma = 2.0f;
 constexpr float epipolar_variance = epipolar_sigma * epipolar_sigma;
 // propagate
-constexpr float predict_sigma = 0.30f;  // [m]
+constexpr float predict_sigma = 0.20f;  // [m]
 constexpr float predict_variance = predict_sigma * predict_sigma;
 
 // Eipolar線分
@@ -75,6 +76,9 @@ float sigmaEstimate(
     const float alpha = (es.max - es.min) / es.length;
 
     float gx = ref_grad_x(ref_x_i), gy = ref_grad_y(ref_x_i);
+    if (math::isInvalid(gx) or math::isInvalid(gy)) {
+        return -1;
+    }
     float lx = (es.start - es.end).x, ly = (es.start - es.end).y;
     float l = es.length;
 
@@ -95,16 +99,17 @@ float sigmaEstimate(
     return sigma;
 }
 
-cv::Point2f doMatching(const cv::Mat1f& obj_gray, const float ref_gray, const EpipolarSegment& es)
+cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float obj_gray, const EpipolarSegment& es)
 {
     cv::Point2f pt = es.start;
     cv::Point2f dir = (es.end - es.start) / es.length;
 
 
     cv::Point2f best_pt = pt;
-    const int N = 3;
-    // TODO:たかだかN
-    float min_ssd = 2 * N;
+    const int N = 5;
+    const int center = (N + 1) / 2;
+    // NOTE:たかだかN
+    float min_ssd = 2.0f * N;
 
     while (cv::norm(pt - es.start) < es.length) {
         float ssd = 0;
@@ -113,13 +118,14 @@ cv::Point2f doMatching(const cv::Mat1f& obj_gray, const float ref_gray, const Ep
         // TODO: 1/Nにできるはず
         for (int i = 0; i < N; i++) {
             cv::Point2f target = pt + (i - N / 2) * dir;
-            float subpixel_gray = Convert::getSubpixel(obj_gray, target);
+            float subpixel_gray = Convert::getSubpixel(ref_gray, target);
             if (math::isInvalid(subpixel_gray)) {
                 ssd = 2 * N;
                 break;
             }
-            float diff = subpixel_gray - ref_gray;
-            ssd += math::square(diff);
+            float diff = subpixel_gray - obj_gray;
+            // 中央ほど，強く加味
+            ssd += 1.0 * (N - std::abs(i - center)) / N * math::square(diff);
         }
 
         if (ssd < min_ssd) {
@@ -127,12 +133,12 @@ cv::Point2f doMatching(const cv::Mat1f& obj_gray, const float ref_gray, const Ep
             min_ssd = ssd;
         }
     }
-    if (min_ssd > N / 2) {
+    if (min_ssd > N * 0.4) {
         return cv::Point2f(-1, -1);
     }
 
-    // if (es.x_i.x < 130 and es.x_i.x > 80 and es.x_i.y < 280 and es.x_i.y > 250)
-    // std::cout << es.start << " " << es.end << " " << es.x_i << " " << best_pt << min_ssd << std::endl;
+    // if (es.x_i.x < 50 and es.x_i.x > 20 and es.x_i.y < 50 and es.x_i.y > 30)
+    //     std::cout << es.start << " " << es.end << " " << es.x_i << " " << best_pt << min_ssd << std::endl;
     return best_pt;
 }
 
@@ -157,11 +163,6 @@ cv::Mat1f regularize(const cv::Mat1f& depth, const cv::Mat1f& sigma)
                 g(depth.at<float>(pt), sigma.at<float>(pt));
             }
             d = g.depth;
-
-            // if (d > 2.0f or d < 0) {
-            //     std::cout << d << std::endl;
-            //     d = 2.0f;
-            // }
         });
 
     // 遠いのは省く
@@ -176,14 +177,17 @@ std::pair<float, float> update(
     const cv::Mat1f& ref_grady,
     const cv::Mat1f& relative_xi,
     const cv::Mat1f& K,
-    const cv::Point2i& x_i,
+    const cv::Point2i& x_i,  // obj座標系
     float depth,
     float sigma)
 {
-    EpipolarSegment es(relative_xi, x_i, K, depth, sigma);
+    EpipolarSegment es(-relative_xi, x_i, K, depth, sigma);
 
-    cv::Point2f matched_x_i = doMatching(obj_gray, ref_gray(x_i), es);
-    if (matched_x_i.x < 0)
+    cv::Point2f matched_x_i = doMatching(ref_gray, obj_gray(x_i), es);  // ref座標系
+    if (matched_x_i.x < 0
+        or matched_x_i.y < 0
+        or matched_x_i.x > obj_gray.cols
+        or matched_x_i.y > obj_gray.rows)
         return {-1, -1};
 
     float new_depth = depthEstimate(matched_x_i, x_i, K, relative_xi);
@@ -191,11 +195,12 @@ std::pair<float, float> update(
     float new_sigma = sigmaEstimate(
         ref_gradx,
         ref_grady,
-        x_i,
+        matched_x_i,
         es);
 
-    // if (x_i.y < 40 and x_i.x < 40 and new_sigma > 0 and new_depth > 0)
-    //     std::cout << "L " << x_i << " " << new_depth << " " << new_sigma << std::endl;
+    if (new_sigma > 0 and new_sigma < 1 and new_depth > 0)
+        std::cout << "update " << x_i << " " << matched_x_i << " " << new_depth << " " << new_sigma  //<< " " << relative_xi.t()
+                  << std::endl;
 
     return {new_depth, new_sigma};
 }

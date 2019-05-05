@@ -36,8 +36,10 @@ public:
         // Tracking
         cv::Mat1f relative_xi = m_tracker.track(frame, ref_frame);
         frame->updateXi(relative_xi, ref_frame);
-        // std::cout << "T_w:\n"
-        //           << math::se3::exp(frame->m_xi) << std::endl;
+        std::cout << "\nT_w:\n"
+                  << math::se3::exp(frame->m_xi)
+                  << "\nT_r:\n"
+                  << math::se3::exp(frame->m_relative_xi) << std::endl;
 
         // Mapping
         m_mapper.estimate(m_history, frame);

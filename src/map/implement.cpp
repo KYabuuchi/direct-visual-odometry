@@ -9,13 +9,13 @@ namespace Implement
 namespace
 {
 // update
-// NOTE: もっと下げた
-constexpr float luminance_sigma = 1.0f;
+// NOTE: もっともっと下げた
+constexpr float luminance_sigma = 0.1f;
 constexpr float luminance_variance = luminance_sigma * luminance_sigma;
-constexpr float epipolar_sigma = 2.0f;
+constexpr float epipolar_sigma = 0.1f;
 constexpr float epipolar_variance = epipolar_sigma * epipolar_sigma;
 // propagate
-constexpr float predict_sigma = 0.20f;  // [m]
+constexpr float predict_sigma = 0.10f;  // [m]
 constexpr float predict_variance = predict_sigma * predict_sigma;
 
 // Eipolar線分
@@ -61,8 +61,8 @@ float depthEstimate(
 
     float depth = -static_cast<float>(a.dot(b) / a.dot(a));
 
-    // if (ref_x_i.x < 50 and ref_x_i.x > 20 and ref_x_i.y < 50 and ref_x_i.y > 30)
-    //     std::cout << ref_x_i << " " << obj_x_i << " " << depth << std::endl;
+    // if (depth > 0)  // and ref_x_i.x < 50 and ref_x_i.x > 20 and ref_x_i.y < 50 and ref_x_i.y > 30)
+    //     std::cout << ref_x_i << " " << obj_x_i << " " << depth << " " << t.t() << std::endl;
     return depth;
 }
 
@@ -72,15 +72,15 @@ float sigmaEstimate(
     const cv::Point2f& ref_x_i,
     const EpipolarSegment& es)
 {
+    float l = es.length;
+    float lx = (es.start - es.end).x / l, ly = (es.start - es.end).y / l;
 
-    const float alpha = (es.max - es.min) / es.length;
+    const float alpha = (es.max - es.min) / l;
 
     float gx = ref_grad_x(ref_x_i), gy = ref_grad_y(ref_x_i);
     if (math::isInvalid(gx) or math::isInvalid(gy)) {
         return -1;
     }
-    float lx = (es.start - es.end).x, ly = (es.start - es.end).y;
-    float l = es.length;
 
     float g_dot_l = std::abs(gx * lx + gy * ly);
     // ( \vec{g} \cdot \vec{l} ) ^2
@@ -93,8 +93,8 @@ float sigmaEstimate(
 
     float sigma = alpha * std::sqrt(epipolar + luminance);
 
-    // if (ref_x_i.x < 40 and ref_x_i.x > 35 and ref_x_i.y < 35 and ref_x_i.y > 30)
-    //     std::cout << sigma << " " << ref_x_i << " " << gx << " " << gy << " " << es.start << " " << es.end << es.min << " " << es.max << std::endl;
+    // if (ref_x_i.x < 110 and ref_x_i.x > 90 and sigma < 1)
+    //     std::cout << sigma << " " << ref_x_i << " " << gx << "," << gy << " " << lx << "," << ly << std::endl;
 
     return sigma;
 }
@@ -198,7 +198,7 @@ std::pair<float, float> update(
         matched_x_i,
         es);
 
-    if (new_sigma > 0 and new_sigma < 1 and new_depth > 0)
+    if (new_sigma > 0 and new_sigma < 1 and new_depth > 0 and matched_x_i.x > 90)
         std::cout << "update " << x_i << " " << matched_x_i << " " << new_depth << " " << new_sigma  //<< " " << relative_xi.t()
                   << std::endl;
 

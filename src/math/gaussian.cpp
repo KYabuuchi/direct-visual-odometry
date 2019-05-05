@@ -6,7 +6,7 @@ namespace math
 namespace
 {
 std::mt19937 engine;
-std::uniform_real_distribution<float> dist(0.5, 4.0);
+std::uniform_real_distribution<float> dist(2.5, 0.5);
 }  // namespace
 
 void Gaussian::update(float d, float s)

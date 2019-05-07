@@ -26,7 +26,7 @@ public:
           m_gray(gray_image), m_depth(depth_image), m_sigma(sigma_image),
           m_K(K) {}
 
-    // Copy
+    // Copy Constructor
     Scene(const Scene& scene)
         : cols(scene.cols), rows(scene.rows),
           m_gray(scene.m_gray), m_depth(scene.m_depth), m_sigma(scene.m_sigma),
@@ -122,7 +122,7 @@ public:
           m_age(frame.m_age), m_scenes(frame.m_scenes),
           m_xi(frame.m_xi), m_relative_xi(frame.m_relative_xi), m_ref_frame(frame.m_ref_frame) {}
 
-    std::shared_ptr<Scene> at(int level) const { return m_scenes.at(level); }
+    std::shared_ptr<Scene> at(int level) { return m_scenes.at(level); }
     std::shared_ptr<Scene> top() { return m_scenes.at(levels - 1); }
 
     const cv::Mat1f& gray() const { return m_scenes.at(levels - 1)->gray(); }
@@ -135,6 +135,7 @@ public:
 
     void updateXi(const cv::Mat1f& relative_xi, std::shared_ptr<Frame> ref_frame);
     void updateDepthSigmaAge(const cv::Mat1f& depth_image, const cv::Mat1f& sigma_image, const cv::Mat1f& age_image);
+    void updateDepthSigma(const cv::Mat1f& depth_image, const cv::Mat1f& sigma_image);
     void updateDepth(const cv::Mat1f& depth_image);
 
 private:

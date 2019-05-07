@@ -35,6 +35,15 @@ std::vector<std::shared_ptr<Scene>> Frame::createScenePyramid(const Scene& scene
     }
     return scenes;
 }
+
+void Frame::updateDepthSigma(const cv::Mat1f& depth_image, const cv::Mat1f& sigma_image)
+{
+    for (int i = 0; i < levels; i++) {
+        m_scenes.at(i)->depth() = Convert::cullImage(depth_image, levels - 1 - i);
+        m_scenes.at(i)->sigma() = Convert::cullImage(sigma_image, levels - 1 - i);
+    }
+}
+
 void Frame::updateDepthSigmaAge(const cv::Mat1f& depth_image, const cv::Mat1f& sigma_image, const cv::Mat1f& age_image)
 {
     m_age = age_image;

@@ -135,12 +135,15 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
                 // std::cout << new_depth << std::endl;
             }
         });
+
+    ref->updateDepthSigma(ref->depth(), ref->sigma());
+
     std::cout << "\t valid update: " << valid_update << std::endl;
 }
 
 void Mapper::regularize(pFrame frame)
 {
-    std::cout << "Mapper::regularize" << std::endl;
+    std::cout << "Mapper::regularize " << frame->id << std::endl;
     cv::Mat1f depth = Implement::regularize(frame->depth(), frame->sigma());
     frame->updateDepth(depth);
 }

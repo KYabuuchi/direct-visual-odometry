@@ -9,7 +9,7 @@ namespace Map
 namespace
 {
 constexpr float MINIMUM_MOVEMENT = 0.10f;  // [m]
-constexpr int MAXIMUM_FORWARD = 10;        // number of frame
+constexpr int MAXIMUM_FORWARD = 5;         // number of frame
 }  // namespace
 
 void Mapper::estimate(FrameHistory& frame_history, pFrame frame)
@@ -114,8 +114,6 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
                 depth,
                 sigma);
 
-            if (new_depth < 0)
-                return;
             // if (new_sigma > 0 and new_sigma < 1)
             //     std::cout << "valid update " << new_depth << " " << new_sigma << " " << x_i << std::endl;
 

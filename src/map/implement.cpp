@@ -9,14 +9,15 @@ namespace Implement
 namespace
 {
 // update
-// NOTE: もっともっと下げた
 constexpr float luminance_sigma = 0.1f;
 constexpr float luminance_variance = luminance_sigma * luminance_sigma;
 constexpr float epipolar_sigma = 0.1f;
 constexpr float epipolar_variance = epipolar_sigma * epipolar_sigma;
 // propagate
-constexpr float predict_sigma = 0.10f;  // [m]
+constexpr float predict_sigma = 0.05f;  // [m]
 constexpr float predict_variance = predict_sigma * predict_sigma;
+// doMatching
+constexpr double MATCHING_THRESHOLD_RATIO = 0.3;
 
 // Eipolar線分
 struct EpipolarSegment {
@@ -63,6 +64,7 @@ float depthEstimate(
 
     // if (depth > 0)  // and ref_x_i.x < 50 and ref_x_i.x > 20 and ref_x_i.y < 50 and ref_x_i.y > 30)
     //     std::cout << ref_x_i << " " << obj_x_i << " " << depth << " " << t.t() << std::endl;
+    // return std::abs(depth);
     return depth;
 }
 
@@ -133,7 +135,7 @@ cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float obj_gray, const Ep
             min_ssd = ssd;
         }
     }
-    if (min_ssd > N * 0.4) {
+    if (min_ssd > N * MATCHING_THRESHOLD_RATIO) {
         return cv::Point2f(-1, -1);
     }
 
@@ -199,9 +201,9 @@ std::pair<float, float> update(
         es);
 
     // if (new_sigma > 0 and new_sigma < 1 and new_depth > 0 and matched_x_i.x > 90)
-    // if (new_sigma > 0 and new_sigma < 1 and matched_x_i.x > 90)
-    //     std::cout << "update " << x_i << " " << matched_x_i << " " << new_depth << " " << new_sigma  //<< " " << relative_xi.t()
-    //               << std::endl;
+    if (new_sigma > 0 and new_sigma < 1 and new_depth < 0.8 and x_i.x < 70)
+        std::cout << "update " << x_i << " " << matched_x_i << " " << new_depth << " " << new_sigma << " " << relative_xi.t()
+                  << std::endl;
 
     return {new_depth, new_sigma};
 }

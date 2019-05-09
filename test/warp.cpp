@@ -24,7 +24,7 @@ int main()
     // load
     cv::Mat1f K;
     cv::Mat1f gray_image, depth_image, sigma_image;
-    Core::KinectLoader loader("../data/KINECT_1DEG/info.txt", "../camera-calibration/data/kinectv2_00/config.yaml");
+    Core::KinectLoader loader("../data/KINECT_1DEG/info.txt", "../external/camera-calibration/data/kinectv2_00/config.yaml");
     loader.getMappedImages(0, gray_image, depth_image, sigma_image);
 
     gray_image = Convert::cullImage(gray_image, 1);

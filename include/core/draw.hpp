@@ -57,4 +57,9 @@ void showImage(const std::string& window_name, const T&... tail)
     cv::imshow(window_name, show_image);
 }
 
+cv::Mat merge(std::vector<cv::Mat>& tail);
+
+void showImage(const std::string& window_name, std::vector<cv::Mat>& tail);
+
+
 }  // namespace Draw

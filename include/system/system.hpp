@@ -10,7 +10,11 @@ namespace System
 class VisualOdometry
 {
 public:
-    VisualOdometry(const cv::Mat1f& K) : K(K) {}
+    VisualOdometry(const cv::Mat1f& K) : K(K)
+    {
+        cv::namedWindow("KeyFrame", cv::WINDOW_NORMAL);
+        cv::resizeWindow("KeyFrame", 640, 480);
+    }
 
     // 初期深度・分散を設定するとき
     VisualOdometry(
@@ -21,6 +25,16 @@ public:
     {
         std::shared_ptr<Frame> frame = std::make_shared<Frame>(gray, depth, sigma, K, 4, 2);
         m_history.setRefFrame(frame);
+    }
+
+    void showKeyFrame()
+    {
+        std::vector<cv::Mat> images;
+        for (int i = 0, N = m_history.size(); i < N; i++) {
+            std::shared_ptr<Frame> frame = m_history[i];
+            images.push_back(frame->gray());
+        }
+        Draw::showImage("KeyFrame", images);
     }
 
     cv::Mat1f odometrize(const cv::Mat1f& gray_image)
@@ -43,6 +57,9 @@ public:
 
         // Mapping
         m_mapper.estimate(m_history, frame);
+
+        // show KeyFrame
+        showKeyFrame();
 
         return math::se3::exp(frame->m_xi);
     }

@@ -99,4 +99,38 @@ cv::Mat visualizeAge(const cv::Mat1f& src_image)
     return dst_image;
 }
 
+cv::Mat merge(std::vector<cv::Mat>& tail)
+{
+    size_t N = tail.size();
+    if (N == 1) {
+        const cv::Mat& img = tail[0];
+        cv::Mat zero = cv::Mat::zeros(img.size(), img.type());
+        cv::Mat m;
+        cv::vconcat(img, zero, m);
+        return m;
+    }
+    if (N == 2) {
+        cv::Mat m;
+        cv::vconcat(tail[0], tail[1], m);
+        return m;
+    }
+    {
+        cv::Mat m1;
+        cv::vconcat(tail[N - 2], tail[N - 1], m1);
+        tail.pop_back();
+        tail.pop_back();
+        cv::Mat m2 = merge(tail);
+        cv::Mat m3;
+        cv::hconcat(m1, m2, m3);
+        return m3;
+    }
+}
+
+void showImage(const std::string& window_name, std::vector<cv::Mat>& tail)
+{
+    cv::Mat show_image = merge(tail);
+    cv::imshow(window_name, show_image);
+}
+
+
 }  // namespace Draw

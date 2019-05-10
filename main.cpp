@@ -15,13 +15,14 @@ int main(/*int argc, char* argv[]*/)
     Core::Loader loader("../data/logicool0/info.txt", "../external/camera-calibration/data/logicool_00/config.yaml");
 
     // main system
-    std::cout << loader.Rgb().K() << std::endl;
+    std::cout << "internal parameters\n"
+              << loader.Rgb().K() << std::endl;
 
     System::VisualOdometry vo(loader.Rgb().K());
     std::vector<cv::Mat1f> trajectory;
 
     // data
-    int num = 10;
+    int num = 0;
     while (true) {
         cv::Mat1f gray_image;
         if (not loader.getNormalizedUndistortedImages(num++, gray_image))
@@ -57,6 +58,5 @@ void show(const std::vector<cv::Mat1f>& trajectory)
         Eigen::Vector2d v = 10 * Eigen::Vector2d(e(0, 3), e(2, 3));
         tmp.push_back(v);
     }
-
     Graphic::draw(tmp, Graphic::Form::CURVE, Graphic::Color::YELLOW);
 }

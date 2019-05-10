@@ -49,12 +49,12 @@ cv::Mat1f Tracker::track(
             stuff.update(xi);
 
             long mili_sec = timer.millSeconds();
-            // if (CHATTY)
-            //     std::cout << "itr: " << iteration
-            //               << " r: " << outcome.residual
-            //               << " upd: " << cv::norm(outcome.xi_update)
-            //               << " rows : " << outcome.valid_pixels
-            //               << " time: " << mili_sec << " ms" << std::endl;
+            if (CHATTY)
+                std::cout << "itr: " << iteration
+                          << " r: " << outcome.residual
+                          << " upd: " << cv::norm(outcome.xi_update)
+                          << " rows : " << outcome.valid_pixels
+                          << " time: " << mili_sec << " ms" << std::endl;
 
             stuff.show(window_name);
             cv::waitKey(1);

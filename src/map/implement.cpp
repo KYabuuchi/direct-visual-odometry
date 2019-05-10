@@ -62,9 +62,8 @@ float depthEstimate(
 
     float depth = static_cast<float>(a.dot(b) / a.dot(a));
 
-    // if (depth > 0)  // and ref_x_i.x < 50 and ref_x_i.x > 20 and ref_x_i.y < 50 and ref_x_i.y > 30)
-    //     std::cout << ref_x_i << " " << obj_x_i << " " << depth << " " << t.t() << std::endl;
-    // return std::abs(depth);
+    if (ref_x_i.x < 50 and ref_x_i.x > 20 and ref_x_i.y < 50 and ref_x_i.y > 30)
+        std::cout << ref_x_i << " " << obj_x_i << " " << depth << " " << t.t() << " " << a.t() << " " << b.t() << std::endl;
     return depth;
 }
 
@@ -201,9 +200,9 @@ std::pair<float, float> update(
         es);
 
     // if (new_sigma > 0 and new_sigma < 1 and new_depth > 0 and matched_x_i.x > 90)
-    if (new_sigma > 0 and new_sigma < 1 and new_depth < 0.8 and x_i.x < 70)
-        std::cout << "update " << x_i << " " << matched_x_i << " " << new_depth << " " << new_sigma << " " << relative_xi.t()
-                  << std::endl;
+    // if (new_sigma > 0 and new_sigma < 1 and new_depth < 0.8 and x_i.x < 70)
+    //     std::cout << "update " << x_i << " " << matched_x_i << " " << new_depth << " " << new_sigma << " " << relative_xi.t()
+    //               << std::endl;
 
     return {new_depth, new_sigma};
 }

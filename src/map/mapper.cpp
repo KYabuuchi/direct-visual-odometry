@@ -73,10 +73,9 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
     std::cout << "Mapper::update" << std::endl;
     pFrame ref = obj->m_ref_frame;
     const cv::Mat1f xi = obj->m_relative_xi;
-
-    auto inRange = math::generateInRange(ref->depth().size());
     const cv::Mat1f K = obj->K();
 
+    auto inRange = math::generateInRange(ref->depth().size());
     int valid_update = 0;
 
     ref->depth().forEach(
@@ -95,7 +94,7 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
             // 生まれ年の
             int age = static_cast<int>(ref->m_age(x_i));
             // NOTE: 追従が不十分なのに昔のをみると推定移動量との乖離が激しくて低深度と勘違いされる
-            age = std::min(age, 1);
+            // age = std::min(age, 1);
             pFrame born = frame_history[age];
 
             // 事前分布

@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
     std::vector<cv::Mat1f> trajectory;
 
     // data
-    int num = 0;
+    int num = 50;
     while (true) {
         cv::Mat1f gray_image;
         if (not loader.getNormalizedUndistortedImages(num++, gray_image))

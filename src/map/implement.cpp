@@ -9,15 +9,15 @@ namespace Implement
 namespace
 {
 // update
-constexpr float luminance_sigma = 0.1f;
+constexpr float luminance_sigma = 0.2f;
 constexpr float luminance_variance = luminance_sigma * luminance_sigma;
-constexpr float epipolar_sigma = 0.1f;
+constexpr float epipolar_sigma = 0.5f;
 constexpr float epipolar_variance = epipolar_sigma * epipolar_sigma;
 // propagate
-constexpr float predict_sigma = 0.05f;  // [m]
+constexpr float predict_sigma = 0.2f;  // [m]
 constexpr float predict_variance = predict_sigma * predict_sigma;
 // doMatching
-constexpr double MATCHING_THRESHOLD_RATIO = 0.1;
+constexpr double MATCHING_THRESHOLD_RATIO = 0.2;
 
 // Eipolar線分
 struct EpipolarSegment {
@@ -63,8 +63,8 @@ float depthEstimate(
 
     float depth = -static_cast<float>(a.dot(b) / a.dot(a));
 
-    if (ref_x_i.x < 50 and ref_x_i.x > 20 and ref_x_i.y < 50 and ref_x_i.y > 30)
-        std::cout << ref_x_i << " " << obj_x_i << " " << depth << " " << t.t() << " a " << a.t() << " b " << b.t() << " q " << x_q.t() << std::endl;
+    // if (ref_x_i.x < 50 and ref_x_i.x > 20 and ref_x_i.y < 50 and ref_x_i.y > 30)
+    //     std::cout << ref_x_i << " " << obj_x_i << " " << depth << " " << t.t() << " a " << a.t() << " b " << b.t() << " q " << x_q.t() << std::endl;
     return depth;
 }
 
@@ -95,8 +95,8 @@ float sigmaEstimate(
 
     float sigma = alpha * std::sqrt(epipolar + luminance);
 
-    // if (ref_x_i.x < 110 and ref_x_i.x > 90 and sigma < 1)
-    //     std::cout << sigma << " " << ref_x_i << " " << gx << "," << gy << " " << lx << "," << ly << std::endl;
+    if (ref_x_i.x < 90 and ref_x_i.x > 30 and sigma < 1)
+        std::cout << sigma << " " << ref_x_i << " " << gx << "," << gy << " " << lx << "," << ly << std::endl;
 
     return sigma;
 }
@@ -104,7 +104,7 @@ float sigmaEstimate(
 cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float obj_gray, const EpipolarSegment& es)
 {
     // 探索幅
-    cv::Point2f dir = (es.end - es.start) / es.length / 2.0f;
+    cv::Point2f dir = (es.end - es.start) / es.length;
     cv::Point2f pt = es.start;
 
     cv::Point2f best_pt = pt;
@@ -193,14 +193,12 @@ std::pair<float, float> update(
         return {-1, -1};
 
     float new_depth = depthEstimate(matched_x_i, x_i, K, relative_xi);
-
     float new_sigma = sigmaEstimate(
         ref_gradx,
         ref_grady,
         matched_x_i,
         es);
 
-    // if (new_sigma > 0 and new_sigma < 1 and new_depth > 0 and matched_x_i.x > 90)
     // if (new_sigma > 0 and new_sigma < 1 and new_depth < 0.8 and x_i.x < 70)
     //     std::cout << "update " << x_i << " " << matched_x_i << " " << new_depth << " " << new_sigma << " " << relative_xi.t()
     //               << std::endl;
@@ -237,11 +235,11 @@ std::tuple<cv::Mat1f, cv::Mat1f, cv::Mat1f> propagate(
             float s = ref_sigma(x_i);
             float d0 = rd;
             float d1 = d0 - tz;
-            if (d0 < 0.05)
-                s = 0.5;
-            else
-                s = std::sqrt(math::pow(d1 / d0, 4) * math::square(s)
-                              + predict_variance);
+            // if (d0 < 0.05)
+            //     s = 0.5;
+            // else
+            s = std::sqrt(math::pow(d1 / d0, 4) * math::square(s)
+                          + predict_variance);
 
             depth(warped_x_i) = std::max(d1, 0.0f);
             sigma(warped_x_i) = s;

@@ -6,6 +6,7 @@ namespace math
 namespace
 {
 std::mt19937 engine;
+// TODO: 平均値は状況による
 std::uniform_real_distribution<float> dist(2.5, 0.5);
 }  // namespace
 

@@ -45,7 +45,6 @@ inline float huber(float n)
 // NOTE: ループ内部でメモリ確保すると遅い
 cv::Mat1f jacobi(cv::Mat1f::zeros(1, 6));
 
-// TODO: わざわざ構造体に詰めずとも構造束縛で返せばよい
 Outcome optimize(const Stuff& stuff)
 {
     float residual = 0;
@@ -106,7 +105,7 @@ Outcome optimize(const Stuff& stuff)
             residual += r * r;
 
             // weight of reliability
-            float sigma = std::clamp(stuff.ref_sigma(x_i), 0.01f, 0.4f);  // [m]
+            float sigma = std::clamp(stuff.ref_sigma(x_i), 0.01f, 0.5f);  // [m]
             float weight = 0.1f / sigma;
 
             // NOTE: A,Bは各threadにアクセスされる

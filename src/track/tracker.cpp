@@ -13,9 +13,9 @@ namespace
 constexpr bool CHATTY = true;
 // NOTE: MapperのDebugのために厳しい制約にしている．
 constexpr float MINIMUM_RESIDUAL = 0.010f;
-constexpr float MINIMUM_UPDATE = 1.e-4f;
+constexpr float MINIMUM_UPDATE = 1.e-3f;
 constexpr int MAXIMUM_TIME_MS = 50;
-constexpr int MAXIMUM_ITERATION = 15;
+constexpr int MAXIMUM_ITERATION = 20;
 }  // namespace
 
 cv::Mat1f Tracker::track(

@@ -43,6 +43,8 @@ public:
         std::shared_ptr<Frame> frame = std::make_shared<Frame>(gray_image, K, 4, 2);
         std::shared_ptr<Frame> ref_frame = m_history.getRefFrame();
         if (ref_frame == nullptr) {
+            std::cout << "culled K\n"
+                      << frame->K() << std::endl;
             m_history.setRefFrame(frame);
             return math::se3::T();
         }

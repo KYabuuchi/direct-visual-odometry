@@ -17,7 +17,7 @@ constexpr float epipolar_variance = epipolar_sigma * epipolar_sigma;
 constexpr float predict_sigma = 0.05f;  // [m]
 constexpr float predict_variance = predict_sigma * predict_sigma;
 // doMatching
-constexpr double MATCHING_THRESHOLD_RATIO = 0.3;
+constexpr double MATCHING_THRESHOLD_RATIO = 0.1;
 
 // Eipolar線分
 struct EpipolarSegment {
@@ -52,18 +52,19 @@ float depthEstimate(
     const cv::Mat1f& xi)
 {
     const cv::Mat1f x_q = cv::Mat1f(Transform::backProject(K, obj_x_i, 1));
-    const cv::Mat1f t = xi.rowRange(0, 3);
-    const cv::Mat1f R = math::se3::exp(xi).colRange(0, 3).rowRange(0, 3);
+    const cv::Mat1f t = -xi.rowRange(0, 3);
+    // const cv::Mat1f R = cv::Mat1f::eye(3, 3);
+    const cv::Mat1f R = math::se3::exp(-xi).colRange(0, 3).rowRange(0, 3);
     const cv::Mat1f r3 = R.row(2);
 
     cv::Mat1f x_i = Convert::toMat1f(ref_x_i.x, ref_x_i.y, 1.0f);
     const cv::Mat1f a(r3.dot(x_q.t()) * x_i - K * R * x_q);
     const cv::Mat1f b(t(2) * x_i - K * t);
 
-    float depth = static_cast<float>(a.dot(b) / a.dot(a));
+    float depth = -static_cast<float>(a.dot(b) / a.dot(a));
 
     if (ref_x_i.x < 50 and ref_x_i.x > 20 and ref_x_i.y < 50 and ref_x_i.y > 30)
-        std::cout << ref_x_i << " " << obj_x_i << " " << depth << " " << t.t() << " " << a.t() << " " << b.t() << std::endl;
+        std::cout << ref_x_i << " " << obj_x_i << " " << depth << " " << t.t() << " a " << a.t() << " b " << b.t() << " q " << x_q.t() << std::endl;
     return depth;
 }
 
@@ -102,9 +103,9 @@ float sigmaEstimate(
 
 cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float obj_gray, const EpipolarSegment& es)
 {
+    // 探索幅
+    cv::Point2f dir = (es.end - es.start) / es.length / 2.0f;
     cv::Point2f pt = es.start;
-    cv::Point2f dir = (es.end - es.start) / es.length;
-
 
     cv::Point2f best_pt = pt;
     const int N = 3;

@@ -7,15 +7,19 @@
 const std::string window_name = "trajectry";
 void show(const std::vector<cv::Mat1f>& trajectory);
 
-int main(/*int argc, char* argv[]*/)
+int main(int argc, char* argv[])
 {
     Graphic::initialize();
 
+    std::string input_file = "../data/logicool0/info.txt";
+    if (argc == 2)
+        input_file = argv[1];
+
     // loading
-    Core::Loader loader("../data/logicool0/info.txt", "../external/camera-calibration/data/logicool_00/config.yaml");
+    Core::Loader loader(input_file, "../external/camera-calibration/data/logicool_00/config.yaml");
 
     // main system
-    std::cout << "internal parameters\n"
+    std::cout << "original internal parameters\n"
               << loader.Rgb().K() << std::endl;
 
     System::VisualOdometry vo(loader.Rgb().K());
@@ -41,9 +45,6 @@ int main(/*int argc, char* argv[]*/)
         // wait
         if (cv::waitKey(0) == 'q')
             break;
-
-        // if (not Graphic::isRunning())
-        //     break;
     }
 
     Graphic::finalize();

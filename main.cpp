@@ -7,6 +7,8 @@
 const std::string window_name = "trajectry";
 void show(const std::vector<cv::Mat1f>& trajectory);
 
+#define USE_CAMERA
+
 int main(int argc, char* argv[])
 {
     Graphic::initialize();
@@ -15,13 +17,15 @@ int main(int argc, char* argv[])
     if (argc == 2)
         input_file = argv[1];
 
-    // loading
     Core::Loader loader(input_file, "../external/camera-calibration/data/logicool_00/config.yaml");
-
-    // main system
     std::cout << "original internal parameters\n"
               << loader.Rgb().K() << std::endl;
 
+#ifdef USE_CAMERA
+    cv::VideoCapture video("/dev/video1");
+#endif
+
+    // main system
     System::VisualOdometry vo(loader.Rgb().K());
     std::vector<cv::Mat1f> trajectory;
 
@@ -29,8 +33,16 @@ int main(int argc, char* argv[])
     int num = 50;
     while (true) {
         cv::Mat1f gray_image;
+#ifdef USE_CAMERA
+        cv::Mat color_image;
+        video >> color_image;
+        cv::cvtColor(color_image, color_image, cv::COLOR_BGR2GRAY);
+        color_image.convertTo(gray_image, CV_32FC1, 1.0 / 255.0);
+        // TODO: 歪補正
+#else
         if (not loader.getNormalizedUndistortedImages(num++, gray_image))
             break;
+#endif
 
         // odometrize
         cv::Mat1f T = vo.odometrize(gray_image);

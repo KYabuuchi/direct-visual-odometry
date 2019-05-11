@@ -64,6 +64,7 @@ float depthEstimate(
     float depth = -static_cast<float>(a.dot(b) / a.dot(a));
 
     // if (ref_x_i.x < 50 and ref_x_i.x > 20 and ref_x_i.y < 50 and ref_x_i.y > 30)
+    // if (ref_x_i.x < 50 and ref_x_i.x > 20 and depth < 1)
     //     std::cout << ref_x_i << " " << obj_x_i << " " << depth << " " << t.t() << " a " << a.t() << " b " << b.t() << " q " << x_q.t() << std::endl;
     return depth;
 }
@@ -95,8 +96,8 @@ float sigmaEstimate(
 
     float sigma = alpha * std::sqrt(epipolar + luminance);
 
-    if (ref_x_i.x < 90 and ref_x_i.x > 30 and sigma < 1)
-        std::cout << sigma << " " << ref_x_i << " " << gx << "," << gy << " " << lx << "," << ly << std::endl;
+    // if (ref_x_i.x < 90 and ref_x_i.x > 30 and sigma < 1)
+    //     std::cout << sigma << " " << ref_x_i << " " << gx << "," << gy << " " << lx << "," << ly << std::endl;
 
     return sigma;
 }
@@ -106,6 +107,7 @@ cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float obj_gray, const Ep
     // 探索幅
     cv::Point2f dir = (es.end - es.start) / es.length;
     cv::Point2f pt = es.start;
+    // std::cout << es.start << " " << es.end << " " << es.x_i << " " << es.min << " " << es.max << std::endl;
 
     cv::Point2f best_pt = pt;
     const int N = 3;

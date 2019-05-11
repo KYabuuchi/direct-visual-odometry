@@ -42,11 +42,11 @@ bool Mapper::needNewFrame(const pFrame frame)
     cv::Mat1f& xi = frame->m_relative_xi;
     double scalar = cv::norm(xi.rowRange(0, 3));
     if (scalar > MINIMUM_MOVEMENT) {
-        std::cout << "needNewFrame: enough movement" << std::endl;
+        std::cout << "Mapper::needNewFrame: enough movement" << std::endl;
         return true;
     }
     if (frame->id - frame->m_ref_frame->id >= MAXIMUM_FORWARD) {
-        std::cout << "needNewFrame: much frame accumulated" << std::endl;
+        std::cout << "Mapper::needNewFrame: much frame accumulated" << std::endl;
         return true;
     }
     // TODO: 回転量におうじたしきい値
@@ -85,16 +85,12 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
                 return;
 
             cv::Point2i x_i(pt[1], pt[0]);
-            // NOTE: 向き確認済
             cv::Point2i warped_x_i = Transform::warp(xi, x_i, d, K);
             if (not inRange(warped_x_i))
                 return;
 
-
-            // 生まれ年の
+            // 生まれ年のKeyFrameを参照
             int age = static_cast<int>(ref->m_age(x_i));
-            // NOTE: 追従が不十分なのに昔のをみると推定移動量との乖離が激しくて低深度と勘違いされる
-            // age = std::min(age, 1);
             pFrame born = frame_history[age];
 
             // 事前分布
@@ -113,28 +109,20 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
                 depth,
                 sigma);
 
-            // if (new_sigma > 0 and new_sigma < 1)
-            //     std::cout << "valid update " << new_depth << " " << new_sigma << " " << x_i << std::endl;
-
-
             // 更新
             if (new_depth > 0 and new_depth < 6.0 and new_sigma > 0 and new_sigma < 1) {
                 math::Gaussian g(depth, sigma);
-                // g.update(new_depth, new_sigma);
-                if (not g.update(new_depth, new_sigma))
-                    std::cout << "reject&reset:" << x_i << " d: " << new_depth << " s: " << new_sigma << " " << g.depth << " " << g.sigma << std::endl;
+                g.update(new_depth, new_sigma);
+                // if (not g.update(new_depth, new_sigma))
+                //     std::cout << "reject&reset:" << x_i << " d: " << new_depth << " s: " << new_sigma << " " << g.depth << " " << g.sigma << std::endl;
 
                 ref->top()->depth()(x_i) = g.depth;
                 ref->top()->sigma()(x_i) = g.sigma;
                 valid_update++;
-                // std::cout << "valid " << obj->id << " " << born->id << std::endl;
-            } else {
-                // std::cout << new_depth << std::endl;
             }
         });
 
     ref->updateDepthSigma(ref->depth(), ref->sigma());
-
     std::cout << "\t valid update: " << valid_update << std::endl;
 }
 

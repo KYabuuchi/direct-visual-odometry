@@ -4,6 +4,8 @@
 #include "track/tracker.hpp"
 #include <memory>
 
+// #define SHOW_KEYFRAME
+
 namespace System
 {
 
@@ -12,8 +14,10 @@ class VisualOdometry
 public:
     VisualOdometry(const cv::Mat1f& K) : K(K)
     {
+#ifdef SHOW_KEYFRAME
         cv::namedWindow("KeyFrame", cv::WINDOW_NORMAL);
         cv::resizeWindow("KeyFrame", 640, 480);
+#endif
     }
 
     // 初期深度・分散を設定するとき
@@ -60,9 +64,10 @@ public:
         // Mapping
         m_mapper.estimate(m_history, frame);
 
-        // show KeyFrame
+#ifdef SHOW_KEYFRAME
         showKeyFrame();
-
+#endif
+        std::cout << std::endl;
         return math::se3::exp(frame->m_xi);
     }
 
@@ -81,6 +86,7 @@ public:
         cv::Mat1f relative_xi = m_tracker.track(frame, m_ref_frame);
         frame->updateXi(relative_xi, m_ref_frame);
         m_ref_frame = frame;
+        std::cout << std::endl;
         return math::se3::exp(relative_xi);
     }
 

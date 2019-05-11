@@ -39,9 +39,7 @@ int main(int argc, char* argv[])
         show(trajectory);
 
         // wait
-        cv::waitKey(1);
-
-        if (!Graphic::isRunning())
+        if (cv::waitKey(0) == 'q')
             break;
     }
 

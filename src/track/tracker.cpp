@@ -6,12 +6,13 @@
 #include "track/optimize.hpp"
 #include <chrono>
 
+// #define SEQUENCIAL_SHOW
+
 namespace Track
 {
 namespace
 {
-constexpr bool CHATTY = true;
-// NOTE: MapperのDebugのために厳しい制約にしている．
+constexpr bool CHATTY = false;
 constexpr float MINIMUM_RESIDUAL = 0.010f;
 constexpr float MINIMUM_UPDATE = 1.e-3f;
 constexpr int MAXIMUM_TIME_MS = 50;
@@ -56,8 +57,10 @@ cv::Mat1f Tracker::track(
                           << " rows : " << outcome.valid_pixels
                           << " time: " << mili_sec << " ms" << std::endl;
 
+#ifdef SEQUENCIAL_SHOW
             stuff.show(window_name);
             cv::waitKey(1);
+#endif
 
             if (cv::norm(outcome.xi_update) < MINIMUM_UPDATE
                 or outcome.residual < MINIMUM_RESIDUAL
@@ -65,6 +68,13 @@ cv::Mat1f Tracker::track(
                 break;
             // TODO: 十分にupdateとresidualが小さければreturnする
         }
+
+#ifndef SEQUENCIAL_SHOW
+        if (level == ref_frame->levels - 1) {
+            stuff.show(window_name);
+            cv::waitKey(1);
+        }
+#endif
     }
 
     return xi;

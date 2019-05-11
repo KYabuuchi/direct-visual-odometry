@@ -19,7 +19,7 @@ bool Gaussian::update(float d, float s)
     // 期待値が離れすぎていたら消去
     float diff = std::abs(d - depth);
     if (diff > std::max(sigma, s)) {
-        depth = dist(engine);
+        depth = std::min(dist(engine), 4.0f);  // NOTE:
         sigma = 0.5f;
         return false;
     }

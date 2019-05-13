@@ -27,7 +27,7 @@ public:
         const cv::Mat1f& sigma,
         const cv::Mat1f& K) : K(K)
     {
-        std::shared_ptr<Frame> frame = std::make_shared<Frame>(gray, depth, sigma, K, 4, 2);
+        std::shared_ptr<Frame> frame = std::make_shared<Frame>(gray, depth, sigma, K, 4, 1);
         m_history.setRefFrame(frame);
     }
 
@@ -44,7 +44,7 @@ public:
     cv::Mat1f odometrize(const cv::Mat1f& gray_image)
     {
         // create Frame pair
-        std::shared_ptr<Frame> frame = std::make_shared<Frame>(gray_image, K, 4, 2);
+        std::shared_ptr<Frame> frame = std::make_shared<Frame>(gray_image, K, 2, 2);
         std::shared_ptr<Frame> ref_frame = m_history.getRefFrame();
         if (ref_frame == nullptr) {
             std::cout << "culled K\n"
@@ -59,7 +59,9 @@ public:
         std::cout << "\nT_w:\n"
                   << math::se3::exp(frame->m_xi)
                   << "\nT_r:\n"
-                  << math::se3::exp(frame->m_relative_xi) << std::endl;
+                  << math::se3::exp(frame->m_relative_xi)
+                  << "\nT_f:\n"
+                  << math::se3::exp(frame->m_ref_frame->m_xi) << std::endl;
 
         // Mapping
         m_mapper.estimate(m_history, frame);

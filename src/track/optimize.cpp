@@ -58,9 +58,17 @@ Outcome optimize(const Stuff& stuff)
 
     int valid_pixels = 0;
 
+    int minus_pixels = 0;
+    int plus_pixels = 0;
+
     stuff.ref_depth.forEach(
         [&](float& depth, const int pt[2]) -> void {
             cv::Point2i x_i = cv::Point2i(pt[1], pt[0]);
+
+            // if (stuff.cols > 100) {
+            //     if (x_i.x < 16 or x_i.x > 144 or x_i.y < 12 or x_i.y > 108)
+            //         return;
+            // }
 
             // depth
             if (depth < 0.50) {
@@ -92,17 +100,23 @@ Outcome optimize(const Stuff& stuff)
             float x = x_c.x, y = x_c.y, z = x_c.z;
             float fgx = fx * gx, fgy = fy * gy;
             float xz = x / z, yz = y / z;
+            jacobi = cv::Mat1f::zeros(1, 6);
             jacobi(0) = fgx / z;
             jacobi(1) = fgy / z;
             jacobi(2) = -(fgx * x + fgy * y) / z / z;
-            jacobi(3) = -fgx * xz * yz - fgy * (1.0f + yz * yz);
-            jacobi(4) = fgx * (1.0f + xz * xz) + fgy * xz * yz;
-            jacobi(5) = (-fgx * yz + fgy * xz);
+            // jacobi(3) = -fgx * xz * yz - fgy * (1.0f + yz * yz);
+            // jacobi(4) = fgx * (1.0f + xz * xz) + fgy * xz * yz;
+            // jacobi(5) = (-fgx * yz + fgy * xz);
 
             // NOTE: residualは各threadにアクセスされる
-            // accumulate residual
-            float r = huber(I_2 - I_1);
+            // float r = huber(I_2 - I_1);
+            float r = I_2 - I_1;
             residual += r * r;
+
+            if (gx * x + gy * y < 0)
+                plus_pixels++;
+            else
+                minus_pixels++;
 
             // weight of reliability
             float sigma = std::clamp(stuff.ref_sigma(x_i), 0.01f, 0.5f);  // [m]
@@ -114,6 +128,11 @@ Outcome optimize(const Stuff& stuff)
             jacobi.copyTo(A.row(id));
             B(id, 0) = r * weight;
         });
+
+    std::cout << "minus: " << minus_pixels << " plus " << plus_pixels << std::endl;
+    if (minus_pixels < plus_pixels) {
+        std::cout << "\n\n HAPPY \t\t" << std::endl;
+    }
 
     if (valid_pixels == 0)
         return Outcome{math::se3::xi(), -1, valid_pixels};

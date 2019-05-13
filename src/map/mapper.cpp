@@ -8,8 +8,8 @@ namespace Map
 {
 namespace
 {
-constexpr float MINIMUM_MOVEMENT = 0.10f;  // [m]
-constexpr int MAXIMUM_FORWARD = 5;         // number of frame
+constexpr float MINIMUM_MOVEMENT = 0.08f;  // [m]
+constexpr int MAXIMUM_FORWARD = 14;        // number of frame
 }  // namespace
 
 void Mapper::estimate(FrameHistory& frame_history, pFrame frame)
@@ -78,6 +78,7 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
     auto inRange = math::generateInRange(ref->depth().size());
     int valid_update = 0;
 
+    // 320x240
     ref->depth().forEach(
         [&](const float d, const int pt[2]) -> void {
             // 外側は無駄になりがち
@@ -91,11 +92,15 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
 
             // 生まれ年のKeyFrameを参照
             int age = static_cast<int>(ref->m_age(x_i));
+            age = std::min(age, 2);
             pFrame born = frame_history[age];
 
             // 事前分布
             float depth = d - obj->m_relative_xi(2);
             float sigma = ref->sigma()(x_i);
+
+            cv::Mat1f r_xi = math::se3::concatenate(static_cast<cv::Mat1f>(obj->m_xi), static_cast<cv::Mat1f>(-born->m_xi));
+            // std::cout << "Tnow " << born->m_xi.t() << " Tpre " << obj->m_xi.t() << " TrelF" << r_xi.t() << std::endl;
 
             // 観測
             auto [new_depth, new_sigma] = Implement::update(
@@ -103,14 +108,14 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
                 born->gray(),
                 born->gradX(),
                 born->gradY(),
-                math::se3::concatenate(static_cast<cv::Mat1f>(obj->m_xi), static_cast<cv::Mat1f>(-born->m_xi)),
+                r_xi,
                 obj->K(),
                 warped_x_i,
                 depth,
                 sigma);
 
             // 更新
-            if (new_depth > 0 and new_depth < 6.0 and new_sigma > 0 and new_sigma < 1) {
+            if (new_depth > 0.2 and new_depth < 6.0 and new_sigma > 0 and new_sigma < 1) {
                 math::Gaussian g(depth, sigma);
                 g.update(new_depth, new_sigma);
                 // if (not g.update(new_depth, new_sigma))

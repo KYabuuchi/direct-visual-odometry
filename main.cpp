@@ -51,7 +51,13 @@ int main(int argc, char* argv[])
         show(trajectory);
 
         // wait
-        cv::waitKey(1);
+        int key = cv::waitKey(10);
+        if (key == 'q')
+            break;
+        if (key == 's') {
+            while (cv::waitKey(0) != 'r')
+                ;
+        }
 
         if (!Graphic::isRunning())
             break;

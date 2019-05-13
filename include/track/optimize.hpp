@@ -31,10 +31,10 @@ struct Stuff {
     void show(const std::string& window_name) const
     {
         Draw::showImage(window_name,
-            Draw::visualizeGray(obj_gray),
-            Draw::visualizeGradient(grad_x),
             Draw::visualizeGray(warped_gray),
-            Draw::visualizeGradient(grad_y),
+            Draw::visualizeGray(obj_gray),
+            // Draw::visualizeGradient(grad_x),
+            // Draw::visualizeGradient(grad_y),
             Draw::visualizeGray(ref_gray),
             Draw::visualizeDepth(ref_depth, ref_sigma));
     }

@@ -9,7 +9,7 @@ namespace Implement
 namespace
 {
 // update
-constexpr float luminance_sigma = 0.2f;
+constexpr float luminance_sigma = 0.4f;
 constexpr float luminance_variance = luminance_sigma * luminance_sigma;
 constexpr float epipolar_sigma = 0.5f;
 constexpr float epipolar_variance = epipolar_sigma * epipolar_sigma;
@@ -17,7 +17,7 @@ constexpr float epipolar_variance = epipolar_sigma * epipolar_sigma;
 constexpr float predict_sigma = 0.2f;  // [m]
 constexpr float predict_variance = predict_sigma * predict_sigma;
 // doMatching
-constexpr double MATCHING_THRESHOLD_RATIO = 0.2;
+constexpr double MATCHING_THRESHOLD_RATIO = 0.1;
 
 // Eipolar線分
 struct EpipolarSegment {
@@ -63,8 +63,8 @@ float depthEstimate(
 
     float depth = -static_cast<float>(a.dot(b) / a.dot(a));
 
-    // if (ref_x_i.x < 50 and ref_x_i.x > 20 and ref_x_i.y < 50 and ref_x_i.y > 30)
     // if (ref_x_i.x < 50 and ref_x_i.x > 20 and depth < 1)
+    // if (ref_x_i.x < 50 and ref_x_i.x > 20 and ref_x_i.y < 50 and ref_x_i.y > 30)
     //     std::cout << ref_x_i << " " << obj_x_i << " " << depth << " " << t.t() << " a " << a.t() << " b " << b.t() << " q " << x_q.t() << std::endl;
     return depth;
 }
@@ -236,7 +236,7 @@ std::tuple<cv::Mat1f, cv::Mat1f, cv::Mat1f> propagate(
 
             float s = ref_sigma(x_i);
             float d0 = rd;
-            float d1 = d0 - tz;
+            float d1 = d0 + 10 * tz;  // NOTE: 符号に自信がない
             // if (d0 < 0.05)
             //     s = 0.5;
             // else

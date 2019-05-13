@@ -16,7 +16,7 @@ public:
     {
         // depth,sigmaの初期化
         m_depth = cv::Mat1f(rows, cols);
-        cv::randn(m_depth, 1.5, 0.5);
+        cv::randn(m_depth, 1.5, 0.8);
         m_depth = cv::max(m_depth, 0.5f);
         m_sigma = 0.5f * cv::Mat1f::ones(rows, cols);
     }

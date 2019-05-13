@@ -6,16 +6,16 @@
 #include "track/optimize.hpp"
 #include <chrono>
 
-// #define SEQUENCIAL_SHOW
+#define SEQUENCIAL_SHOW
 
 namespace Track
 {
 namespace
 {
-constexpr bool CHATTY = false;
-constexpr float MINIMUM_RESIDUAL = 0.010f;
-constexpr float MINIMUM_UPDATE = 1.e-3f;
-constexpr int MAXIMUM_TIME_MS = 50;
+constexpr bool CHATTY = true;
+constexpr float MINIMUM_RESIDUAL = 0.0010f;
+constexpr float MINIMUM_UPDATE = 1.e-4f;
+constexpr int MAXIMUM_TIME_MS = 200;
 constexpr int MAXIMUM_ITERATION = 20;
 }  // namespace
 
@@ -53,14 +53,18 @@ cv::Mat1f Tracker::track(
             if (CHATTY)
                 std::cout << "itr: " << iteration
                           << " r: " << outcome.residual
-                          << " upd: " << cv::norm(outcome.xi_update)
+                          << " upd: " << outcome.xi_update.t()
+                          << " norm: " << cv::norm(outcome.xi_update)
                           << " rows : " << outcome.valid_pixels
                           << " time: " << mili_sec << " ms" << std::endl;
 
 #ifdef SEQUENCIAL_SHOW
             stuff.show(window_name);
-            cv::waitKey(1);
+            cv::waitKey(30);
 #endif
+            // if (iteration > 10 and level == 0) {
+            //     break;
+            // }
 
             if (cv::norm(outcome.xi_update) < MINIMUM_UPDATE
                 or outcome.residual < MINIMUM_RESIDUAL

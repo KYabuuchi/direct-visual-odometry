@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
     std::vector<cv::Mat1f> trajectory;
 
     // data
-    int num = 50;
+    int num = 90;
     while (true) {
         cv::Mat1f gray_image;
         if (not loader.getNormalizedUndistortedImages(num++, gray_image))
@@ -56,4 +56,11 @@ void show(const std::vector<cv::Mat1f>& trajectory)
         tmp.push_back(v);
     }
     Graphic::draw(tmp, Graphic::Form::CURVE, Graphic::Color::YELLOW);
+    const cv::Mat1f& latest = trajectory.back();
+    Eigen::Vector2d bottom(10 * latest(0, 3), 10 * latest(2, 3));
+    Eigen::Vector2d top(10 * latest(0, 3), 10 * latest(2, 3) + 0.1);
+    tmp.clear();
+    tmp.push_back(top);
+    tmp.push_back(bottom);
+    Graphic::drawArrow(tmp, Graphic::Color::RED);
 }

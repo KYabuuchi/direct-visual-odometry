@@ -14,7 +14,7 @@ public:
     Tracker() : window_name("Tracking")
     {
         cv::namedWindow(window_name, cv::WINDOW_NORMAL);
-        cv::resizeWindow(window_name, 960, 480);
+        cv::resizeWindow(window_name, 720, 720);
     }
 
     cv::Mat1f track(

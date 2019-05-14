@@ -9,9 +9,9 @@ namespace Implement
 namespace
 {
 // update
-constexpr float luminance_sigma = 0.4f;
+constexpr float luminance_sigma = 0.6f;  // Epipolar直線に沿った輝度勾配による分散
 constexpr float luminance_variance = luminance_sigma * luminance_sigma;
-constexpr float epipolar_sigma = 0.5f;
+constexpr float epipolar_sigma = 0.6f;  // 等高線とEpipolar Lineが成す角度による分散
 constexpr float epipolar_variance = epipolar_sigma * epipolar_sigma;
 // propagate
 constexpr float predict_sigma = 0.2f;  // [m]
@@ -31,7 +31,7 @@ struct EpipolarSegment {
           start(Transform::warp(static_cast<cv::Mat1f>(xi), x_i, max, K)),
           end(Transform::warp(static_cast<cv::Mat1f>(xi), x_i, min, K)),
           length(static_cast<float>(cv::norm(start - end))),
-          x_i(x_i) {}
+          x_i(x_i), xi(xi) {}
 
     // copy constractor
     EpipolarSegment(const EpipolarSegment& es)
@@ -43,6 +43,7 @@ struct EpipolarSegment {
     const cv::Point2f end;
     const float length;
     const cv::Point2f x_i;
+    const cv::Mat1f xi;
 };
 
 float depthEstimate(
@@ -141,8 +142,8 @@ cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float obj_gray, const Ep
         return cv::Point2f(-1, -1);
     }
 
-    // if (es.x_i.x < 50 and es.x_i.x > 20 and es.x_i.y < 50 and es.x_i.y > 30)
-    //     std::cout << es.start << " " << es.end << " " << es.x_i << " " << best_pt << min_ssd << std::endl;
+    if (es.x_i.x < 50 and es.x_i.x > 20 and es.x_i.y < 50 and es.x_i.y > 30)
+        std::cout << es.start << " " << es.end << " " << es.x_i << " " << best_pt << " " << es.xi.t() << std::endl;
     return best_pt;
 }
 
@@ -159,6 +160,7 @@ cv::Mat1f regularize(const cv::Mat1f& depth, const cv::Mat1f& sigma)
         [=](float& d, const int p[2]) -> void {
             math::Gaussian g{d, sigma(p[0], p[1])};
 
+            // TODO: 近いほうが優遇されないようにする
             for (const std::pair<int, int> offset : offsets) {
                 cv::Point2i pt(p[1] + offset.second, p[0] + offset.first);
                 if (not inRange(pt))
@@ -220,9 +222,13 @@ std::tuple<cv::Mat1f, cv::Mat1f, cv::Mat1f> propagate(
     const cv::Size size = ref_depth.size();
     std::function<bool(cv::Point2i)> inRange = math::generateInRange(size);
 
+    // TODO: depthとsigmaを正しく初期化
     cv::Mat1f depth(cv::Mat1f::ones(size));
     cv::Mat1f sigma(cv::Mat1f::ones(size));
     cv::Mat1f age(cv::Mat1f::zeros(size));
+
+    std::cout << "\n\td1=d0+TZ: " << tz << "\n"
+              << std::endl;
 
     ref_depth.forEach(
         [&](float& rd, const int pt[2]) -> void {
@@ -235,11 +241,9 @@ std::tuple<cv::Mat1f, cv::Mat1f, cv::Mat1f> propagate(
                 return;
 
             float s = ref_sigma(x_i);
-            float d0 = rd;
-            float d1 = d0 + 10 * tz;  // NOTE: 符号に自信がない
-            // if (d0 < 0.05)
-            //     s = 0.5;
-            // else
+            float d0 = std::max(rd, 0.01f);
+            float d1 = d0 + tz;
+
             s = std::sqrt(math::pow(d1 / d0, 4) * math::square(s)
                           + predict_variance);
 

@@ -97,7 +97,7 @@ Outcome optimize(const Stuff& stuff)
             cv::Point3f x_c = Transform::backProject(stuff.K, x_i, depth);
             float x = x_c.x, y = x_c.y, z = x_c.z;
             float fgx = fx * gx, fgy = fy * gy;
-            float xz = x / z, yz = y / z;
+            // float xz = x / z, yz = y / z;
             jacobi = cv::Mat1f::zeros(1, 6);
             jacobi(0) = fgx / z;
             jacobi(1) = fgy / z;

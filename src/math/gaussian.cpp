@@ -6,8 +6,7 @@ namespace math
 namespace
 {
 std::mt19937 engine;
-// TODO: 平均値は状況による
-std::uniform_real_distribution<float> dist(2.5, 0.5);
+std::uniform_real_distribution<float> dist(2.0, 0.5);
 }  // namespace
 
 bool Gaussian::update(float d, float s)
@@ -18,7 +17,8 @@ bool Gaussian::update(float d, float s)
 
     // 期待値が離れすぎていたら消去
     float diff = std::abs(d - depth);
-    if (diff > std::max(sigma, s)) {
+    float gain = (std::min(d, diff) < 0.8) ? 0.5f + std::min(d, diff) / 0.8f * 0.5f : 1.0f;
+    if (diff > gain * std::max(sigma, s)) {
         depth = std::min(dist(engine), 4.0f);  // NOTE:
         sigma = 0.5f;
         return false;
@@ -36,6 +36,7 @@ bool Gaussian::operator()(float d, float s)
     float v2 = math::square(s);
     float v = v1 + v2;
 
+    // TODO: こっちも近いほうが不遇になるようにする
     // 期待値が離れすぎていたら反映しない
     float diff = std::abs(d - depth);
     if (diff > std::max(sigma, s))

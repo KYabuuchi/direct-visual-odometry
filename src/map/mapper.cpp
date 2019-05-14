@@ -92,7 +92,7 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
 
             // 生まれ年のKeyFrameを参照
             int age = static_cast<int>(ref->m_age(x_i));
-            age = std::min(age, 2);
+            // age = std::min(age, 2);
             pFrame born = frame_history[age];
 
             // 事前分布
@@ -117,13 +117,14 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
             // 更新
             if (new_depth > 0.2 and new_depth < 6.0 and new_sigma > 0 and new_sigma < 1) {
                 math::Gaussian g(depth, sigma);
-                g.update(new_depth, new_sigma);
-                // if (not g.update(new_depth, new_sigma))
-                //     std::cout << "reject&reset:" << x_i << " d: " << new_depth << " s: " << new_sigma << " " << g.depth << " " << g.sigma << std::endl;
-
+                if (not g.update(new_depth, new_sigma)) {
+                    // NOTE: maybe occulusion
+                    ref->m_age(x_i) = 0;
+                } else {
+                    valid_update++;
+                }
                 ref->top()->depth()(x_i) = g.depth;
                 ref->top()->sigma()(x_i) = g.sigma;
-                valid_update++;
             }
         });
 

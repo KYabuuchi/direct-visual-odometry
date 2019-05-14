@@ -6,7 +6,7 @@
 #include "track/optimize.hpp"
 #include <chrono>
 
-#define SEQUENCIAL_SHOW
+// #define SEQUENCIAL_SHOW
 
 namespace Track
 {
@@ -14,7 +14,7 @@ namespace
 {
 constexpr bool CHATTY = true;
 constexpr float MINIMUM_RESIDUAL = 0.0010f;
-constexpr float MINIMUM_UPDATE = 1.e-4f;
+constexpr float MINIMUM_UPDATE = 2.0e-4f;
 constexpr int MAXIMUM_TIME_MS = 200;
 constexpr int MAXIMUM_ITERATION = 20;
 }  // namespace

@@ -13,9 +13,9 @@ namespace Track
 namespace
 {
 constexpr bool CHATTY = true;
-constexpr float MINIMUM_RESIDUAL = 0.0010f;
-constexpr float MINIMUM_UPDATE = 2.0e-4f;
-constexpr int MAXIMUM_TIME_MS = 200;
+constexpr float MINIMUM_RESIDUAL = 1e-4f;
+constexpr float MINIMUM_UPDATE = 1e-4f;
+constexpr int MAXIMUM_TIME_MS = 1000;
 constexpr int MAXIMUM_ITERATION = 20;
 }  // namespace
 
@@ -26,11 +26,15 @@ cv::Mat1f Tracker::track(
     std::cout << "Tracker::track" << std::endl;
 
     cv::Mat1f xi = math::se3::xi();
+
+    long process_time = 0;
+
     for (int level = 0; level < ref_frame->levels; level++) {
         const pScene obj_scene = obj_frame->at(level);
         const pScene ref_scene = ref_frame->at(level);
         const int COLS = ref_scene->cols;
         const int ROWS = ref_scene->rows;
+        const int RESOLUTION = COLS * ROWS;
 
         if (CHATTY)
             std::cout << "\nLEVEL: " << level << " ROW: " << ROWS << " COL: " << COLS << std::endl;
@@ -50,6 +54,7 @@ cv::Mat1f Tracker::track(
             stuff.update(xi);
 
             long mili_sec = timer.millSeconds();
+            process_time += mili_sec;
             if (CHATTY)
                 std::cout << "itr: " << iteration
                           << " r: " << outcome.residual
@@ -62,15 +67,11 @@ cv::Mat1f Tracker::track(
             stuff.show(window_name);
             cv::waitKey(30);
 #endif
-            // if (iteration > 10 and level == 0) {
-            //     break;
-            // }
 
             if (cv::norm(outcome.xi_update) < MINIMUM_UPDATE
                 or outcome.residual < MINIMUM_RESIDUAL
-                or mili_sec > MAXIMUM_TIME_MS)
+                or process_time > MAXIMUM_TIME_MS)
                 break;
-            // TODO: 十分にupdateとresidualが小さければreturnする
         }
 
 #ifndef SEQUENCIAL_SHOW

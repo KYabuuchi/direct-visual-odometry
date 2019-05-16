@@ -142,8 +142,8 @@ cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float obj_gray, const Ep
         return cv::Point2f(-1, -1);
     }
 
-    if (es.x_i.x < 50 and es.x_i.x > 20 and es.x_i.y < 50 and es.x_i.y > 30)
-        std::cout << es.start << " " << es.end << " " << es.x_i << " " << best_pt << " " << es.xi.t() << std::endl;
+    // if (es.x_i.x < 50 and es.x_i.x > 20 and es.x_i.y < 50 and es.x_i.y > 30)
+    //     std::cout << es.start << " " << es.end << " " << es.x_i << " " << best_pt << " " << es.xi.t() << std::endl;
     return best_pt;
 }
 

@@ -36,10 +36,11 @@ bool Gaussian::operator()(float d, float s)
     float v2 = math::square(s);
     float v = v1 + v2;
 
-    // TODO: こっちも近いほうが不遇になるようにする
     // 期待値が離れすぎていたら反映しない
     float diff = std::abs(d - depth);
-    if (diff > std::max(sigma, s))
+    float gain = (std::min(d, diff) < 0.8) ? 0.5f + std::min(d, diff) / 0.8f * 0.5f : 1.0f;
+    // float gain = 1.0f;
+    if (diff > gain * std::max(sigma, s))
         return false;
 
     depth = (v2 * depth + v1 * d) / v;

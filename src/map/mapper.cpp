@@ -8,8 +8,8 @@ namespace Map
 {
 namespace
 {
-constexpr float MINIMUM_MOVEMENT = 0.08f;  // [m]
-constexpr int MAXIMUM_FORWARD = 14;        // number of frame
+constexpr float MINIMUM_MOVEMENT = 0.03f;  // [m]
+constexpr int MAXIMUM_FORWARD = 8;         // number of frame
 }  // namespace
 
 void Mapper::estimate(FrameHistory& frame_history, pFrame frame)

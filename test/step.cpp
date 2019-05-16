@@ -6,7 +6,7 @@
 #include <Eigen/Dense>
 
 const std::string window_name = "trajectry";
-void show(const std::vector<cv::Mat1f>& trajectory);
+void show(const std::list<cv::Mat1f>& trajectory);
 
 int main(int argc, char* argv[])
 {
@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
               << loader.Rgb().K() << std::endl;
 
     System::VisualOdometry vo(loader.Rgb().K());
-    std::vector<cv::Mat1f> trajectory;
+    std::list<cv::Mat1f> trajectory;
 
     // data
     int num = 0;
@@ -33,13 +33,14 @@ int main(int argc, char* argv[])
         if (not loader.getNormalizedUndistortedImages(num++, gray_image))
             break;
 
-        // odometrize
-
         Timer timer;
         cv::Mat1f T = vo.odometrize(gray_image);
-        std::cout << "whole timer: " << timer.millSeconds() << " ms" << std::endl;
+        std::cout << "whole time: " << timer.millSeconds() << " ms" << std::endl;
         T = Convert::inversePose(T);
+
         trajectory.push_back(T);
+        if (trajectory.size() > 50)
+            trajectory.pop_front();
         show(trajectory);
 
         // wait
@@ -50,7 +51,7 @@ int main(int argc, char* argv[])
     Graphic::finalize();
 }
 
-void show(const std::vector<cv::Mat1f>& trajectory)
+void show(const std::list<cv::Mat1f>& trajectory)
 {
     Graphic::clear();
     std::vector<Eigen::Vector2d> tmp;

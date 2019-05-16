@@ -123,9 +123,9 @@ cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float obj_gray, const Ep
         // TODO: 1/Nにできるはず
         for (int i = 0; i < N; i++) {
             cv::Point2f target = pt + (i - N / 2) * dir;
-            float subpixel_gray = Convert::getSubpixel(ref_gray, target);
+            float subpixel_gray = Convert::getSubpixelFromDense(ref_gray, target);
             if (math::isInvalid(subpixel_gray)) {
-                ssd = 2 * N;
+                ssd = 2.0f * N;
                 break;
             }
             float diff = subpixel_gray - obj_gray;
@@ -160,7 +160,6 @@ cv::Mat1f regularize(const cv::Mat1f& depth, const cv::Mat1f& sigma)
         [=](float& d, const int p[2]) -> void {
             math::Gaussian g{d, sigma(p[0], p[1])};
 
-            // TODO: 近いほうが優遇されないようにする
             for (const std::pair<int, int> offset : offsets) {
                 cv::Point2i pt(p[1] + offset.second, p[0] + offset.first);
                 if (not inRange(pt))

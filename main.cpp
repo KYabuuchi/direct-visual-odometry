@@ -5,7 +5,7 @@
 #include <Eigen/Dense>
 
 const std::string window_name = "trajectry";
-void show(const std::vector<cv::Mat1f>& trajectory);
+void show(const std::list<cv::Mat1f>& trajectory);
 
 #define USE_CAMERA
 
@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
 
     // main system
     System::VisualOdometry vo(loader.Rgb().K());
-    std::vector<cv::Mat1f> trajectory;
+    std::list<cv::Mat1f> trajectory;
 
     while (true) {
         cv::Mat1f gray_image;
@@ -36,7 +36,6 @@ int main(int argc, char* argv[])
         video >> color_image;
         cv::cvtColor(color_image, color_image, cv::COLOR_BGR2GRAY);
         color_image.convertTo(gray_image, CV_32FC1, 1.0 / 255.0);
-        // TODO: 歪補正
 #else
         if (not loader.getNormalizedUndistortedImages(num++, gray_image))
             break;
@@ -46,6 +45,8 @@ int main(int argc, char* argv[])
         cv::Mat1f T = vo.odometrize(gray_image);
         T = Convert::inversePose(T);
         trajectory.push_back(T);
+        if (trajectory.size() > 50)
+            trajectory.pop_front();
         show(trajectory);
 
         // wait
@@ -64,7 +65,7 @@ int main(int argc, char* argv[])
     Graphic::finalize();
 }
 
-void show(const std::vector<cv::Mat1f>& trajectory)
+void show(const std::list<cv::Mat1f>& trajectory)
 {
     Graphic::clear();
     std::vector<Eigen::Vector2d> tmp;

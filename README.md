@@ -1,6 +1,5 @@
 # Abstract
 * semi-dense-visual-odometryの再現実装
+* ただし，回転成分はないものと仮定する
 # TODO 
-* Trackingを時間で終了判定(Wed)
-* Trajectoryのフィルタリング(Fri)
 * ストリーミングモードではキー入力で初期化できるようにする(Fri)

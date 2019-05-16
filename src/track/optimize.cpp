@@ -55,8 +55,9 @@ Outcome optimize(const Stuff& stuff)
     cv::Mat1f A(cv::Mat1f::zeros(max_size, 3));
     cv::Mat1f B(cv::Mat1f::zeros(max_size, 1));
 
+    // TODO:
     // step幅
-    float step = 2.5f;
+    float step = 2.0f;
     if (stuff.levels == 1)
         step = 1.5f;
     if (stuff.levels == 2)

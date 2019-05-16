@@ -60,8 +60,8 @@ public:
                   << math::se3::exp(frame->m_xi)
                   << "\nT_r:\n"
                   << math::se3::exp(frame->m_relative_xi)
-                  << "\nT_f:\n"
-                  << math::se3::exp(frame->m_ref_frame->m_xi) << std::endl;
+                  << "\n"
+                  << std::endl;
 
         // Mapping
         m_mapper.estimate(m_history, frame);

@@ -11,7 +11,8 @@ struct Stuff {
     Stuff(
         std::shared_ptr<System::Scene> obj,
         std::shared_ptr<System::Scene> ref,
-        const cv::Mat1f& xi)
+        const cv::Mat1f& xi,
+        const int levels)
         : obj_gray(obj->gray()),
           ref_gray(ref->gray()),
           ref_depth(ref->depth()),
@@ -20,7 +21,7 @@ struct Stuff {
           grad_y(ref->gradY()),
           warped_gray(Transform::warpImage(xi, ref->gray(), ref->depth(), ref->K())),
           xi(xi), K(ref->K()),
-          cols(ref->cols), rows(ref->rows) {}
+          cols(ref->cols), rows(ref->rows), levels(levels) {}
 
     void update(const cv::Mat1f _xi)
     {
@@ -50,6 +51,7 @@ struct Stuff {
     const cv::Mat1f K;
     const int cols;
     const int rows;
+    const int levels;
 };
 
 struct Outcome {

@@ -1,5 +1,6 @@
 #include "map/mapper.hpp"
 #include "core/draw.hpp"
+#include "core/timer.hpp"
 #include "core/transform.hpp"
 #include "map/implement.hpp"
 #include <cmath>
@@ -14,6 +15,7 @@ constexpr int MAXIMUM_FORWARD = 8;         // number of frame
 
 void Mapper::estimate(FrameHistory& frame_history, pFrame frame)
 {
+    Timer timer;
     if (needNewFrame(frame)) {
         propagate(frame);
         frame_history.setRefFrame(frame);
@@ -22,13 +24,16 @@ void Mapper::estimate(FrameHistory& frame_history, pFrame frame)
     }
 
     pFrame ref_frame = frame_history.getRefFrame();
+    std::cout << "process time: " << timer.millSeconds() << " ms\n"
+              << std::endl;
+
     regularize(ref_frame);
     show(ref_frame);
+    std::cout << "process time: " << timer.millSeconds() << " ms" << std::endl;
 }
 
 void Mapper::show(const pFrame frame)
 {
-    std::cout << "Mapper::show " << frame->id << std::endl;
     Draw::showImage(
         window_name,
         Draw::visualizeGray(frame->gray()),
@@ -129,12 +134,12 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
         });
 
     ref->updateDepthSigma(ref->depth(), ref->sigma());
-    std::cout << "\t valid update: " << valid_update << std::endl;
+    std::cout << "valid update: " << valid_update << " pixel" << std::endl;
 }
 
 void Mapper::regularize(pFrame frame)
 {
-    std::cout << "Mapper::regularize " << frame->id << std::endl;
+    std::cout << "Mapper::regularize " << std::endl;
     cv::Mat1f depth = Implement::regularize(frame->depth(), frame->sigma());
     frame->updateDepth(depth);
 }

@@ -1,5 +1,6 @@
 #include "calibration/loader.hpp"
 #include "core/loader.hpp"
+#include "core/timer.hpp"
 #include "graphic/draw.hpp"
 #include "system/system.hpp"
 #include <Eigen/Dense>
@@ -33,7 +34,10 @@ int main(int argc, char* argv[])
             break;
 
         // odometrize
+
+        Timer timer;
         cv::Mat1f T = vo.odometrize(gray_image);
+        std::cout << "whole timer: " << timer.millSeconds() << " ms" << std::endl;
         T = Convert::inversePose(T);
         trajectory.push_back(T);
         show(trajectory);

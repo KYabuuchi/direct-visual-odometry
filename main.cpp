@@ -29,8 +29,6 @@ int main(int argc, char* argv[])
     System::VisualOdometry vo(loader.Rgb().K());
     std::vector<cv::Mat1f> trajectory;
 
-    // data
-    int num = 50;
     while (true) {
         cv::Mat1f gray_image;
 #ifdef USE_CAMERA

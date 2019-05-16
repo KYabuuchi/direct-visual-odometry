@@ -14,8 +14,8 @@ namespace
 {
 constexpr bool CHATTY = true;
 constexpr float MINIMUM_RESIDUAL = 1e-4f;
-constexpr float MINIMUM_UPDATE = 1e-4f;
-constexpr int MAXIMUM_TIME_MS = 1000;
+constexpr float MINIMUM_UPDATE = 5e-4f;
+constexpr int MAXIMUM_TIME_MS = 300;
 constexpr int MAXIMUM_ITERATION = 20;
 }  // namespace
 
@@ -34,12 +34,11 @@ cv::Mat1f Tracker::track(
         const pScene ref_scene = ref_frame->at(level);
         const int COLS = ref_scene->cols;
         const int ROWS = ref_scene->rows;
-        const int RESOLUTION = COLS * ROWS;
 
         if (CHATTY)
             std::cout << "\nLEVEL: " << level << " ROW: " << ROWS << " COL: " << COLS << std::endl;
 
-        Stuff stuff = {obj_scene, ref_scene, xi};
+        Stuff stuff = {obj_scene, ref_scene, xi, level};
 
         for (int iteration = 0; iteration < MAXIMUM_ITERATION; iteration++) {
             Timer timer;
@@ -73,15 +72,15 @@ cv::Mat1f Tracker::track(
                 or process_time > MAXIMUM_TIME_MS)
                 break;
         }
-
 #ifndef SEQUENCIAL_SHOW
+        // 最後に1回だけ表示する
         if (level == ref_frame->levels - 1) {
             stuff.show(window_name);
-            cv::waitKey(1);
+            // cv::waitKey(1); // ここで待たなくともmainで待ってる
         }
 #endif
     }
-
+    std::cout << "process time: " << process_time << " ms" << std::endl;
     return xi;
 }
 

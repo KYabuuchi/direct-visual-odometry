@@ -50,13 +50,17 @@ Outcome optimize(const Stuff& stuff)
     float residual = 0;
     const float fx = stuff.K(0, 0), fy = stuff.K(1, 1);
 
-    // TODO: 画面の外側は計算しない(ただし総画素数が少ないうちは全部回す)
     int max_size = stuff.cols * stuff.rows;
-    // TODO: この規模のメモリ確保は遅い，毎回使うなら予め確保しておく
-    cv::Mat1f A(cv::Mat1f::zeros(max_size, 6));
+    int valid_pixels = 0;
+    cv::Mat1f A(cv::Mat1f::zeros(max_size, 3));
     cv::Mat1f B(cv::Mat1f::zeros(max_size, 1));
 
-    int valid_pixels = 0;
+    // step幅
+    float step = 2.0f;
+    if (stuff.levels == 1)
+        step = 1.5f;
+    if (stuff.levels == 2)
+        step = 0.8f;
 
     stuff.ref_depth.forEach(
         [&](float& depth, const int pt[2]) -> void {
@@ -98,7 +102,7 @@ Outcome optimize(const Stuff& stuff)
             float x = x_c.x, y = x_c.y, z = x_c.z;
             float fgx = fx * gx, fgy = fy * gy;
             // float xz = x / z, yz = y / z;
-            jacobi = cv::Mat1f::zeros(1, 6);
+            jacobi = cv::Mat1f::zeros(1, 3);
             jacobi(0) = fgx / z;
             jacobi(1) = fgy / z;
             jacobi(2) = -(fgx * x + fgy * y) / z / z;
@@ -107,12 +111,13 @@ Outcome optimize(const Stuff& stuff)
             // jacobi(5) = (-fgx * yz + fgy * xz);
 
             // NOTE: residualは各threadにアクセスされる
-            float r = huber(I_2 - I_1);  // NOTE: huber関数の恩恵が少ない
+            // float r = huber(I_2 - I_1);  // NOTE: huber関数の恩恵が少ない
+            float r = I_2 - I_1;  // NOTE: huber関数の恩恵が少ない
             residual += r * r;
 
             // weight of reliability
             float sigma = std::clamp(stuff.ref_sigma(x_i), 0.01f, 0.5f);  // [m]
-            float weight = 0.1f / sigma;
+            float weight = step * 0.5f / sigma;
 
             // NOTE: A,Bは各threadにアクセスされる
             // stack
@@ -125,8 +130,12 @@ Outcome optimize(const Stuff& stuff)
         return Outcome{math::se3::xi(), -1, valid_pixels};
 
     // solve equation (A xi + B = 0)
-    cv::Mat1f xi_update;
-    cv::solve(A, -B, xi_update, cv::DECOMP_SVD);
+    cv::Mat1f xi_update, update;
+    cv::solve(A, -B, update, cv::DECOMP_SVD);
+    xi_update = cv::Mat1f::zeros(6, 1);
+    for (int i = 0; i < 3; i++) {
+        xi_update(i) = update(i);
+    }
     return Outcome{cv::Mat1f(-xi_update), residual / static_cast<float>(valid_pixels), valid_pixels};
 }
 

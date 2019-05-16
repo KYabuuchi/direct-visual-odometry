@@ -227,9 +227,6 @@ std::tuple<cv::Mat1f, cv::Mat1f, cv::Mat1f> propagate(
     cv::Mat1f sigma(cv::Mat1f::ones(size));
     cv::Mat1f age(cv::Mat1f::zeros(size));
 
-    std::cout << "\n\td1=d0+TZ: " << tz << "\n"
-              << std::endl;
-
     ref_depth.forEach(
         [&](float& rd, const int pt[2]) -> void {
             cv::Point2i x_i(pt[1], pt[0]);

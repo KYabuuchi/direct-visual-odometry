@@ -14,7 +14,7 @@ constexpr float luminance_variance = luminance_sigma * luminance_sigma;
 constexpr float epipolar_sigma = 0.6f;  // 等高線とEpipolar Lineが成す角度による分散
 constexpr float epipolar_variance = epipolar_sigma * epipolar_sigma;
 // propagate
-constexpr float predict_sigma = 0.2f;  // [m]
+constexpr float predict_sigma = 0.08f;  // [m]
 constexpr float predict_variance = predict_sigma * predict_sigma;
 // doMatching
 constexpr double MATCHING_THRESHOLD_RATIO = 0.1;

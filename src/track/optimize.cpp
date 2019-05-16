@@ -56,24 +56,24 @@ Outcome optimize(const Stuff& stuff)
     cv::Mat1f B(cv::Mat1f::zeros(max_size, 1));
 
     // step幅
-    float step = 2.0f;
+    float step = 2.5f;
     if (stuff.levels == 1)
         step = 1.5f;
     if (stuff.levels == 2)
-        step = 0.8f;
+        step = 1.0f;
 
     stuff.ref_depth.forEach(
         [&](float& depth, const int pt[2]) -> void {
             cv::Point2i x_i = cv::Point2i(pt[1], pt[0]);
 
-            // 画素数が多いので無意味になりがちな外側を捨てる
-            if (stuff.cols > 100) {
-                if (x_i.x < 16 or x_i.x > 144 or x_i.y < 12 or x_i.y > 108)
+            // 画素数が多いなら外側を捨てる
+            if (stuff.levels == 2) {
+                if (x_i.x < 20 or x_i.x > 140 or x_i.y < 20 or x_i.y > 100)
                     return;
             }
 
             // depth
-            if (depth < 0.50) {
+            if (depth < 0.20) {
                 return;
             }
 
@@ -86,7 +86,10 @@ Outcome optimize(const Stuff& stuff)
 
             // gradient
             cv::Point2f warped_x_i = Transform::warp(static_cast<cv::Mat1f>(-stuff.xi), x_i, depth, stuff.K);
-            if (warped_x_i.x < 0 or static_cast<float>(stuff.cols) <= warped_x_i.x or warped_x_i.y < 0 or static_cast<float>(stuff.rows) <= warped_x_i.y)
+            if (warped_x_i.x < 0
+                or warped_x_i.y < 0
+                or static_cast<float>(stuff.cols) <= warped_x_i.x
+                or static_cast<float>(stuff.rows) <= warped_x_i.y)
                 return;
 
             float gx = Convert::getSubpixelFromDense(stuff.grad_x, warped_x_i);
@@ -110,16 +113,14 @@ Outcome optimize(const Stuff& stuff)
             // jacobi(4) = fgx * (1.0f + xz * xz) + fgy * xz * yz;
             // jacobi(5) = (-fgx * yz + fgy * xz);
 
-            // NOTE: residualは各threadにアクセスされる
             // float r = huber(I_2 - I_1);  // NOTE: huber関数の恩恵が少ない
-            float r = I_2 - I_1;  // NOTE: huber関数の恩恵が少ない
+            float r = I_2 - I_1;
             residual += r * r;
 
             // weight of reliability
             float sigma = std::clamp(stuff.ref_sigma(x_i), 0.01f, 0.5f);  // [m]
-            float weight = step * 0.5f / sigma;
+            float weight = step / sigma;
 
-            // NOTE: A,Bは各threadにアクセスされる
             // stack
             int id = pt[1] + pt[0] * stuff.cols;
             jacobi.copyTo(A.row(id));

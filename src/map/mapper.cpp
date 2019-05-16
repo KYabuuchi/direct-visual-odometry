@@ -9,8 +9,8 @@ namespace Map
 {
 namespace
 {
-constexpr float MINIMUM_MOVEMENT = 0.03f;  // [m]
-constexpr int MAXIMUM_FORWARD = 8;         // number of frame
+constexpr float MINIMUM_MOVEMENT = 0.02f;  // [m]
+constexpr int MAXIMUM_FORWARD = 6;         // number of frame
 }  // namespace
 
 void Mapper::estimate(FrameHistory& frame_history, pFrame frame)
@@ -28,7 +28,7 @@ void Mapper::estimate(FrameHistory& frame_history, pFrame frame)
               << std::endl;
 
     regularize(ref_frame);
-    show(ref_frame);
+    // show(ref_frame);
     std::cout << "process time: " << timer.millSeconds() << " ms" << std::endl;
 }
 
@@ -105,7 +105,6 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
             float sigma = ref->sigma()(x_i);
 
             cv::Mat1f r_xi = math::se3::concatenate(static_cast<cv::Mat1f>(obj->m_xi), static_cast<cv::Mat1f>(-born->m_xi));
-            // std::cout << "Tnow " << born->m_xi.t() << " Tpre " << obj->m_xi.t() << " TrelF" << r_xi.t() << std::endl;
 
             // 観測
             auto [new_depth, new_sigma] = Implement::update(
@@ -120,10 +119,10 @@ void Mapper::update(const FrameHistory& frame_history, pFrame obj)
                 sigma);
 
             // 更新
-            if (new_depth > 0.2 and new_depth < 6.0 and new_sigma > 0 and new_sigma < 1) {
+            if (new_depth > 0.2f and new_depth < 6.0f and new_sigma > 0.0f and new_sigma < 0.5f) {
                 math::Gaussian g(depth, sigma);
                 if (not g.update(new_depth, new_sigma)) {
-                    // NOTE: maybe occulusion
+                    // maybe occulusion
                     ref->m_age(x_i) = 0;
                 } else {
                     valid_update++;

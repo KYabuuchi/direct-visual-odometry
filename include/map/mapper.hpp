@@ -17,8 +17,8 @@ class Mapper
 public:
     Mapper() : window_name("Mapping")
     {
-        cv::namedWindow(window_name, cv::WINDOW_NORMAL);
-        cv::resizeWindow(window_name, 640, 480);
+        // cv::namedWindow(window_name, cv::WINDOW_NORMAL);
+        // cv::resizeWindow(window_name, 640, 480);
     }
 
     // 本体

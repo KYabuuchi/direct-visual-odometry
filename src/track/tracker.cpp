@@ -12,11 +12,11 @@ namespace Track
 {
 namespace
 {
-constexpr bool CHATTY = true;
-constexpr float MINIMUM_RESIDUAL = 1e-4f;
+// constexpr bool CHATTY = true;
+constexpr float MINIMUM_RESIDUAL = 5e-3f;
 constexpr float MINIMUM_UPDATE = 5e-4f;
-constexpr int MAXIMUM_TIME_MS = 300;
-constexpr int MAXIMUM_ITERATION = 20;
+constexpr int MAXIMUM_TIME_MS = 200;
+constexpr int MAXIMUM_ITERATION = 15;
 }  // namespace
 
 cv::Mat1f Tracker::track(
@@ -35,8 +35,7 @@ cv::Mat1f Tracker::track(
         const int COLS = ref_scene->cols;
         const int ROWS = ref_scene->rows;
 
-        if (CHATTY)
-            std::cout << "\nLEVEL: " << level << " ROW: " << ROWS << " COL: " << COLS << std::endl;
+        std::cout << "\nLEVEL: " << level << " ROW: " << ROWS << " COL: " << COLS << std::endl;
 
         Stuff stuff = {obj_scene, ref_scene, xi, level};
 
@@ -54,13 +53,12 @@ cv::Mat1f Tracker::track(
 
             long mili_sec = timer.millSeconds();
             process_time += mili_sec;
-            if (CHATTY)
-                std::cout << "itr: " << iteration
-                          << " r: " << outcome.residual
-                          << " upd: " << outcome.xi_update.t()
-                          << " norm: " << cv::norm(outcome.xi_update)
-                          << " rows : " << outcome.valid_pixels
-                          << " time: " << mili_sec << " ms" << std::endl;
+            std::cout << "itr: " << iteration
+                      << " r: " << outcome.residual
+                      << " upd: " << outcome.xi_update.t()
+                      << " norm: " << cv::norm(outcome.xi_update)
+                      << " rows : " << outcome.valid_pixels
+                      << " time: " << mili_sec << " ms" << std::endl;
 
 #ifdef SEQUENCIAL_SHOW
             stuff.show(window_name);
@@ -69,8 +67,10 @@ cv::Mat1f Tracker::track(
 
             if (cv::norm(outcome.xi_update) < MINIMUM_UPDATE
                 or outcome.residual < MINIMUM_RESIDUAL
-                or process_time > MAXIMUM_TIME_MS)
+                or process_time > MAXIMUM_TIME_MS) {
+                // std::cout << "itr: " << iteration << std::endl;
                 break;
+            }
         }
 #ifndef SEQUENCIAL_SHOW
         // 最後に1回だけ表示する

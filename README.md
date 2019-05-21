@@ -4,5 +4,5 @@
 * ただし回転の追従がうまくいかず，展示時には回転運動が生じないように拘束して運用した
     * for-exhibitionブランチはそのときのそれ
 ## Demo
-![result](https://github.com/KYacbuuchi/direct-visual-odometry/blob/media/data/demo/PV.gif)
-![result](https://github.com/KYacbuuchi/direct-visual-odometry/blob/media/data/demo/depth.png)
+![result](https://github.com/KYabuuchi/direct-visual-odometry/blob/media/data/demo/PV.gif)
+![result](https://github.com/KYabuuchi/direct-visual-odometry/blob/media/data/demo/depth.png)

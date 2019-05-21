@@ -5,4 +5,4 @@
     * for-exhibitionブランチはそのときのそれ
 ## Demo
 ![result](https://github.com/KYabuuchi/direct-visual-odometry/blob/media/data/demo/PV.gif)
-![result](https://github.com/KYabuuchi/direct-visual-odometry/blob/media/data/demo/depth.png)
+![result](https://github.com/KYabuuchi/direct-visual-odometry/blob/media/data/demo/depth.jpg)

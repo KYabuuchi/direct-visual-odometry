@@ -9,12 +9,12 @@ namespace Implement
 namespace
 {
 // update
-constexpr float luminance_sigma = 0.6f;  // Epipolar直線に沿った輝度勾配による分散
+constexpr float luminance_sigma = 0.5f;  // Epipolar直線に沿った輝度勾配による分散
 constexpr float luminance_variance = luminance_sigma * luminance_sigma;
-constexpr float epipolar_sigma = 0.6f;  // 等高線とEpipolar Lineが成す角度による分散
+constexpr float epipolar_sigma = 0.5f;  // 等高線とEpipolar Lineが成す角度による分散
 constexpr float epipolar_variance = epipolar_sigma * epipolar_sigma;
 // propagate
-constexpr float predict_sigma = 0.08f;  // [m]
+constexpr float predict_sigma = 0.06f;  // [m]
 constexpr float predict_variance = predict_sigma * predict_sigma;
 // doMatching
 constexpr double MATCHING_THRESHOLD_RATIO = 0.1;
@@ -116,6 +116,7 @@ cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float obj_gray, const Ep
     // NOTE:たかだかN
     float min_ssd = 2.0f * N;
 
+    int count = 0;
     while (cv::norm(pt - es.start) < es.length) {
         float ssd = 0;
         pt += dir;
@@ -136,6 +137,9 @@ cv::Point2f doMatching(const cv::Mat1f& ref_gray, const float obj_gray, const Ep
         if (ssd < min_ssd) {
             best_pt = pt;
             min_ssd = ssd;
+        }
+        if (count++ > 100) {
+            break;
         }
     }
     if (min_ssd > N * MATCHING_THRESHOLD_RATIO) {

@@ -17,6 +17,8 @@ int main(int argc, char* argv[])
     if (argc == 2)
         input_file = argv[1];
 
+    cv::namedWindow("Source", cv::WINDOW_NORMAL);
+
     Core::Loader loader(input_file, "../external/camera-calibration/data/logicool_00/config.yaml");
     std::cout << "original internal parameters\n"
               << loader.Rgb().K() << std::endl;
@@ -32,9 +34,9 @@ int main(int argc, char* argv[])
     while (true) {
         cv::Mat1f gray_image;
 #ifdef USE_CAMERA
-        cv::Mat color_image;
-        video >> color_image;
-        cv::cvtColor(color_image, color_image, cv::COLOR_BGR2GRAY);
+        cv::Mat color_image, raw_image;
+        video >> raw_image;
+        cv::cvtColor(raw_image, color_image, cv::COLOR_BGR2GRAY);
         color_image.convertTo(gray_image, CV_32FC1, 1.0 / 255.0);
 #else
         if (not loader.getNormalizedUndistortedImages(num++, gray_image))
@@ -57,6 +59,8 @@ int main(int argc, char* argv[])
             while (cv::waitKey(0) != 'r')
                 ;
         }
+
+        cv::imshow("Source", raw_image);
 
         if (!Graphic::isRunning())
             break;

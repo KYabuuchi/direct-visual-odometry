@@ -38,7 +38,7 @@ cv::Mat visualizeDepth(const cv::Mat1f& src_image)
                 p[0] = p[1] = p[2] = 0;
                 return;
             }
-            tmp = std::clamp((tmp - 0.3f) * 50.0f, 0.0f, 180.0f);
+            tmp = std::clamp((tmp - 0.70f) * 70.0f, 0.0f, 180.0f);
             p[0] = static_cast<unsigned char>(tmp);  // H in [0,179]
             p[1] = 255;
             p[2] = 255;
@@ -57,7 +57,7 @@ cv::Mat visualizeDepth(const cv::Mat1f& src_image, const cv::Mat1f& sigma)
                 p[0] = p[1] = p[2] = 0;
                 return;
             }
-            tmp = std::clamp((tmp - 0.3f) * 50.0f, 0.0f, 180.0f);
+            tmp = std::clamp((tmp - 0.70f) * 70.0f, 0.0f, 180.0f);
             p[0] = static_cast<unsigned char>(tmp);  // H in [0,179]
             p[1] = 255;
             p[2] = static_cast<unsigned char>(-500 * std::min(sigma(pt[0], pt[1]), 0.5f) + 255);

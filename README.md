@@ -3,6 +3,11 @@
 * 2019年東京大学五月祭での展示用に作成．
 * ただし回転の追従がうまくいかず，展示時には回転運動が生じないように拘束して運用した
     * for-exhibitionブランチはそのときのそれ
+
+##Requirement
+* OpenCV >=3.
+* glfw
+
 ## Demo
 ![result](https://github.com/KYabuuchi/direct-visual-odometry/blob/media/data/demo/PV.gif)
 ![result](https://github.com/KYabuuchi/direct-visual-odometry/blob/media/data/demo/depth.jpg)

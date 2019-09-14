@@ -7,7 +7,7 @@
 const std::string window_name = "trajectry";
 void show(const std::list<cv::Mat1f>& trajectory);
 
-#define USE_CAMERA
+//#define USE_CAMERA
 
 int main(int argc, char* argv[])
 {
@@ -25,6 +25,8 @@ int main(int argc, char* argv[])
 
 #ifdef USE_CAMERA
     cv::VideoCapture video("/dev/video1");
+#else
+    int num = 0;
 #endif
 
     // main system
@@ -60,7 +62,9 @@ int main(int argc, char* argv[])
                 ;
         }
 
+#ifdef USE_CAMERA
         cv::imshow("Source", raw_image);
+#endif
 
         if (!Graphic::isRunning())
             break;

@@ -3,7 +3,7 @@ project(rgbd-dense-visual-odometry)
 
 # Set default build type to Release
 if(NOT DEFINED CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
+    set(CMAKE_BUILD_TYPE "Release")
 endif()
 
 # Check C++17
@@ -39,7 +39,7 @@ endforeach()
 message("Build type:\n\t${CMAKE_BUILD_TYPE}")
 
 # Optimize flag
-if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     set(OPTIMIZE_FLAGS "-mtune=native -march=native -mfpmath=both -Ofast")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OPTIMIZE_FLAGSS}")
     message("Optimization flags:\n\t${OPTIMIZE_FLAGS}")
@@ -53,7 +53,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 message("OpenMP found:\n\t${OpenMP_FOUND}")
 
 # OpenCV
-find_package(OpenCV 3.0 REQUIRED)
+find_package(OpenCV REQUIRED)
 message("OpenCV version:\n\t${OpenCV_VERSION}")
 
 # Eigen
@@ -78,6 +78,7 @@ file(GLOB SOURCES src/*/*.cpp)
 
 # library
 add_library(vo-core STATIC ${SOURCES})
+target_link_libraries(vo-core ${OpenCV_LIBS})
 
 # cmake-format: off
 # =============================

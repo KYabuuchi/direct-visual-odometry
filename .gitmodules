@@ -1,9 +1,3 @@
-[submodule "external/matplotlib-cpp"]
-	path = external/matplotlib-cpp
-	url = https://github.com/lava/matplotlib-cpp.git
-[submodule "camera_calibration"]
+[submodule "external/camera-calibration"]
 	path = external/camera-calibration
 	url = https://github.com/KYabuuchi/camera_calibration.git
-[submodule "external/glfw-drawer"]
-	path = external/glfw-drawer
-	url = https://github.com/KYabuuchi/glfw-drawer.git

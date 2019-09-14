@@ -61,7 +61,7 @@ find_package(Eigen3 REQUIRED)
 include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
 
 # matplotlib
-find_package(PythonLibs)
+#find_package(PythonLibs)
 
 # camera-calibration
 add_subdirectory(external/camera-calibration)
